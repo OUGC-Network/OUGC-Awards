@@ -1,0 +1,190 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title>OUGC Awards (1.0)</title>
+		<style type="text/css">
+			html, body {
+				margin:0;
+				padding:0;
+			}
+			html {
+				background-color:#fefefe;
+			}
+			body {
+				color: #000;
+				margin:20px auto;
+				width:850px;
+				text-align:left;
+				padding:10px;
+				border:#999 solid 1px;
+				-webkit-border-radius:5px;
+				-moz-border-radius:5px;
+				border-radius:5px;
+				-webkit-box-shadow: inset 0px 0px 0px 1px rgba(255,255,255,0.1);
+				-moz-box-shadow: inset 0px 0px 0px 1px rgba(255,255,255,0.1);
+				box-shadow: inset 0px 0px 0px 1px rgba(255,255,255,0.1);
+				background: #efefef;
+				background: -moz-linear-gradient(top, #efefef 0%, #e1e1e1 100%);
+				background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#efefef), color-stop(100%,#e1e1e1));
+				background: -webkit-linear-gradient(top, #efefef 0%,#e1e1e1 100%);
+				background: -o-linear-gradient(top, #efefef 0%,#e1e1e1 100%);
+				background: -ms-linear-gradient(top, #efefef 0%,#e1e1e1 100%);
+				background: linear-gradient(top, #efefef 0%,#e1e1e1 100%);
+				filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#efefef', endColorstr='#e1e1e1',GradientType=0 );
+			}
+			.tcat {
+				border: 1px solid #333;
+				color: #FFF;
+				background: #323438;
+				background: -moz-linear-gradient(top, #323438 0%, #000000 100%);
+				background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#323438), color-stop(100%,#000000));
+				background: -webkit-linear-gradient(top, #323438 0%,#000000 100%);
+				background: -o-linear-gradient(top, #323438 0%,#000000 100%);
+				background: -ms-linear-gradient(top, #323438 0%,#000000 100%);
+				background: linear-gradient(top, #323438 0%,#000000 100%);
+				filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#323438', endColorstr='#000000',GradientType=0 );
+				-webkit-box-shadow: inset 0px 0px 0px 1px rgba(255,255,255,0.1);
+				-moz-box-shadow: inset 0px 0px 0px 1px rgba(255,255,255,0.1);
+				box-shadow: inset 0px 0px 0px 1px rgba(255,255,255,0.1);
+				-webkit-border-radius:5px 0 5px 0;
+				-moz-border-radius:5px 0 5px 0;
+				border-radius:0 5px 0 5px;
+				width:auto;
+				margin-top:-10px;
+				margin-right:-10px;
+			}
+			.clear {
+				clear:both;
+			}
+			blockquote {
+				color: #333;
+				border: 1px solid #999;
+				margin: 4px;
+				background: #FCFCFC;
+				padding: 4px;
+				font-size: 90%;
+			}
+			span.note {
+				font-size:small;
+				font-weight:normal;
+			}
+			span.note strong {
+				color:red;
+			}
+			.float_right {
+				float:right;
+			}
+			h1 {
+				margin:15px auto 5px;
+			}
+			.img {
+				max-width:100px;
+				max-height:100px;
+			}
+		</style>
+	</head>
+	<body>
+	<div class="tcat float_right"><img src="./Screenshots/logo.png" /></div>
+	<h1>OUGC Awards (1.0)</h1>
+	Este plugin agregara un poderoso sistema de medallas a tu foro.
+	<br class="clear" />
+	<h2>Información:</h2>
+	<ul>
+		<li><strong>Nombre:</strong> OUGC Awards</li>
+		<li><strong>Descripcion:</strong> Este plugin agregara un poderoso sistema de medallas a tu foro.</li>
+		<li><strong>Autor:</strong> Omar Gonzalez</li>
+		<li><strong>Website:</strong> <a href="http://udezain.com.ar/">uDezain</a></li>
+		<li><strong>Fecha:</strong> Abril 08, 2012.</li>
+		<li><strong>Versión:</strong> 1.0</li>
+		<li><strong>Versión MyBB:</strong> 1.6.7</li>
+	</ul><br />
+	<h2>Features:</h2>
+	<ul>
+		<li>Uso de imágenes internas y externas.</li>
+		<li>Soporte completo de múltiples idiomas.</li>
+		<li>Enviado de MP al otorgar premios.</li>
+		<li>Muestra cada premio en el perfil, mensaje, o ambos.</li>
+		<li>Desactiva premios sin borrar información.</li>
+		<li>Otorga y/o remueve premios desde el ModCP.</li>
+	</ul><br />
+	<h2>Instalación:</h2>
+	<ol type="1">
+		<li>Sube el contenido de la carpeta "Upload" a tu carpeta de MyBB.</li>
+		<li>Dirígete a "ACP -> Configuración -> Plugins" y activa este plugin.</li>
+		<li>Dirígete a "ACP -> Usuarios & Grupos -> Manage Awards" para agregar, otorgar, remover, encontrar usuarios por premio, editar, o borrar premios.</li>
+		<li>Activa el plugin y modifica las opciones desde "ACP -> Configuración -> OUGC Awards Settings".</li>
+	</ol><br />
+	<h3>Opciones Generales del Plugin:</h3>
+	<ul>
+		<li><b>Activar Plugin:</b> Activar/desactivar sin perder información.</li>
+		<li><b>Máximo de Premios en Mensajes:</b> Máximo numero de premios a mostrar en mensajes. Valores permitidos:<br/>
+		&nbsp;&nbsp;&nbsp;"-1" para todos<br/>
+		&nbsp;&nbsp;&nbsp;"numero" para un máximo.<br/>
+		&nbsp;&nbsp;&nbsp;"0" o cualquier otra cosa sera igual a ninguno (des habilitado).<br/></li>
+		<li><b>Máximo de Premios en Perfiles:</b> Como arriba.</li>
+		<li><b>Mostrar premios ocultos en el ModCP:</b> Permitir a los moderadores dar/remover premios ocultos.</li>
+		<li><b>Moderadores de Premios:</b> Por defecto, solo administradores y Super Moderadores pueden administrar premios desde el ModCP. Inserta una lista separada por comas de los grupos que pueden moderar.</li>
+	</ul><br />
+	<h3>Creando un Premio:</h3>
+	<ul>
+		<li><b>Nombre:</b> Un corto nombre para el premio. (Requerido)</li>
+		<li><b>Descripcion:</b> Una corta Descripcion para el premio. (Opcional)</li>
+		<li><b>Imagen:</b> La imagen del premio. (Opcional)<br/>
+		&nbsp;&nbsp;&nbsp;"http://..." para imágenes externas<br/>
+		&nbsp;&nbsp;&nbsp;"name.png" para imágenes en la carpeta </i>MYBB_ROOT/images/ougc_awards/</i> y si existen.<br/>
+		&nbsp;&nbsp;&nbsp;"/name.png" para imágenes internas relativas a tu foro.<br/>
+		&nbsp;&nbsp;&nbsp;Cualquier otra cosa intentara usar la imagen predeterminada (</i>MYBB_ROOT/images/ougc_awards/default.png</i>).</li>
+		<li><b>Visible:</b> Si esta o no activo este premio.</li>
+		<li><b>MP:</b> MP a ser enviado al entregar. (Opcional | Vacío = no MP)<br/>
+		&nbsp;&nbsp;&nbsp;"{1}" = Nombre del Usuario<br/>
+		&nbsp;&nbsp;&nbsp;"{2}" = Nombre del Premio<br/>
+		&nbsp;&nbsp;&nbsp;"{3}" = Razón<br/>
+		&nbsp;&nbsp;&nbsp;"{4}" = Imagen</li>
+		<li><b>Tipo:</b> Mostrar en perfiles, mensajes, o ambos.</li>
+	</ul><br />
+	<h3>Otorgar Premio:</h3>
+	<ul>
+		<li><b>Usuario:</b> Nombre de usuario del usuario a quien se le debe entregar el premio. (Requerido)</li>
+		<li><b>Razón:</b> Una corta descripción para otorgar el premio. (Opcional)</li>
+	</ul><br />
+	<h3>Remover Premio de Usuario:</h3>
+	<ul>
+		<li><b>Usuario:</b> Nombre de usuario del usuario a quien se le debe remover el premio. (Requerido)</li>
+	</ul><br />
+	<h3>Editar Premio de Usuario:</h3>
+	<ul>
+		<li><b>Premio:</b> Premio nuevo. (Requerido)</li>
+		<li><b>Razón:</b> Una corta descripción para otorgar el premio. (Opcional)</li>
+		<li><b>Estampa de Tiempo:</b> La estampilla unix de la fecha en que el premio fue otorgado. (Requerido)</li>
+	</ul><br />
+	<h3>Reconstruir Cache:</h3>
+	<ul>
+		<li>El cache debería estar siempre actualizado, pero aun así puedes actualizarlo desde el panel de control administrativo así como del de moderación.</li>
+	</ul><br />
+	<h3>Capturas:</h3>
+	<a href="./Screenshots/ACP-Add.jpg"><img class="img" src="./Screenshots/ACP-Add.jpg" /></a>
+	<a href="./Screenshots/ACP-Delete.jpg"><img class="img" src="./Screenshots/ACP-Delete.jpg" /></a>
+	<a href="./Screenshots/ACP-Give.jpg"><img class="img" src="./Screenshots/ACP-Give.jpg" /></a>
+	<a href="./Screenshots/ACP-List.jpg"><img class="img" src="./Screenshots/ACP-List.jpg" /></a>
+	<a href="./Screenshots/ACP-Menu.jpg"><img class="img" src="./Screenshots/ACP-Menu.jpg" /></a>
+	<a href="./Screenshots/ACP-Revoke.jpg"><img class="img" src="./Screenshots/ACP-Revoke.jpg" /></a>
+	<a href="./Screenshots/ACP-Users.jpg"><img class="img" src="./Screenshots/ACP-Users.jpg" /></a>
+	<a href="./Screenshots/Awards-List.jpg"><img class="img" src="./Screenshots/Awards-List.jpg" /></a>
+	<a href="./Screenshots/Awards-User.jpg"><img class="img" src="./Screenshots/Awards-User.jpg" /></a>
+	<a href="./Screenshots/Awards-View.jpg"><img class="img" src="./Screenshots/Awards-View.jpg" /></a>
+	<a href="./Screenshots/ModCP-Give.jpg"><img class="img" src="./Screenshots/ModCP-Give.jpg" /></a>
+	<a href="./Screenshots/ModCP-List.jpg"><img class="img" src="./Screenshots/ModCP-List.jpg" /></a>
+	<a href="./Screenshots/ModCP-Revoke.jpg"><img class="img" src="./Screenshots/ModCP-Revoke.jpg" /></a>
+	<a href="./Screenshots/PM.jpg"><img class="img" src="./Screenshots/PM.jpg" /></a>
+	<a href="./Screenshots/Postbit.jpg"><img class="img" src="./Screenshots/Postbit.jpg" /></a>
+	<br />
+    <h2>Soporte</h2>
+	Soporte gratuito en <a href="http://udezain.com.ar/">uDezain</a>.<br />
+
+	<br class="clear" />
+    <a href="./LICENSE.txt" title="Read License">Leer Licencia</a>
+    <div class="float_right">&copy; 2012 - Omar Gonzalez - All Rights Reserved.</div>
+	<br class="clear" />
+	</body>
+</html>
