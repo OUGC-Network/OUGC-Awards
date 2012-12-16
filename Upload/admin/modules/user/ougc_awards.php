@@ -208,6 +208,10 @@ elseif($mybb->input['action'] == 'give')
 		{
 			$page->output_inline_error($lang->ougc_awards_error_give);
 		}
+		elseif(!$ougc_awards->can_edit_user($user['uid']))
+		{
+			$page->output_inline_error($lang->ougc_awards_error_giveperm);
+		}
 		else
 		{
 			$ougc_awards->give_award($award, $user, $mybb->input['reason']);
@@ -248,6 +252,10 @@ elseif($mybb->input['action'] == 'revoke')
 		elseif(!$ougc_awards->get_gived_award($award['aid'], $user['uid']))
 		{
 			$page->output_inline_error($lang->ougc_awards_error_notgive);
+		}
+		elseif(!$ougc_awards->can_edit_user($user['uid']))
+		{
+			$page->output_inline_error($lang->ougc_awards_error_giveperm);
 		}
 		else
 		{
@@ -424,7 +432,7 @@ else
 		$query = $db->simple_select('ougc_awards', 'COUNT(aid) AS awards');
 		$awards = (int)$db->fetch_field($query, 'awards');
 
-		echo draw_admin_pagination($mybb->input['page'], $limit, $awards, $view['url'].'index.php?module=user-ougc_awards');
+		echo draw_admin_pagination($mybb->input['page'], $limit, $awards, 'index.php?module=user-ougc_awards');
 	}
 	$page->output_footer();
 }

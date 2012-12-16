@@ -27,6 +27,9 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************/
 
+// Plugin information.
+$l['ougc_awards'] = 'OUGC Awards';
+
 // ModCP
 $l['ougc_awards_modcp_nav'] = 'Manage Awards';
 $l['ougc_awards_modcp_list_desc'] = 'Here you can fast give or revoke awards.';
@@ -34,9 +37,11 @@ $l['ougc_awards_modcp_list_note'] = '<b>Note:</b> To add / remove / edit awards 
 
 // Errors.
 $l['ougc_awards_error_wrongaward'] = 'Invalid award.';
-$l['ougc_awards_error_wronguser'] = 'Invalid user.';
-$l['ougc_awards_error_duplicated'] = 'This user already has this award.';
-$l['ougc_awards_error_nowarded'] = 'This user has not this award.';
+$l['ougc_awards_error_invaliduser'] = 'The selected user is invalid.';
+$l['ougc_awards_error_give'] = 'The selected user already has this award.';
+$l['ougc_awards_error_notgive'] = 'The selected user already has not this award.';
+$l['ougc_awards_error_giveperm'] = 'You don\'t have permission to edit the selected user.';
+$l['ougc_awards_error_active'] = 'The awards system is currently not active.';
 
 // Words
 $l['ougc_awards_modcp_username'] = 'Username';
