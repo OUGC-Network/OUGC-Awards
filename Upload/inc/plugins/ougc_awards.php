@@ -493,7 +493,7 @@ function ougc_awards_uninstall()
 	$PL->settings_delete('ougc_awards');
 
 	// Delete any old templates.
-	$PL->templates_delete('ougc_awards');
+	$PL->templates_delete('ougcawards');
 }
 
 // Check PluginLibrary dependency
@@ -849,91 +849,35 @@ function ougc_awards_postbit(&$post)
 		return;
 	}
 
+	static $ougc_awards_cache = null;
+
 	// First we need to get our data
-	if(THIS_SCRIPT == 'private.php')
+	if(THIS_SCRIPT == 'showthread.php' && isset($GLOBALS['pids']) && !isset($ougc_awards_cache))
 	{
-		global $db, $pm;
+		global $db;
+		$ougc_awards_cache = array();
 
+		$pids = array_filter(array_unique(array_map('intval', explode('\'', $GLOBALS['pids']))));
 		$query = $db->query('
-			SELECT a.aid, a.name, a.image
+			SELECT a.aid, a.name, a.image, p.uid
 			FROM '.TABLE_PREFIX.'ougc_awards a
 			JOIN '.TABLE_PREFIX.'ougc_awards_users ag ON (ag.aid=a.aid)
-			WHERE ag.uid=\''.(int)($plugins->current_hook == 'postbit_prev' ? (isset($post['uid']) ? $post['uid'] : $mybb->user['uid']): $post['uid']).'\' AND a.visible=\'1\' AND a.type!=\'1\'
-			ORDER BY ag.date desc
-			'.($max_postbit == -1 ? '' : 'LIMIT '.$max_postbit)
+			JOIN '.TABLE_PREFIX.'posts p ON (p.uid=ag.uid)
+			WHERE p.pid IN (\''.implode('\',\'', $pids).'\') AND a.visible=\'1\' AND a.type!=\'1\'
+			ORDER BY ag.date desc'
 		);
-	
-		while($data = $db->fetch_array($query))
-		{
-			$awards[$data['aid']] = $data;
-		}
-	}
-	elseif(THIS_SCRIPT == 'announcements.php')
-	{
-		global $db, $aid;
-
-		$query = $db->query('
-			SELECT a.aid, a.name, a.image
-			FROM '.TABLE_PREFIX.'ougc_awards a
-			JOIN '.TABLE_PREFIX.'ougc_awards_users ag ON (ag.aid=a.aid)
-			WHERE ag.uid=\''.(int)$post['uid'].'\' AND a.visible=\'1\' AND a.type!=\'1\'
-			ORDER BY ag.date desc
-			'.($max_postbit == -1 ? '' : 'LIMIT '.$max_postbit)
-		);
+		// how to limit by uid here?
+		// -- '.($max_postbit == -1 ? '' : 'LIMIT '.$max_postbit)
 
 		while($data = $db->fetch_array($query))
 		{
-			$awards[$data['aid']] = $data;
+			$ougc_awards_cache[$data['uid']][$data['aid']] = $data;
 		}
 	}
-	elseif(THIS_SCRIPT == 'showthread.php')
+	elseif(!isset($ougc_awards_cache))
 	{
-		if($mybb->input['mode'] == 'threaded')
-		{
-			$query = $db->query('
-				SELECT a.aid, a.name, a.image
-				FROM '.TABLE_PREFIX.'ougc_awards a
-				JOIN '.TABLE_PREFIX.'ougc_awards_users ag ON (ag.aid=a.aid)
-				WHERE ag.uid=\''.(int)$post['uid'].'\' AND a.visible=\'1\' AND a.type!=\'1\'
-				ORDER BY ag.date desc
-				'.($max_postbit == -1 ? '' : 'LIMIT '.$max_postbit)
-			);
-
-			while($data = $db->fetch_array($query))
-			{
-				$awards[$data['aid']] = $data;
-			}
-		}
-		else
-		{
-			static $ougc_awards_cache = null;
-			if(!isset($ougc_awards_cache))
-			{
-				global $db;
-
-				$pids = array_filter(array_unique(array_map('intval', explode('\'', $GLOBALS['pids']))));
-				$query = $db->query('
-					SELECT a.aid, a.name, a.image, p.uid
-					FROM '.TABLE_PREFIX.'ougc_awards a
-					JOIN '.TABLE_PREFIX.'ougc_awards_users ag ON (ag.aid=a.aid)
-					JOIN '.TABLE_PREFIX.'posts p ON (p.uid=ag.uid)
-					WHERE p.pid IN (\''.implode('\',\'', $pids).'\') AND a.visible=\'1\' AND a.type!=\'1\'
-					ORDER BY ag.date desc'
-				);
-				// how to limit by uid here?
-				// -- '.($max_postbit == -1 ? '' : 'LIMIT '.$max_postbit)
-
-				while($data = $db->fetch_array($query))
-				{
-					$ougc_awards_cache[$data['uid']][$data['aid']] = $data;
-				}
-			}
-			$awards = $ougc_awards_cache[$post['uid']];
-		}
-	}
-	else
-	{
-		global $db, $mybb;
+		global $db;
+		$ougc_awards_cache = array();
 
 		$query = $db->query('
 			SELECT a.aid, a.name, a.image, ag.uid
@@ -946,15 +890,16 @@ function ougc_awards_postbit(&$post)
 	
 		while($data = $db->fetch_array($query))
 		{
-			$awards[$data['aid']] = $data;
+			$ougc_awards_cache[$data['uid']][$data['aid']] = $data;
 		}
 	}
 
 	// User has no awards
-	if(empty($awards))
+	if(empty($ougc_awards_cache[$post['uid']]))
 	{
 		return;
 	}
+	$awards = $ougc_awards_cache[$post['uid']];
 
 	global $templates, $ougc_awards;
 
