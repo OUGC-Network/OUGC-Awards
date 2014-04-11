@@ -28,8 +28,8 @@
 ****************************************************************************/
 
 // Plugin information.
-$l['ougc_awards'] = 'OUGC Awards';
-$l['ougc_awards_d'] = 'This plugin will allow you to give awards to users and show them in posts and profile.';
+$l['ougc_awards_plugin'] = 'OUGC Awards';
+$l['ougc_awards_plugin_d'] = 'This plugin will allow you to give awards to users and show them in posts and profile.';
 
 // Awards management page.
 $l['ougc_awards_acp_nav'] = 'Manage Awards';
@@ -89,7 +89,6 @@ $l['ougc_awards_success_edit'] = 'The award/user was edited successfully.';
 $l['ougc_awards_error_invaliduser'] = 'The selected user is invalid.';
 $l['ougc_awards_error_give'] = 'The selected user already has this award.';
 $l['ougc_awards_error_notgive'] = 'The selected user already has not this award.';
-$l['ougc_awards_error_giveperm'] = 'You don\'t have permission to edit the selected user.';
 $l['ougc_awards_success_give'] = 'User awarded successfully.';
 $l['ougc_awards_error_revoke'] = 'The selected user doesn\'t exist or it doesn\'t have this award.';
 $l['ougc_awards_success_revoke'] = 'Awards was revoked from the selected user successfully.';
@@ -110,6 +109,8 @@ $l['ougc_awards_users_time'] = '{1} <i>at</i> {2}';
 $l['ougc_awards_users_empty'] = 'This award currently has no users.';
 
 // Settings
+$l['ougc_awards_settinggroup'] = 'OUGC Awards';
+$l['ougc_awards_settinggroup_d'] = 'Configure your awards system.';
 $l['ougc_awards_s_power'] = 'Activate Plugin ';
 $l['ougc_awards_s_power_d'] = 'Turn this on/off without losing any data.';
 $l['ougc_awards_s_postbit'] = 'Maximum Awards in Posts';
@@ -120,19 +121,9 @@ $l['ougc_awards_s_hidemcp'] = 'Show Hidden Awards in ModCP';
 $l['ougc_awards_s_hidemcp_d'] = 'Choose [YES] to show hidden awards in the ModCP (this settings doesn\'t affect other awards areas).';
 $l['ougc_awards_s_moderators'] = 'Awards Extra Moderators';
 $l['ougc_awards_s_moderators_d'] = 'Insert a comma separated list of groups that can moderate awards from the ModCP.';
-$l['ougc_awards_s_pmuser'] = 'PM UserID';
-$l['ougc_awards_s_pmuser_d'] = 'Choose the PM author. Leave empty to disable.<br />
- -1 = MyBB Engine.<br />
- -2 = Current user';
+$l['ougc_awards_s_pmuser'] = 'Current User as PM Author';
+$l['ougc_awards_s_pmuser_d'] = 'Choose if use current online user as the PM author.';
+$l['ougc_awards_s_pmuserid'] = 'PM UserID';
+$l['ougc_awards_s_pmuserid_d'] = 'Choose the PM author. -1 = MyBB Engine. (Only works if above is set to [NO])';
 $l['ougc_awards_s_multipage'] = 'Enable Multipage';
 $l['ougc_awards_s_multipage_d'] = 'Choose whether to show or no to use a multipage for profiles.';
-$l['ougc_awards_s_checkperm'] = 'Check Permissions';
-$l['ougc_awards_s_checkperm_d'] = 'Check if current user has permission to edit end user before giving/revoking awards.';
-$l['ougc_awards_s_enablemod'] = 'Enable Moderation Panel';
-$l['ougc_awards_s_enablemod_d'] = 'Enable moderators to give or revoke awards from the moderation panel.';
-$l['ougc_awards_s_orderby'] = 'Order By';
-$l['ougc_awards_s_orderby_d'] = 'Order awards being show by which method.';
-
-// PluginLibrary
-$l['ougc_awards_plreq'] = 'This plugin requires <a href="{1}">PluginLibrary</a> version {2} or later to be uploaded to your forum.';
-$l['ougc_awards_plold'] = 'This plugin requires PluginLibrary version {1} or later, whereas your current version is {2}. Please do update <a href="{3}">PluginLibrary</a>.';
