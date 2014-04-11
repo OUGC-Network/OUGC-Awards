@@ -2,7 +2,7 @@
 
 /***************************************************************************
  *
- *   OUGC Awards plugin (/inc/plugins/ougc_awards/languages/english/ougc_awards_extra_vals.lang.php)
+ *   OUGC Awards plugin (/awards.php)
  *	 Author: Omar Gonzalez
  *   Copyright: © 2012 Omar Gonzalez
  *   
@@ -28,28 +28,26 @@
 ****************************************************************************/
 
 // Boring stuff..
-define('IN_MYBB', 1);
-define('THIS_SCRIPT', substr($_SERVER['SCRIPT_NAME'], -strpos(strrev($_SERVER['SCRIPT_NAME']), '/')));
-$templatelist = 'ougcawards_page_list_award, ougcawards_page_list, ougcawards_page, ougcawards_page_user_award, ougcawards_page_user, ougcawards_page, ougcawards_page_view_row, ougcawards_page_view, ougcawards_page, ougcawards_page_user_empty';
-require_once './global.php';
-
-// Load lang
-$ougc_awards->lang_load();
+define("IN_MYBB", 1);
+$filename = substr($_SERVER['SCRIPT_NAME'], -strpos(strrev($_SERVER['SCRIPT_NAME']), "/"));
+define('THIS_SCRIPT', $filename);
+$templatelist = "ougc_awards_page_list_award, ougc_awards_page_list, ougc_awards_page, ougc_awards_page_user_award, ougc_awards_page_user, ougc_awards_page, ougc_awards_page_view_row, ougc_awards_page_view, ougc_awards_page, ougc_awards_page_user_empty";
+require_once "./global.php";
 
 // If plugin no active or user is guest then stop.
-$ougc_awards->is_active or $error_handler->error(MYBB_GENERAL, $lang->ougc_awards_error_active);
-if(!$mybb->user['uid'])
+if(!$mybb->user['uid'] || $mybb->settings['ougc_awards_power'] != 1 || !function_exists('ougc_awards_is_installed'))
 {
 	error_no_permission();
 }
 
-// Load plugin
+// We need out plugin file, for some reason lang load is no working anymore :|
 require_once MYBB_ROOT.'inc/plugins/ougc_awards/plugin.php';
-$ougc_awards = new OUGC_Awards;
-$ougc_awards->lang_load();
+
+// Load our lang file.
+ougc_awards_lang_load();
 
 // Run our start hook, may be somebody can use it? IDK.
-$plugins->run_hooks('ougc_awards_start');
+$plugins->run_hooks("ougc_awards_start");
 
 add_breadcrumb($lang->ougc_awards_page_title, THIS_SCRIPT);
 // We are viewing a spesific award.
@@ -134,7 +132,7 @@ elseif($mybb->input['user'])
 		$award['aid'] = intval($award['aid']);
 		$award['reason'] = ougc_awards_get_award_info('reason', $award['aid'], $award['reason'], $award['gid']);
 		$award['date'] = $lang->sprintf($lang->ougc_awards_profile_tine, my_date($mybb->settings['dateformat'], $award['date']), my_date($mybb->settings['timeformat'], $award['date']));
-		$award['image'] = $ougc_awards->get_icon($award['image'], $award['aid']);
+		$award['image'] = ougc_awards_get_icon($award['image']);
 		eval("\$awards_list .= \"".$templates->get("ougc_awards_page_user_award")."\";");
 	}
 	$db->free_result($query);
@@ -152,24 +150,28 @@ elseif($mybb->input['user'])
 // Anything else lets see all awards..
 else
 {
-	$awards_list = $ougc_awards->get_awards(false, 'aid, name, description, image', "visible='1'");
+	$query = $db->simple_select('ougc_awards', 'aid, name, description, image', "visible='1'");
 	$award_list = '';
-	foreach($awards_list as $award)
+	while($award = $db->fetch_array($query))
 	{
 		$trow = alt_trow();
 		$award['aid'] = intval($award['aid']);
-		$award['name'] = $ougc_awards->get_award_info('name', $award['aid'], $award['name']);
-		$award['description'] = $ougc_awards->get_award_info('desc', $award['aid'], $award['description']);
-		$award['image'] = $ougc_awards->get_icon($award['image'], $award['aid']);
+		$award['name'] = ougc_awards_get_award_info('name', $award['aid'], $award['name']);
+		$award['description'] = ougc_awards_get_award_info('desc', $award['aid'], $award['description']);
+		$award['image'] = ougc_awards_get_icon($award['image']);
 		eval("\$award_list .= \"".$templates->get("ougc_awards_page_list_award")."\";");
 	}
+	$db->free_result($query);
 
 	if(!$award_list)
 	{
-		eval('$award_list = "'.$templates->get('ougc_awards_page_list_empty').'";');
+		eval("\$award_list = \"".$templates->get("ougc_awards_page_list_empty")."\";");
 	}
 
-	eval('$content = "'.$templates->get('ougc_awards_page_list').'";');
-	eval('$page = "'.$templates->get('ougc_awards_page').'";');
+	eval("\$content = \"".$templates->get("ougc_awards_page_list")."\";");
+	eval("\$page = \"".$templates->get("ougc_awards_page")."\";");
 	output_page($page);
+	exit;
 }
+
+?>
