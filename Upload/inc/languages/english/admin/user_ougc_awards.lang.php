@@ -2,27 +2,27 @@
 
 /***************************************************************************
  *
- *   OUGC Awards plugin (/inc/plugins/ougc_awards/languages/english/ougc_awards_extra_vals.lang.php)
- *	 Author: Omar Gonzalez
- *   Copyright: © 2012 Omar Gonzalez
- *   
- *   Website: http://community.mybb.com/user-25096.html
+ *	OUGC Awards plugin (/inc/anguages/english/admin/user_ougc_awards.lang.php)
+ *	Author: Omar Gonzalez
+ *	Copyright: © 2012-2014 Omar Gonzalez
  *
- *   Extend your forum with a powerful awards system.
+ *	Website: http://omarg.me
+ *
+ *	Extend your forum with a powerful awards system.
  *
  ***************************************************************************
- 
+
 ****************************************************************************
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
-	
+
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
-	
+
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************/
@@ -124,8 +124,8 @@ $l['ougc_awards_s_pmuser'] = 'PM UserID';
 $l['ougc_awards_s_pmuser_d'] = 'Choose the PM author. Leave empty to disable.<br />
  -1 = MyBB Engine.<br />
  -2 = Current user';
-$l['ougc_awards_s_multipage'] = 'Enable Multipage';
-$l['ougc_awards_s_multipage_d'] = 'Choose whether to show or no to use a multipage for profiles.';
+$l['settings_ougc_awards_perpage'] = 'Items Per Page';
+$l['settings_ougc_awards_perpage_desc'] = 'Maximun number of items to show per page in the ModCP queue list.';
 $l['ougc_awards_s_checkperm'] = 'Check Permissions';
 $l['ougc_awards_s_checkperm_d'] = 'Check if current user has permission to edit end user before giving/revoking awards.';
 $l['ougc_awards_s_enablemod'] = 'Enable Moderation Panel';

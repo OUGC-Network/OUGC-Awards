@@ -2,35 +2,35 @@
 
 /***************************************************************************
  *
- *   OUGC Awards plugin (/inc/plugins/ougc_awards.php)
- *	 Author: Omar Gonzalez
- *   Copyright: © 2012 Omar Gonzalez
- *   
- *   Website: http://community.mybb.com/user-25096.html
+ *	OUGC Awards plugin (/inc/plugins/ougc_awards.php)
+ *	Author: Omar Gonzalez
+ *	Copyright: © 2012-2014 Omar Gonzalez
  *
- *   Extend your forum with a powerful awards system.
+ *	Website: http://omarg.me
+ *
+ *	Extend your forum with a powerful awards system.
  *
  ***************************************************************************
- 
+
 ****************************************************************************
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
-	
+
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
-	
+
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************/
 
 // Die if IN_MYBB is not defined, for security reasons.
-defined('IN_MYBB') or die('This file cannot be accessed directly.');
+defined('IN_MYBB') or die('Direct initialization of this file is not allowed.');
 
-// Add hooks.
+// Run/Add Hooks
 if(defined('IN_ADMINCP'))
 {
 	// Add menu to ACP
@@ -42,7 +42,7 @@ if(defined('IN_ADMINCP'))
 	// Insert our plugin into the admin permissions page
 	$plugins->add_hook('admin_user_permissions', create_function('&$args', 'global $lang, $ougc_awards;	$ougc_awards->lang_load();	$args[\'ougc_awards\'] = $lang->ougc_awards_acp_permissions;'));// Insert our menu at users section.
 }
-elseif(defined('THIS_SCRIPT'))
+else
 {
 	global $templatelist;
 
@@ -98,93 +98,84 @@ elseif(defined('THIS_SCRIPT'))
 // PLUGINLIBRARY
 defined('PLUGINLIBRARY') or define('PLUGINLIBRARY', MYBB_ROOT.'inc/plugins/pluginlibrary.php');
 
-// Necessary plugin information for the ACP plugin manager.
+// Plugin API
 function ougc_awards_info()
 {
-	global $lang, $ougc_awards;
-	$ougc_awards->lang_load();
+	global $lang, $awards;
+	$awards->lang_load();
 
 	return array(
 		'name'			=> 'OUGC Awards',
-		'description'	=> $lang->ougc_awards_d,
-		'website'		=> 'http://mods.mybb.com/view/ougc-custom-reputation',
-		'author'		=> 'Omar Gonzalez',
-		'authorsite'	=> 'http://community.mybb.com/user-25096.html',
-		'version'		=> '1.5',
-		'versioncode'	=> 1500,
+		'description'	=> $lang->setting_group_ougc_awards_desc,
+		'website'		=> 'http://mods.mybb.com/view/ougc-awards',
+		'author'		=> 'Omar G.',
+		'authorsite'	=> 'http://omarg.me',
+		'version'		=> '1.0.7',
+		'versioncode'	=> 1070,
 		'compatibility'	=> '16*',
 		'guid'			=> '8172205c3142e4295ed5ed3a7e8f40d6',
-		'pl_version' 	=> 11,
-		'pl_url'		=> 'http://mods.mybb.com/view/pluginlibrary'
+		'myalerts'		=> 105,
+		'pl'			=> array(
+			'version'	=> 12,
+			'url'		=> 'http://mods.mybb.com/view/pluginlibrary'
+		)
 	);
 }
 
-// Activate the plugin.
+// _activate() routine
 function ougc_awards_activate()
 {
-	global $PL, $lang;
+	global $PL, $lang, $cache, $awards;
+	$awards->lang_load();
 	ougc_awards_deactivate();
 
-	// Modify some templates.
-	require_once MYBB_ROOT.'/inc/adminfunctions_templates.php';
-	find_replace_templatesets('postbit', '#'.preg_quote('{$post[\'user_details\']}').'#', '{$post[\'user_details\']}{$post[\'ougc_awards\']}');
-	find_replace_templatesets('postbit_classic', '#'.preg_quote('{$post[\'user_details\']}').'#', '{$post[\'user_details\']}{$post[\'ougc_awards\']}');
-	find_replace_templatesets('member_profile', '#'.preg_quote('{$signature}').'#', '{$signature}{$memprofile[\'ougc_awards\']}');
-	find_replace_templatesets('modcp_nav', '#'.preg_quote('mcp_nav_modlogs}</a></td></tr>').'#', 'mcp_nav_modlogs}</a></td></tr><!--OUGC_AWARDS-->');
-
-	// Add our settings
-	$PL->settings('ougc_awards', $lang->ougc_awards, $lang->ougc_awards_d, array(
+	// Add settings group
+	$PL->settings('ougc_awards', $lang->setting_group_ougc_awards, $lang->setting_group_ougc_awards_desc, array(
 		'postbit'	=> array(
-			'title'			=> $lang->ougc_awards_s_postbit,
-			'description'	=> $lang->ougc_awards_s_postbit_d,
-			'optionscode'	=> 'text',
-			'value'			=> 4,
+		   'title'			=> $lang->setting_ougc_awards_postbit,
+		   'description'	=> $lang->setting_ougc_awards_postbit_desc,
+		   'optionscode'	=> 'text',
+			'value'			=>	4,
 		),
 		'profile'	=> array(
-			'title'			=> $lang->ougc_awards_s_profile,
-			'description'	=> $lang->ougc_awards_s_profile_d,
-			'optionscode'	=> 'text',
-			'value'			=> 4,
+		   'title'			=> $lang->setting_ougc_awards_profile,
+		   'description'	=> $lang->setting_ougc_awards_profile_desc,
+		   'optionscode'	=> 'text',
+			'value'			=>	4,
 		),
-		'enablemod'	=> array(
-			'title'			=> $lang->ougc_awards_s_enablemod,
-			'description'	=> $lang->ougc_awards_s_enablemod_d,
-			'optionscode'	=> 'yesno',
-			'value'			=> 1,
+		'modcp'	=> array(
+		   'title'			=> $lang->setting_ougc_awards_modcp,
+		   'description'	=> $lang->setting_ougc_awards_modcp_desc,
+		   'optionscode'	=> 'yesno',
+			'value'			=>	1,
 		),
 		'moderators'	=> array(
-			'title'			=> $lang->ougc_awards_s_moderators,
-			'description'	=> $lang->ougc_awards_s_moderators_d,
-			'optionscode'	=> 'text',
-			'value'			=> '',
+		   'title'			=> $lang->setting_ougc_awards_moderators,
+		   'description'	=> $lang->setting_ougc_awards_moderators_desc,
+		   'optionscode'	=> 'text',
+			'value'			=>	'',
 		),
-		'hidemcp'	=> array(
-			'title'			=> $lang->ougc_awards_s_hidemcp,
-			'description'	=> $lang->ougc_awards_s_hidemcp_d,
-			'optionscode'	=> 'yesno',
-			'value'			=> 1,
+		'perpage'	=> array(
+		   'title'			=> $lang->setting_ougc_awards_perpage,
+		   'description'	=> $lang->setting_ougc_awards_perpage_desc,
+		   'optionscode'	=> 'text',
+			'value'			=>	20,
 		),
-		'multipage'	=> array(
-			'title'			=> $lang->ougc_awards_s_multipage,
-			'description'	=> $lang->ougc_awards_s_multipage_d,
-			'optionscode'	=> 'yesno',
-			'value'			=> 0,
+		'sendpm'			=> array(
+		   'title'			=> $lang->setting_ougc_awards_sendpm,
+		   'description'	=> $lang->setting_ougc_awards_sendpm_desc,
+		   'optionscode'	=> 'yesno',
+		   'value'			=> 1
 		),
-		'pmuser'	=> array(
-			'title'			=> $lang->ougc_awards_s_pmuser,
-			'description'	=> $lang->ougc_awards_s_pmuser_d,
-			'optionscode'	=> 'yesno',
-			'value'			=> 0,
-		),
-		'checkperm'	=> array(
-			'title'			=> $lang->ougc_awards_s_checkperm,
-			'description'	=> $lang->ougc_awards_s_checkperm_d,
-			'optionscode'	=> 'text',
-			'value'			=> -1,
-		),
+		'myalerts'	=> array(
+		   'title'			=> $lang->setting_ougc_awards_myalerts,
+		   'description'	=> $lang->setting_ougc_awards_myalerts_desc,
+		   'optionscode'	=> 'yesno',
+			'value'			=>	0,
+		)
 	));
 
-	// Insert template/group
+	// Add template group
 	$PL->templates('ougcawards', $lang->ougc_awards, array(
 		'modcp_manage'					=> '<form action="modcp.php" method="post">
 <input type="hidden" name="action" value="awards" />
@@ -371,17 +362,32 @@ function ougc_awards_activate()
 </tr>',
 	));
 
-	$info = ougc_awards_info();
-	if(isset($plugins['ougc_awards']))
+	// Modify templates
+	require_once MYBB_ROOT.'/inc/adminfunctions_templates.php';
+	find_replace_templatesets('postbit', '#'.preg_quote('{$post[\'user_details\']}').'#', '{$post[\'user_details\']}{$post[\'ougc_awards\']}');
+	find_replace_templatesets('postbit_classic', '#'.preg_quote('{$post[\'user_details\']}').'#', '{$post[\'user_details\']}{$post[\'ougc_awards\']}');
+	find_replace_templatesets('member_profile', '#'.preg_quote('{$signature}').'#', '{$signature}{$memprofile[\'ougc_awards\']}');
+	find_replace_templatesets('modcp_nav', '#'.preg_quote('mcp_nav_modlogs}</a></td></tr>').'#', 'mcp_nav_modlogs}</a></td></tr><!--OUGC_AWARDS-->');
+
+	// Update administrator permissions
+	change_admin_permission('tools', 'ougc_awards');
+
+	// Insert/update version into cache
+	$plugins = $cache->read('ougc_plugins');
+	if(!$plugins)
 	{
-		$plugins['ougc_awards'] = (int)$plugins['ougc_awards'];
-	}
-	else
-	{
-		$plugins['ougc_awards'] = 0;
+		$plugins = array();
 	}
 
-	if((int)$plugins['ougc_awards'] <= 1500)
+	$info = ougc_awards_info();
+
+	if(!isset($plugins['awards']))
+	{
+		$plugins['awards'] = $info['versioncode'];
+	}
+
+	/*~*~* RUN UPDATES START *~*~*/
+	if($plugins['awards'] <= 1100)
 	{
 		global $db, $cache;
 
@@ -418,34 +424,95 @@ function ougc_awards_activate()
 		}
 	}
 
-	$plugins['ougc_awards'] = $info['versioncode'];
+	if($plugins['awards'] <= 1000)
+	{
+		global $lang, $db;
+		ougc_awards_lang_load();
+
+		// Modify our users column.
+		$db->modify_column('ougc_awards', 'users', "text NOT NULL DEFAULT ''");
+
+		// Inser our new settings
+		$set1 = $db->fetch_field($db->simple_select('settings', 'sid', 'name="ougc_awards_multipage"'), 'sid');
+		$set2 = $db->fetch_field($db->simple_select('settings', 'sid', 'name="ougc_awards_pmuser" AND disporder!="8"'), 'sid');
+		$set3 = $db->fetch_field($db->simple_select('settings', 'sid', 'name="ougc_awards_pmuserid"'), 'sid');
+		$setgroup = $db->fetch_field($db->simple_select('settinggroups', 'gid', 'name="ougc_awards"'), 'gid');
+
+		if(!$set1 && $setgroup)
+		{
+			$db->insert_query('settings',
+				array(
+					'name'			=>	$db->escape_string('ougc_awards_multipage'),
+					'title'			=>	$db->escape_string("Enable Multipage"),
+					'description'	=>	$db->escape_string("Choose whether to show or no to use a multipage for profiles."),
+					'optionscode'	=>	'yesno',
+					'value'			=>	0,
+					'disporder'		=>	7,
+					'gid'			=>	intval($setgroup)
+				)
+			);
+		}
+
+		if(!$set3 && $setgroup)
+		{
+			$db->insert_query('settings',
+				array(
+					'name'			=>	$db->escape_string('ougc_awards_pmuserid'),
+					'title'			=>	$db->escape_string("PM UserID"),
+					'description'	=>	$db->escape_string("Choose the PM author. -1 = MyBB Engine. (Only works if above is set to [NO])"),
+					'optionscode'	=>	'text',
+					'value'			=>	-1,
+					'disporder'		=>	9,
+					'gid'			=>	intval($setgroup)
+				)
+			);
+		}
+
+		if($set2)
+		{
+			$db->update_query('settings', array('disporder' => '8'), "sid='{$set2}'");
+		}
+		rebuild_settings();
+
+		// Modify some templates.
+		require_once MYBB_ROOT.'/inc/adminfunctions_templates.php';
+		find_replace_templatesets('ougc_awards_page_view_row', '#'.preg_quote('{$user[\'username\']}').'#', '{$gived[\'username\']}', 0);
+		find_replace_templatesets('member_profile_ougc_awards', '#'.preg_quote('</table>').'#', '{$multipage}', 0);
+
+		// Delete one template.
+		$db->delete_query('templates', "title IN('ougc_awards_image') AND sid='-2'");
+
+		// Now we need to refresh the cache.
+		ougc_awards_update_cache();
+	}
+	/*~*~* RUN UPDATES END *~*~*/
+
+	$plugins['awards'] = $info['versioncode'];
 	$cache->update('ougc_plugins', $plugins);
 }
 
-// Deactivate the plugin.
+// _deactivate() routine
 function ougc_awards_deactivate()
 {
-	ougc_awards_pl_req();
+	ougc_awards_pl_check();
 
-	// Remove added variables.
+	// Revert template edits
 	require_once MYBB_ROOT.'/inc/adminfunctions_templates.php';
 	find_replace_templatesets('postbit', '#'.preg_quote('{$post[\'ougc_awards\']}').'#', '', 0);
 	find_replace_templatesets('postbit_classic', '#'.preg_quote('{$post[\'ougc_awards\']}').'#', '', 0);
 	find_replace_templatesets('member_profile', '#'.preg_quote('{$memprofile[\'ougc_awards\']}').'#', '', 0);
 	find_replace_templatesets('modcp_nav', '#'.preg_quote('<!--OUGC_AWARDS-->').'#', '', 0);
+
+	// Update administrator permissions
+	change_admin_permission('tools', 'ougc_awards', 0);
 }
 
-// Install the plugin.
+// _install() routine
 function ougc_awards_install()
 {
-	global $db, $PL, $lang, $ougc_awards;
-	ougc_awards_pl_req();
-	$ougc_awards->lang_load();
+	global $db;
 
-	// Drop tables
-	$db->drop_table('ougc_awards');
-	$db->drop_table('ougc_awards_users');
-
+	// Create our table(s)
 	$collation = $db->build_create_table_collation();
 	$db->write_query("CREATE TABLE `".TABLE_PREFIX."ougc_awards` (
 			`aid` int UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -469,9 +536,43 @@ function ougc_awards_install()
 			INDEX aiduid (aid,uid)
 		) ENGINE=MyISAM{$collation};"
 	);
+
+	// Add DB entries
+	if(!$db->field_exists('ougc_awards', 'users'))
+	{
+		$db->add_column('users', 'ougc_awards', 'text NOT NULL');
+	}
+
+	if($db->table_exists('alert_settings') && $db->table_exists('alert_setting_values'))
+	{
+		$query = $db->simple_select('alert_settings', 'id', 'code=\'ougc_awards\'');
+
+		if(!($id = (int)$db->fetch_field($query, 'id')))
+		{
+			$id = (int)$db->insert_query('alert_settings', array('code' => 'ougc_awards'));
+	
+			// Only update the first time
+			$db->delete_query('alert_setting_values', 'setting_id=\''.$id.'\'');
+
+			$query = $db->simple_select('users', 'uid');
+			while($uid = (int)$db->fetch_field($query, 'uid'))
+			{
+				$settings[] = array(
+					'user_id'		=> $uid,
+					'setting_id'	=> $id,
+					'value'			=> 1
+				);
+			}
+
+			if(!empty($settings))
+			{
+				$db->insert_query_multiple('alert_setting_values', $settings);
+			}
+		}
+	}
 }
 
-// Is the plugin installed?
+// _is_installed() routine
 function ougc_awards_is_installed()
 {
 	global $db;
@@ -479,52 +580,116 @@ function ougc_awards_is_installed()
 	return $db->table_exists('ougc_awards');
 }
 
-// Uninstall the plugin.
+// _uninstall() routine
 function ougc_awards_uninstall()
 {
-	global $db, $PL, $ougc_awards;
-	ougc_awards_pl_req();
+	global $db, $PL, $cache;
+	ougc_awards_pl_check();
 
-	// Delete our tables
+	// Drop DB entries
 	$db->drop_table('ougc_awards');
 	$db->drop_table('ougc_awards_users');
+	if($db->field_exists('ougc_awards', 'users'))
+	{
+		$db->drop_column('users', 'ougc_awards');
+	}
 
-	// Delete setting group.
 	$PL->settings_delete('ougc_awards');
+	$PL->templates_delete('ougc_awards');
 
-	// Delete any old templates.
-	$PL->templates_delete('ougcawards');
+	// Delete version from cache
+	$plugins = (array)$cache->read('ougc_plugins');
+
+	if(isset($plugins['awards']))
+	{
+		unset($plugins['awards']);
+	}
+
+	if(!empty($plugins))
+	{
+		$cache->update('ougc_plugins', $plugins);
+	}
+	else
+	{
+		$PL->cache_delete('ougc_plugins');
+	}
+
+	// Remove administrator permissions
+	change_admin_permission('tools', 'ougc_awards', -1);
 }
 
-// Check PluginLibrary dependency
-function ougc_awards_pl_req()
+// PluginLibrary dependency check & load
+function ougc_awards_pl_check()
 {
-	global $lang, $ougc_awards;
-	$ougc_awards->lang_load();
+	global $lang, $awards;
+	$awards->lang_load();
 	$info = ougc_awards_info();
 
 	if(!file_exists(PLUGINLIBRARY))
 	{
-		$message = $lang->sprintf($lang->ougc_awards_plreq, $info['pl_url'], $info['pl_version']);
-		$ougc_awards->admin_redirect($message, true);
+		flash_message($lang->sprintf($lang->ougc_awards_pl_required, $info['pl']['url'], $info['pl']['version']), 'error');
+		admin_redirect('index.php?module=config-plugins');
+		exit;
 	}
 
 	global $PL;
+
 	$PL or require_once PLUGINLIBRARY;
 
-	if($PL->version < $info['pl_version'])
+	if($PL->version < $info['pl']['version'])
 	{
-		$message = $lang->sprintf($lang->ougc_awards_plold, $PL->version, $info['pl_version'], $info['pl_url']);
-		$ougc_awards->admin_redirect($message, true);
+		flash_message($lang->sprintf($lang->ougc_awards_pl_old, $info['pl']['url'], $info['pl']['version'], $PL->version), 'error');
+		admin_redirect('index.php?module=config-plugins');
+		exit;
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ModCP Part
 function ougc_awards_modcp()
 {
 	global $mybb, $modcp_nav, $templates, $lang, $ougc_awards;
 
-	$permission = (bool)($mybb->settings['ougc_awards_enablemod'] && ($mybb->usergroup['cancp'] || $this->check_groups($mybb->settings['ougc_awards_moderators'], false)));
+	$permission = (bool)($mybb->settings['ougc_awards_modcp'] && ($mybb->usergroup['cancp'] || $this->check_groups($mybb->settings['ougc_awards_moderators'], false)));
 
 	if($permission)
 	{
@@ -684,7 +849,7 @@ function ougc_awards_modcp()
 				$trow = alt_trow();
 
 				$award['aid'] = (int)$award['aid'];
-				$award['image'] = $ougc_awards->get_icon($award['image'], $award['aid']);
+				$award['image'] = $ougc_awards->get_award_icon($award['aid']);
 				if($name = $ougc_awards->get_award_info('name', $award['aid']))
 				{
 					$award['name'] = $name;
@@ -817,7 +982,7 @@ function ougc_awards_profile()
 
 			$ougc_awards->parse_text($award['reason']);
 
-			$award['image'] = $ougc_awards->get_icon($award['image'], $award['aid']);
+			$award['image'] = $ougc_awards->get_award_icon($award['aid']);
 
 			$award['date'] = $lang->sprintf($lang->ougc_awards_profile_tine, my_date($mybb->settings['dateformat'], $award['date']), my_date($mybb->settings['timeformat'], $award['date']));
 
@@ -916,7 +1081,7 @@ function ougc_awards_postbit(&$post)
 		$award['name_ori'] = $award['name'];
 		$award['name'] = strip_tags($award['name_ori']);
 
-		$award['image'] = $ougc_awards->get_icon($award['image'], $award['aid']);
+		$award['image'] = $ougc_awards->get_award_icon($award['aid']);
 
 		if($max_postbit == -1 || $count < $max_postbit)
 		{
@@ -1038,26 +1203,27 @@ class OUGC_Awards
 	}
 
 	// Get the rate icon
-	function get_icon($img, $aid)
+	function get_award_icon($aid)
 	{
 		if(!isset($this->cache['images'][$aid]))
 		{
 			global $settings;
+			$award = $this->get_award($aid);
 
 			// The image is suppose to be external.
-			if(my_strpos($img, 'ttp:/') || my_strpos($img, 'ttps:/')) 
+			if(my_strpos($award['image'], 'ttp:/') || my_strpos($award['image'], 'ttps:/')) 
 			{
-				$this->cache['images'][$aid] = $img;
+				$this->cache['images'][$aid] = $award['image'];
 			}
 			// The image is suppose to be internal inside our images folder.
-			elseif(!my_strpos($img, '/') && !empty($img) && file_exists(MYBB_ROOT.'/images/ougc_awards/'.$img)) 
+			elseif(!my_strpos($award['image'], '/') && !empty($award['image']) && file_exists(MYBB_ROOT.'/images/ougc_awards/'.$award['image'])) 
 			{
-				$this->cache['images'][$aid] = $settings['bburl'].'/images/ougc_awards/'.htmlspecialchars_uni($img);
+				$this->cache['images'][$aid] = $settings['bburl'].'/images/ougc_awards/'.htmlspecialchars_uni($award['image']);
 			}
 			// Image is suppose to be internal.
-			elseif(!empty($img) && file_exists(MYBB_ROOT.'/'.$img))
+			elseif(!empty($award['image']) && file_exists(MYBB_ROOT.'/'.$award['image']))
 			{
-				$this->cache['images'][$aid] = $settings['bburl'].'/'.htmlspecialchars_uni($img);
+				$this->cache['images'][$aid] = $settings['bburl'].'/'.htmlspecialchars_uni($award['image']);
 			}
 			// Default image.
 			else
@@ -1315,74 +1481,23 @@ class OUGC_Awards
 
 		$db->insert_query('ougc_awards_users', $insert_data);
 
-		$this->send_pm($award, $user, $reason);
-	}
-
-	// Send a PM when award is given.
-	function send_pm($award, $user, $reason)
-	{
-		global $settings;
-
-		// Disabled
-		if(empty($settings['ougc_awards_pmuser']))
-		{
-			return true;
-		}
-
-		// Get PM sender UID
-		$uid = (int)$settings['ougc_awards_pmuser'];
-		if($uid == -2)
-		{
-			$uid = (int)$GLOBALS['mybb']->user['uid'];
-		}
-		if($uid < 1)
-		{
-			$uid = -1;
-		}
-
-		// Get the award PM content.
 		if($message = $this->get_award_info('pm', $award['aid']))
 		{
 			$award['pm'] = $message;
 		}
-		unset($message);
-
-		if(empty($award['pm']))
-		{
-			return;
-		}
-
-		// Set up the pm handler
-		require_once MYBB_ROOT.'inc/datahandlers/pm.php';
-		$pmhandler = new PMDataHandler;
-		$pmhandler->admin_override = true;
-
-		global $lang;
-
-		// Get the award name.
 		if($name = $this->get_award_info('name', $award['aid']))
 		{
 			$award['name'] = $name;
 		}
-		unset($name);
 
-		$award['name'] = strip_tags($award['name']);
+		global $lang;
+		$this->lang_load();
 
-		$pmhandler->set_data(array(
-			'subject'	=>	$lang->sprintf($lang->ougc_awards_pm_title, $award['name']),
-			'message'	=>	$lang->sprintf($award['pm'], $user['username'], $award['name'], (!empty($reason) ? $reason : $lang->ougc_awards_pm_noreason), $this->get_icon($award['image'], $award['aid']), $mybb->settings['bbname']),
-			'icon'		=>	-1,
-			'fromid'	=>	$uid,
-			'toid'		=>	array((int)$user['uid'])
-		));
-
-		if($pmhandler->validate_pm())
-		{
-			$pmhandler->insert_pm();
-			return true;
-		}
-
-		return false;
+		$this->send_pm(array(
+			'subject'		=> $lang->sprintf($lang->ougc_awards_pm_title, strip_tags($award['name'])),
+			'message'		=> $lang->sprintf($award['pm'], $user['username'], $award['name'], (!empty($reason) ? $reason : $lang->ougc_awards_pm_noreason), $this->get_award_icon($award['aid']), $mybb->settings['bbname']),
+			'touid'			=> $this->approval['uid']
+		), -1, true);
 	}
 
 	// I liked as I did the pm thing, so what about award name, description, and reasons?
@@ -1528,7 +1643,7 @@ class OUGC_Awards
 	{
 		global $mybb;
 
-		if((bool)$mybb->setttings['checkperm'])
+		if(true)
 		{
 			$uid = (int)$uid;
 
@@ -1569,6 +1684,66 @@ class OUGC_Awards
 		}
 
 		return true;
+	}
+
+	// Send a Private Message to a user  (Copied from MyBB 1.7)
+	function send_pm($pm, $fromid=0, $admin_override=false, $tids)
+	{
+		global $mybb;
+
+		if(!$mybb->settings['ougc_awards_sendpm'] || !$mybb->settings['enablepms'] || !is_array($pm))
+		{
+			return false;
+		}
+
+		if (!$pm['subject'] ||!$pm['message'] || (!$pm['receivepms'] && !$admin_override))
+		{
+			return false;
+		}
+
+		global $lang, $db, $session;
+		$lang->load('messages');
+
+		require_once MYBB_ROOT."inc/datahandlers/pm.php";
+
+		$pmhandler = new PMDataHandler();
+
+		// Build our final PM array
+		$pm = array(
+			'subject'		=> $pm['subject'],
+			'message'		=> $pm['message'],
+			'icon'			=> -1,
+			'fromid'		=> ($fromid == 0 ? (int)$mybb->user['uid'] : ($fromid < 0 ? 0 : $fromid)),
+			'toid'			=> array($pm['touid']),
+			'bccid'			=> array(),
+			'do'			=> '',
+			'pmid'			=> '',
+			'saveasdraft'	=> 0,
+			'options'	=> array(
+				'signature'			=> 0,
+				'disablesmilies'	=> 0,
+				'savecopy'			=> 0,
+				'readreceipt'		=> 0
+			)
+		);
+
+		if(isset($mybb->session))
+		{
+			$pm['ipaddress'] = $mybb->session->packedip;
+		}
+
+		// Admin override
+		$pmhandler->admin_override = (int)$admin_override;
+
+		$pmhandler->set_data($pm);
+
+		if($pmhandler->validate_pm())
+		{
+			$pmhandler->insert_pm();
+			return true;
+		}
+
+		return false;
 	}
 }
 $GLOBALS['ougc_awards'] = new OUGC_Awards;
