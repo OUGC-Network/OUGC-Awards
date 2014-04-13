@@ -27,7 +27,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************/
 
-/*** PLEASE READ DOCUMENTATION FILE FOR INFORMATION ***/
+/*~*~* Language Support For Awards *~*~*/
 
 /*
 $l['ougc_awards_award_pm_1'] = 'Hi {1}. You have been given the [b]{2}[/b] award.
