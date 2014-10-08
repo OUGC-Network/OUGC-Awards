@@ -113,15 +113,19 @@ function ougc_awards_info()
 	global $lang, $awards;
 	$awards->lang_load();
 
+	$message = '<div id="flash_message" class="error" style="margin-bottom: 0;">
+<strong>If you are using this in a live forum, you are on the wrong way.</strong>
+</div>';
+
 	return array(
 		'name'			=> 'OUGC Awards',
-		'description'	=> $lang->setting_group_ougc_awards_desc,
+		'description'	=> $lang->setting_group_ougc_awards_desc.$message,
 		'website'		=> 'http://mods.mybb.com/view/ougc-awards',
 		'author'		=> 'Omar G.',
 		'authorsite'	=> 'http://omarg.me',
-		'version'		=> '1.3.0',
-		'versioncode'	=> 1300,
-		'compatibility'	=> '16*,18*',
+		'version'		=> '1.7.0',
+		'versioncode'	=> 1700,
+		'compatibility'	=> '18*',
 		'guid'			=> '8172205c3142e4295ed5ed3a7e8f40d6',
 		'myalerts'		=> 105,
 		'pl'			=> array(
