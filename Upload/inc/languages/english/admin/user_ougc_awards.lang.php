@@ -82,7 +82,10 @@ $l['ougc_awards_form_reason_d'] = 'Insert a reason for giving this award';
 $l['ougc_awards_form_desc'] = 'Description';
 $l['ougc_awards_form_desc_d'] = 'Write a short description for this award.';
 $l['ougc_awards_form_image'] = 'Image';
-$l['ougc_awards_form_image_d'] = 'Image of this award.';
+$l['ougc_awards_form_image_d'] = 'Image of this award.<br/><span class="smalltext">&nbsp;&nbsp;{bburl} -> Forum URL<br />
+&nbsp;&nbsp;{homeurl} -> Home URL<br />
+&nbsp;&nbsp;{imgdir} -> Theme Directory URL
+</span>';
 $l['ougc_awards_form_visible'] = 'Visible';
 $l['ougc_awards_form_hidden'] = 'Hidden';
 $l['ougc_awards_form_visible_d'] = 'Does this award is visible at all?';

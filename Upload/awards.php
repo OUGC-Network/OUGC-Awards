@@ -40,6 +40,11 @@ $awards->lang_load();
 $awards->is_active or error($lang->ougc_awards_error_active);
 $mybb->user['uid'] or error_no_permission();
 
+if(!$mybb->settings['ougc_awards_pagegroups'] || ($mybb->settings['ougc_awards_pagegroups'] != -1 && !$awards->is_member($mybb->settings['ougc_awards_pagegroups'])))
+{
+	error_no_permission();
+}
+
 // Set url
 $awards->set_url(null, THIS_SCRIPT);
 
