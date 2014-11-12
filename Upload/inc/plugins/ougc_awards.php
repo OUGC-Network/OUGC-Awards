@@ -123,10 +123,9 @@ function ougc_awards_info()
 		'website'		=> 'http://mods.mybb.com/view/ougc-awards',
 		'author'		=> 'Omar G.',
 		'authorsite'	=> 'http://omarg.me',
-		'version'		=> '1.7.0',
-		'versioncode'	=> 1700,
+		'version'		=> '1.7.1',
+		'versioncode'	=> 1701,
 		'compatibility'	=> '18*',
-		'guid'			=> '8172205c3142e4295ed5ed3a7e8f40d6',
 		'myalerts'		=> 105,
 		'pl'			=> array(
 			'version'	=> 12,
@@ -143,7 +142,7 @@ function ougc_awards_activate()
 	ougc_awards_deactivate();
 
 	// Add settings group
-	$PL->settings('ougc_awards', '<lang:setting_group_ougc_awards>', $lang->setting_group_ougc_awards_desc, array(
+	$PL->settings('ougc_awards', $lang->setting_group_ougc_awards, $lang->setting_group_ougc_awards_desc, array(
 		'postbit'	=> array(
 		   'title'			=> $lang->setting_ougc_awards_postbit,
 		   'description'	=> $lang->setting_ougc_awards_postbit_desc,
@@ -195,7 +194,7 @@ function ougc_awards_activate()
 	));
 
 	// Add template group
-	$PL->templates('ougcawards', $lang->ougc_awards, array(
+	$PL->templates('ougcawards', '<lang:setting_group_ougc_awards>', array(
 		'modcp_manage'					=> '<form action="modcp.php" method="post">
 <input type="hidden" name="action" value="awards" />
 <input type="hidden" name="manage" value="{$mybb->input[\'manage\']}" />
@@ -217,13 +216,50 @@ function ougc_awards_activate()
 	<input type="submit" class="button" value="{$lang->ougc_awards_modcp_give}" />
 </div>
 </form>
-<script type="text/javascript" src="{$mybb->settings[\'bburl\']}/jscripts/autocomplete.js?ver=1400"></script>
+<link rel="stylesheet" href="{$mybb->asset_url}/jscripts/select2/select2.css">
+<script type="text/javascript" src="{$mybb->asset_url}/jscripts/select2/select2.min.js"></script>
 <script type="text/javascript">
 <!--
-	if(use_xmlhttprequest == "1")
-	{
-		new autoComplete("username", "xmlhttp.php?action=get_users", {valueSpan: "username"});
-	}
+if(use_xmlhttprequest == "1")
+{
+	MyBB.select2();
+	$("#username").select2({
+		placeholder: "{$lang->search_user}",
+		minimumInputLength: 3,
+		maximumSelectionSize: 3,
+		multiple: false,
+		ajax: { // instead of writing the function to execute the request we use Select2\'s convenient helper
+			url: "xmlhttp.php?action=get_users",
+			dataType: \'json\',
+			data: function (term, page) {
+				return {
+					query: term, // search term
+				};
+			},
+			results: function (data, page) { // parse the results into the format expected by Select2.
+				// since we are using custom formatting functions we do not need to alter remote JSON data
+				return {results: data};
+			}
+		},
+		initSelection: function(element, callback) {
+			var value = $(element).val();
+			if (value !== "") {
+				callback({
+					id: value,
+					text: value
+				});
+			}
+		},
+       // Allow the user entered text to be selected as well
+       createSearchChoice:function(term, data) {
+			if ( $(data).filter( function() {
+				return this.text.localeCompare(term)===0;
+			}).length===0) {
+				return {id:term, text:term};
+			}
+		},
+	});
+}
 // -->
 </script>',
 		'modcp_nav'						=> '<tr><td class="trow1 smalltext"><a href="modcp.php?action=awards" class="modcp_nav_item" style="background: url(\'images/modcp/awards.png\') no-repeat left center;">{$lang->ougc_awards_modcp_nav}</a></td></tr>',
@@ -576,7 +612,7 @@ function ougc_awards_uninstall()
 	!$db->field_exists('ougc_awards', 'users') or $db->drop_column('users', 'ougc_awards');
 
 	$PL->settings_delete('ougc_awards');
-	$PL->templates_delete('ougc_awards');
+	$PL->templates_delete('ougcawards');
 
 	// Delete version from cache
 	$plugins = (array)$cache->read('ougc_plugins');
@@ -834,6 +870,7 @@ function ougc_awards_profile()
 	}
 
 	global $db, $lang, $theme, $templates, $awards;
+	$awards->lang_load();
 
 	$awards->set_url(null, get_profile_link($memprofile['uid']));
 

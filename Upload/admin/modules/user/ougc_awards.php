@@ -205,9 +205,13 @@ elseif($mybb->input['action'] == 'give' || $mybb->input['action'] == 'revoke')
 		{
 			$errors[] = $lang->ougc_awards_error_invaliduser;
 		}
-		if($awards->get_gived_award($award['aid'], $user['uid']))
+		if($give && $awards->get_gived_award($award['aid'], $user['uid']))
 		{
 			$errors[] = $lang->ougc_awards_error_give;
+		}
+		if(!$give && !$awards->get_gived_award($award['aid'], $user['uid']))
+		{
+			$errors[] = $lang->ougc_awards_error_revoke;
 		}
 		if(!$awards->can_edit_user($user['uid']))
 		{
@@ -408,7 +412,7 @@ else
 			$table->construct_cell($award['name']);
 			$table->construct_cell($award['description']);
 			$table->construct_cell($form->generate_text_box('disporder['.$award['aid'].']', (int)$award['disporder'], array('style' => 'text-align: center; width: 30px;')), array('class' => 'align_center'));
-			$table->construct_cell('<img src="styles/default/images/icons/bullet_o'.(!$award['visible'] ? 'ff' : 'n').'.gif" alt="" title="'.(!$award['visible'] ? $lang->ougc_awards_form_hidden : $lang->ougc_awards_form_visible).'" />', array('class' => 'align_center'));
+			$table->construct_cell('<img src="styles/default/images/icons/bullet_o'.(!$award['visible'] ? 'ff' : 'n').'.png" alt="" title="'.(!$award['visible'] ? $lang->ougc_awards_form_hidden : $lang->ougc_awards_form_visible).'" />', array('class' => 'align_center'));
 
 			$popup = new PopupMenu("award_{$award['aid']}", $lang->options);
 			$popup->add_item($lang->ougc_awards_tab_give, "index.php?module=user-ougc_awards&amp;action=give&amp;aid={$award['aid']}");
