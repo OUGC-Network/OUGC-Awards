@@ -38,22 +38,9 @@ if(defined('IN_ADMINCP'))
 	$plugins->add_hook('admin_user_permissions', create_function('&$args', 'global $lang, $awards;	$awards->lang_load();	$args[\'ougc_awards\'] = $lang->ougc_awards_acp_permissions;'));
 
 	// Language support
-	$plugins->add_hook('admin_config_settings_start', create_function('&$args', 'global $awards;	$awards->lang_load();'));
-	$plugins->add_hook('admin_style_templates_set', create_function('&$args', 'global $awards;	$awards->lang_load();'));
+	$plugins->add_hook('admin_config_settings_start', array('OUGC_Awards', 'lang_load'));
+	$plugins->add_hook('admin_style_templates_set', array('OUGC_Awards', 'lang_load'));
 	$plugins->add_hook('admin_config_settings_change', 'ougc_awards_settings_change');
-
-	// Cache manager
-	$funct = create_function('', '
-			control_object($GLOBALS[\'cache\'], \'
-			function update_ougc_awards()
-			{
-				$GLOBALS[\\\'awards\\\']->update_cache();
-			}
-		\');
-	');
-	$plugins->add_hook('admin_tools_cache_start', $funct);
-	$plugins->add_hook('admin_tools_cache_rebuild', $funct);
-	unset($funct);
 }
 else
 {
@@ -1069,6 +1056,14 @@ function ougc_awards_postbit(&$post)
 	}
 
 	$post['user_details'] = str_replace('<!--OUGC_AWARDS-->', $post['ougc_awards'], $post['user_details']);
+}
+
+// Cache manager helper.
+function update_ougc_awards()
+{
+	global $awards;
+
+	$awards->update_cache();
 }
 
 class OUGC_Awards
