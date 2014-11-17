@@ -110,8 +110,8 @@ function ougc_awards_info()
 		'website'		=> 'http://mods.mybb.com/view/ougc-awards',
 		'author'		=> 'Omar G.',
 		'authorsite'	=> 'http://omarg.me',
-		'version'		=> '1.7.1',
-		'versioncode'	=> 1701,
+		'version'		=> '1.7.2',
+		'versioncode'	=> 1702,
 		'compatibility'	=> '18*',
 		'myalerts'		=> 105,
 		'pl'			=> array(
