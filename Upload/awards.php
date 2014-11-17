@@ -55,23 +55,6 @@ add_breadcrumb($lang->ougc_awards_page_title, $awards->build_url());
 $limit = (int)$mybb->settings['ougc_awards_perpage'];
 $limit = $limit > 100 ? 100 : ($limit < 1 ? 1 : $limit);
 
-$mybb->input['page'] = (int)$mybb->input['page'];
-if($mybb->input['page'] > 0)
-{
-	$start = ($mybb->input['page'] - 1)*$limit;
-			$pages = ceil($awardscount/$limit);
-			if($mybb->input['page'] > $pages)
-			{
-				$start = 0;
-				$mybb->input['page'] = 1;
-			}
-}
-else
-{
-	$start = 0;
-	$mybb->input['page'] = 1;
-}
-
 $users_list = $award_list = $multipage = '';
 
 if(!empty($mybb->input['view']))
@@ -94,6 +77,25 @@ if(!empty($mybb->input['view']))
 	}
 	add_breadcrumb(strip_tags($award['name']));
 
+	$query = $db->simple_select('ougc_awards_users', 'COUNT(gid) AS users', 'aid=\''.(int)$award['aid'].'\'');
+	$userscount = $db->fetch_field($query, 'users');
+
+	if($mybb->get_input('page', 1) > 0)
+	{
+		$start = ($mybb->get_input('page', 1)-1)*$limit;
+		$pages = ceil($userscount/$limit);
+		if($mybb->get_input('page', 1) > $pages)
+		{
+			$start = 0;
+			$mybb->input['page'] = 1;
+		}
+	}
+	else
+	{
+		$start = 0;
+		$mybb->input['page'] = 1;
+	}
+
 	// Query our data.
 	$query = $db->query('
 		SELECT g.gid, g.uid, g.aid, g.reason, g.date, u.uid, u.username, u.usergroup, u.displaygroup 
@@ -104,38 +106,33 @@ if(!empty($mybb->input['view']))
 		LIMIT '.$start.', '.$limit.'
 	');
 
-	if(!$db->num_rows($query))
+	$multipage = (string)multipage($userscount, $limit, $mybb->input['page'], $awards->build_url('view='.$aid));
+
+	while($gived = $db->fetch_array($query))
+	{
+		$trow = alt_trow();
+
+		if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid']))
+		{
+			$award['reason'] = $reason;
+		}
+
+		if(empty($award['reason']))
+		{
+			$award['reason'] = $lang->ougc_awards_pm_noreason;
+		}
+
+		$gived['username'] = htmlspecialchars_uni($gived['username']);
+		$gived['username'] = format_name($gived['username'], $gived['usergroup'], $gived['displaygroup']);
+		$gived['username'] = build_profile_link($gived['username'], $gived['uid']);
+		$gived['date'] = $lang->sprintf($lang->ougc_awards_profile_tine, my_date($mybb->settings['dateformat'], $gived['date']), my_date($mybb->settings['timeformat'], $gived['date']));
+
+		eval('$users_list .= "'.$templates->get('ougcawards_page_view_row').'";');
+	}
+
+	if(!$users_list)
 	{
 		eval('$users_list = "'.$templates->get('ougcawards_page_view_empty').'";');
-	}
-	else
-	{
-		$query2 = $db->simple_select('ougc_awards_users', 'COUNT(gid) AS users', 'aid=\''.(int)$award['aid'].'\'');
-		$userscount = $db->fetch_field($query2, 'users');
-
-		$multipage = (string)multipage($userscount, $limit, $mybb->input['page'], $awards->build_url('view='.$aid));
-
-		while($gived = $db->fetch_array($query))
-		{
-			$trow = alt_trow();
-
-			if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid']))
-			{
-				$award['reason'] = $reason;
-			}
-
-			if(empty($award['reason']))
-			{
-				$award['reason'] = $lang->ougc_awards_pm_noreason;
-			}
-
-			$gived['username'] = htmlspecialchars_uni($gived['username']);
-			$gived['username'] = format_name($gived['username'], $gived['usergroup'], $gived['displaygroup']);
-			$gived['username'] = build_profile_link($gived['username'], $gived['uid']);
-			$gived['date'] = $lang->sprintf($lang->ougc_awards_profile_tine, my_date($mybb->settings['dateformat'], $gived['date']), my_date($mybb->settings['timeformat'], $gived['date']));
-
-			eval('$users_list .= "'.$templates->get('ougcawards_page_view_row').'";');
-		}
 	}
 
 	$plugins->run_hooks('ougc_awards_view_end');
@@ -144,36 +141,50 @@ if(!empty($mybb->input['view']))
 }
 else
 {
-	$query = $db->simple_select('ougc_awards', '*', 'visible=\'1\'', array('limit_start' => $start, 'limit' => $limit, 'order_by' => 'disporder'));
+	$query = $db->simple_select('ougc_awards', 'COUNT(aid) AS awards', 'visible=\'1\'');
+	$awardscount = $db->fetch_field($query, 'awards');
 
-	if(!$db->num_rows($query))
+	if($mybb->get_input('page', 1) > 0)
 	{
-		eval('$award_list = "'.$templates->get('ougcawards_page_list_empty').'";');
+		$start = ($mybb->get_input('page', 1)-1)*$limit;
+		$pages = ceil($awardscount/$limit);
+		if($mybb->get_input('page', 1) > $pages)
+		{
+			$start = 0;
+			$mybb->input['page'] = 1;
+		}
 	}
 	else
 	{
-		$query2 = $db->simple_select('ougc_awards', 'COUNT(aid) AS awards', 'visible=\'1\'');
-		$awardscount = $db->fetch_field($query2, 'awards');
+		$start = 0;
+		$mybb->input['page'] = 1;
+	}
 
-		$multipage = (string)multipage($awardscount, $limit, $mybb->input['page'], $awards->build_url());
+	$query = $db->simple_select('ougc_awards', '*', 'visible=\'1\'', array('limit_start' => $start, 'limit' => $limit, 'order_by' => 'disporder'));
 
-		while($award = $db->fetch_array($query))
+	$multipage = (string)multipage($awardscount, $limit, $mybb->input['page'], $awards->build_url());
+
+	while($award = $db->fetch_array($query))
+	{
+		$trow = alt_trow();
+
+		$award['aid'] = (int)$award['aid'];
+		$award['image'] = $awards->get_award_icon($award['aid']);
+		if($name = $awards->get_award_info('name', $award['aid']))
 		{
-			$trow = alt_trow();
-
-			$award['aid'] = (int)$award['aid'];
-			$award['image'] = $awards->get_award_icon($award['aid']);
-			if($name = $awards->get_award_info('name', $award['aid']))
-			{
-				$award['name'] = $name;
-			}
-			if($description = $awards->get_award_info('description', $award['aid']))
-			{
-				$award['description'] = $description;
-			}
-
-			eval('$award_list .= "'.$templates->get('ougcawards_page_list_award').'";');
+			$award['name'] = $name;
 		}
+		if($description = $awards->get_award_info('description', $award['aid']))
+		{
+			$award['description'] = $description;
+		}
+
+		eval('$award_list .= "'.$templates->get('ougcawards_page_list_award').'";');
+	}
+
+	if(!$award_list)
+	{
+		eval('$award_list = "'.$templates->get('ougcawards_page_list_empty').'";');
 	}
 
 	$plugins->run_hooks('ougc_awards_end');

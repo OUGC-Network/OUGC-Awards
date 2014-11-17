@@ -134,6 +134,10 @@ $l['ougc_awards_users_timestamp_d'] = 'Modify time stamp.';
 $l['ougc_awards_users_time'] = '{1} <i>at</i> {2}';
 $l['ougc_awards_users_empty'] = 'This award currently has no users.';
 
+// PMs
+$l['ougc_awards_pm_title'] = 'You have been given the {1} award!';
+$l['ougc_awards_pm_noreason'] = 'There was no reason specified.';
+
 // PluginLibrary
 $l['ougc_awards_pl_required'] = 'This plugin requires <a href="{1}">PluginLibrary</a> version {2} or later to be uploaded to your forum.';
 $l['ougc_awards_pl_old'] = 'This plugin requires <a href="{1}">PluginLibrary</a> version {2} or later, whereas your current version is {3}.';

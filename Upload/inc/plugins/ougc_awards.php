@@ -330,6 +330,7 @@ if(use_xmlhttprequest == "1")
 	<body>
 		{$header}
 		{$content}
+		{$multipage}
 		{$footer}
 	</body>
 </html>',
@@ -1426,12 +1427,12 @@ class OUGC_Awards
 		}
 
 		global $lang;
-		$this->lang_load();
+		$this->lang_load(true);
 
 		$this->send_pm(array(
 			'subject'		=> $lang->sprintf($lang->ougc_awards_pm_title, strip_tags($award['name'])),
 			'message'		=> $lang->sprintf($award['pm'], $user['username'], $award['name'], (!empty($reason) ? $reason : $lang->ougc_awards_pm_noreason), $this->get_award_icon($award['aid']), $mybb->settings['bbname']),
-			'touid'			=> $this->approval['uid']
+			'touid'			=> $user['uid']
 		), -1, true);
 	}
 
@@ -1632,13 +1633,13 @@ class OUGC_Awards
 			return false;
 		}
 
-		if (!$pm['subject'] ||!$pm['message'] || (!$pm['receivepms'] && !$admin_override))
+		if(!$pm['subject'] || !$pm['message'] || (!$pm['receivepms'] && !$admin_override))
 		{
 			return false;
 		}
 
 		global $lang, $db, $session;
-		$lang->load('messages');
+		$lang->load((defined('IN_ADMINCP') ? '../' : '').'messages');
 
 		require_once MYBB_ROOT."inc/datahandlers/pm.php";
 

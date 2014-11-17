@@ -65,7 +65,7 @@ $l['ougc_awards_profile_tine'] = '{1} <i>at</i> {2}';
 $l['ougc_awards_profile_title'] = '{1}\' awards.';
 
 // PMs
-$l['ougc_awards_pm_title'] = '!You have been given the {1} award!';
+$l['ougc_awards_pm_title'] = 'You have been given the {1} award!';
 $l['ougc_awards_pm_noreason'] = 'There was no reason specified.';
 
 // Page langs
