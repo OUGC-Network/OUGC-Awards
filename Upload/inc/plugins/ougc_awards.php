@@ -75,7 +75,7 @@ else
 			if($mybb->input['action'] == 'profile')
 			{
 				$plugins->add_hook('member_profile_end', 'ougc_awards_profile');
-				$templatelist .= 'ougcawards_profile_row, ougcawards_profile, ougcharol_select_image, ougcharol_select_profile';
+				$templatelist .= 'ougcawards_profile_row, ougcawards_profile, ougcawards_profile_multipage, multipage_prevpage, multipage_page, multipage_page_current, multipage_nextpage, multipage';
 			}
 			break;
 		case 'modcp.php':
@@ -110,8 +110,8 @@ function ougc_awards_info()
 		'website'		=> 'http://mods.mybb.com/view/ougc-awards',
 		'author'		=> 'Omar G.',
 		'authorsite'	=> 'http://omarg.me',
-		'version'		=> '1.7.2',
-		'versioncode'	=> 1702,
+		'version'		=> '1.7.3',
+		'versioncode'	=> 1703,
 		'compatibility'	=> '18*',
 		'myalerts'		=> 105,
 		'pl'			=> array(
@@ -305,15 +305,15 @@ if(use_xmlhttprequest == "1")
 		<td class="thead"><strong>{$lang->ougc_awards_profile_title}</strong></td>
 	</tr>
 	{$awardlist}
+	{$multipage}
 </table>
-{$multipage}
 <br />',
 		'profile_row'	=> '<tr>
-	<td class="{$trow}" >
+	<td class="{$trow}">
 		<span class="float_right smalltext">{$award[\'date\']}</span> {$award[\'name\']}
 	</td>
 </tr><tr>
-	<td class="{$trow}" style="vertical-align: middle;" >
+	<td class="{$trow}" style="vertical-align: middle;">
 		<a href="{$mybb->settings[\'bburl\']}/awards.php?view={$award[\'aid\']}" title="{$award[\'name\']}"><img src="{$award[\'image\']}" alt="{$award[\'name\']}" /></a> {$award[\'reason\']}
 	</td>
 </tr>',
@@ -904,6 +904,7 @@ function ougc_awards_profile()
 		// We want to keep $mybb->input['view'] intact for other plugins, ;)
 
 		$multipage = (string)multipage($awardscount, $limit, $page, $awards->build_url('view=awards'));
+		eval('$multipage = "'.$templates->get('ougcawards_profile_multipage').'";');
 
 		$query = $db->query('
 			SELECT au.*, a.*
@@ -966,7 +967,10 @@ function ougc_awards_postbit(&$post)
 	global $settings, $plugins, $mybb;
 
 	$post['ougc_awards'] = '';
-	$max_postbit = (int)$settings['ougc_awards_postbit'];
+
+	$spl = explode('/', $settings['ougc_awards_postbit']);
+	$max_postbit = (int)$spl[0];
+	$spl = (int)$spl[1];
 
 	if($max_postbit < 1 && $max_postbit != -1)
 	{
@@ -1046,7 +1050,7 @@ function ougc_awards_postbit(&$post)
 		{
 			$count++;
 			$br = '';
-			if($count == 1)
+			if($count == 1 || ($spl && !($count % $spl == 0)))
 			{
 				$br = '<br />'; // We insert a break if it is the first award.
 			}
@@ -1168,8 +1172,9 @@ class OUGC_Awards
 				'type'	=> (int)$award['type'],
 			);
 		}
+		#_dump(1, $d);
 
-		!$d or $cache->update('ougc_awards', $d);
+		$cache->update('ougc_awards', $d);
 
 		return true;
 	}
@@ -1244,6 +1249,8 @@ class OUGC_Awards
 			global $cache, $settings, $theme;
 			$awards = (array)$cache->read('ougc_awards');
 			$award = $awards[$aid];
+
+			$award or $award = $this->get_award($aid);
 
 			$replaces = array(
 				'{bburl}'	=> $settings['bburl'],
