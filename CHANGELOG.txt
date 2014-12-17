@@ -1,22 +1,40 @@
-1.0.6 => 1.0.7
+New in 1.1
+==============================
+- "Show Hidden Awards in ModCP" setting removed.
+- "Enable Multipage" setting removed.
+- "PM UserID" setting removed, PM author is now MyBB Engine (-1)
+- "Check Permissions" setting removed, now default is TRUE
+- Added option to order awards
+- Moved ACP code to self file.
+- Optimized ACP pagination code.
+- Updated plugin update method (in core intead of separate file).
+- Moved files to proper MyBB directories. Removed plugin directory inside plugins directory.
+- Added setting to turn off PM notification.
+- Added MyAlerts integration.
+- Removed obsolet documentation files.
+- Added more hooks to ./awards.php file.
+- Moved user awards to profiles.
+
+
+New in 1.0.7
 ==============================
 - Fixed lang problem when awarding a user from ACP.
 
-1.0.5 => 1.0.6
+New in 1.0.6
 ==============================
 - Fixed wrong usage of lang load function.
 
-1.0.2 => 1.0.5
+New in 1.0.5
 ==============================
 - Added multi page feature for profiles.
 - Modified some templates and deleted others
 - Fix in awards.php when trying to access the file.
 - Plugin now caches less data to increase plugin performance.
 
-1.0.1 => 1.0.2
+New in 1.0.2
 ==============================
 Fixed PHP waringn when users try to login/logout.
 
-1.0 => 1.0.1
+New in 1.0.1
 ==============================
 Fixed PHP warning in AdminCP when installing from.
