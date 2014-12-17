@@ -100,18 +100,14 @@ function ougc_awards_info()
 	global $lang, $awards;
 	$awards->lang_load();
 
-	$message = '<div id="flash_message" class="error" style="margin-bottom: 0;">
-<strong>If you are using this in a live forum, you are on the wrong way.</strong>
-</div>';
-
 	return array(
 		'name'			=> 'OUGC Awards',
-		'description'	=> $lang->setting_group_ougc_awards_desc.$message,
+		'description'	=> $lang->setting_group_ougc_awards_desc,
 		'website'		=> 'http://mods.mybb.com/view/ougc-awards',
 		'author'		=> 'Omar G.',
 		'authorsite'	=> 'http://omarg.me',
-		'version'		=> '1.7.3',
-		'versioncode'	=> 1703,
+		'version'		=> '1.8',
+		'versioncode'	=> 1800,
 		'compatibility'	=> '18*',
 		'myalerts'		=> 105,
 		'pl'			=> array(
@@ -172,12 +168,12 @@ function ougc_awards_activate()
 		   'optionscode'	=> 'yesno',
 		   'value'			=> 1
 		),
-		'myalerts'	=> array(
+		/*'myalerts'	=> array(
 		   'title'			=> $lang->setting_ougc_awards_myalerts,
 		   'description'	=> $lang->setting_ougc_awards_myalerts_desc,
 		   'optionscode'	=> 'yesno',
 			'value'			=>	0,
-		)
+		)*/
 	));
 
 	// Add template group
@@ -1116,7 +1112,7 @@ class OUGC_Awards
 			$this->set_url(null, 'modcp.php?action=awards');
 		}
 
-		if($settings['ougc_awards_myalerts'])
+		if(!empty($settings['ougc_awards_myalerts']))
 		{
 			$settings['myalerts_alert_ougc_awards'] = 1;
 		}
