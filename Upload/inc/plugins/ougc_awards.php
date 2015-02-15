@@ -41,6 +41,7 @@ if(defined('IN_ADMINCP'))
 	$plugins->add_hook('admin_config_settings_start', array('OUGC_Awards', 'lang_load'));
 	$plugins->add_hook('admin_style_templates_set', array('OUGC_Awards', 'lang_load'));
 	$plugins->add_hook('admin_config_settings_change', 'ougc_awards_settings_change');
+	$plugins->add_hook('admin_config_plugins_begin', array('OUGC_Awards', 'run_importer'));
 }
 else
 {
@@ -102,7 +103,7 @@ function ougc_awards_info()
 
 	return array(
 		'name'			=> 'OUGC Awards',
-		'description'	=> $lang->setting_group_ougc_awards_desc,
+		'description'	=> $lang->setting_group_ougc_awards_desc.(ougc_awards_is_installed() ? $lang->ougc_awards_import_desc : ''),
 		'website'		=> 'http://mods.mybb.com/view/ougc-awards',
 		'author'		=> 'Omar G.',
 		'authorsite'	=> 'http://omarg.me',
@@ -401,7 +402,7 @@ if(use_xmlhttprequest == "1")
 	}
 
 	/*~*~* RUN UPDATES START *~*~*/
-	if($plugins['awards'] <= 1100)
+	if($plugins['awards'] <= 1700)
 	{
 		global $db;
 
@@ -1415,7 +1416,7 @@ class OUGC_Awards
 			'aid'		=> (int)$award['aid'],
 			'uid'		=> (int)$user['uid'],
 			'reason'	=> $db->escape_string(trim($reason)),
-			'date'		=> TIME_NOW
+			'date'		=> isset($award['TIME_NOW']) ? (int)$award['TIME_NOW'] : TIME_NOW
 		);
 
 		$db->insert_query('ougc_awards_users', $insert_data);
@@ -1684,6 +1685,89 @@ class OUGC_Awards
 		}
 
 		return false;
+	}
+
+	// Importer
+	function run_importer()
+	{
+		global $mybb;
+
+		if(!($type = $mybb->get_input('ougc_awards_import')))
+		{
+			return;
+		}
+
+		switch($type)
+		{
+			#case 'mybbcentral';
+			default;
+				$tables = array('awards' => 'myawards', 'users' => 'myawards_users');
+				$keys = array('name' => 'awname', 'description' => 'awdescr', 'image' => 'awimg', 'original_id' => 'awid', 'uid' => 'awuid', 'reason' => 'awreason', 'TIME_NOW' => 'awutime');
+				$img_prefix = '{bburl}/uploads/awards/';
+				$lang_var = 'ougc_awards_import_confirm_mybbcentral';
+				break;
+		}
+
+		global $lang, $awards, $page;
+		$awards->lang_load();
+
+		if($mybb->request_method == 'post')
+		{
+			if(!verify_post_check($mybb->input['my_post_key']))
+			{
+				flash_message($lang->invalid_post_verify_key2, 'error');
+				admin_redirect("index.php?module=config-plugins");
+			}
+
+			if(isset($mybb->input['no']))
+			{
+				return true;
+			}
+
+			global $db;
+
+			$query = $db->simple_select('ougc_awards', 'MAX(disporder) AS max_disporder');
+			$disporder = (int)$db->fetch_field($query, 'max_disporder');
+
+			$query = $db->simple_select($tables['awards']);
+			while($award = $db->fetch_array($query))
+			{
+				$insert_award = array(
+					'name'			=> $award[$keys['name']],
+					'description'	=> $award[$keys['description']],
+					'image'			=> $img_prefix.$award[$keys['image']],
+					'disporder'		=> ++$disporder,
+					'pm'			=> ''
+				);
+
+				$awards->insert_award($insert_award);
+
+				$insert_award['aid'] = $awards->aid;
+				$insert_award[$keys['original_id']] = $award[$keys['original_id']];
+
+				$cache_awards[$award[$keys['original_id']]] = $insert_award;
+			}
+
+			$mybb->settings['ougc_awards_sendpm'] = $mybb->settings['enablepms'] = false;
+
+			$query = $db->simple_select($tables['users']);
+			while($award = $db->fetch_array($query))
+			{
+				$insert_award = array(
+					'aid'			=> $cache_awards[$award[$keys['original_id']]]['aid'],
+					'uid'			=> $award[$keys['uid']],
+					'reason'		=> $award[$keys['reason']],
+					'TIME_NOW'		=> $award[$keys['TIME_NOW']]
+				);
+
+				$awards->give_award($insert_award, array('uid' => $insert_award['uid']), $insert_award['reason']);
+			}
+
+			flash_message($lang->ougc_awards_import_end, 'success');
+			admin_redirect('index.php?module=config-plugins');
+		}
+
+		$page->output_confirm_action("index.php?module=config-plugins&ougc_awards_import={$type}", $lang->{$lang_var}, $lang->ougc_awards_import_title);
 	}
 }
 $GLOBALS['awards'] = new OUGC_Awards;

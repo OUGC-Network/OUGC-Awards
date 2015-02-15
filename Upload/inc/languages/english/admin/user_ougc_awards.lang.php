@@ -31,6 +31,12 @@
 $l['setting_group_ougc_awards'] = 'OUGC Awards';
 $l['setting_group_ougc_awards_desc'] = 'Extend your forum with a powerful awards system.';
 
+// Importer
+$l['ougc_awards_import_title'] = 'Import Awards';
+$l['ougc_awards_import_desc'] = '<br />&nbsp;&nbsp;&nbsp;<a href="./index.php?module=config-plugins&amp;ougc_awards_import=mybbcentral">Import MyAwards by MyBB-Central</a>';
+$l['ougc_awards_import_confirm_mybbcentral'] = 'Are you sure you want to import awards from MyAwards by MyBB-Central?';
+$l['ougc_awards_import_end'] = 'Awards Imported Successfully.';
+
 // Settings
 $l['setting_ougc_awards_postbit'] = 'Maximum Awards in Posts';
 $l['setting_ougc_awards_postbit_desc'] = 'Maximum number of awards to be shown in posts. -1 for unlimited.';
