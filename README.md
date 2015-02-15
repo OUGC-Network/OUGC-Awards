@@ -6,7 +6,7 @@ Extend your forum with a powerful awards system.
 ***
 
 ### Requirements
-- [MyBB](http://www.mybb.com/downloads "Download MyBB") version 1.6.5+
+- [MyBB](http://www.mybb.com/downloads "Download MyBB") version 1.8+
 - [PluginLibrary](http://mods.mybb.com/view/pluginlibrary "Download PluginLibrary") library for MyBB to work.
 
 ### Installation
@@ -16,6 +16,11 @@ Extend your forum with a powerful awards system.
 4. __Enjoy!__
 
 ### Update
+##### 1.x to 1.8
+1. Deactivate old plugin.
+2. Delete all plugin files.
+3. Follow "Installation" instructions.
+
 ##### 1.0 to 1.1
 1. Deactivate old plugin.
 2. Follow "Installation" instructions.
