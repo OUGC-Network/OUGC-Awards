@@ -107,8 +107,8 @@ function ougc_awards_info()
 		'website'		=> 'http://mods.mybb.com/view/ougc-awards',
 		'author'		=> 'Omar G.',
 		'authorsite'	=> 'http://omarg.me',
-		'version'		=> '1.8',
-		'versioncode'	=> 1800,
+		'version'		=> '1.8.3',
+		'versioncode'	=> 1803,
 		'compatibility'	=> '18*',
 		'myalerts'		=> 105,
 		'pl'			=> array(
@@ -402,7 +402,7 @@ if(use_xmlhttprequest == "1")
 	}
 
 	/*~*~* RUN UPDATES START *~*~*/
-	if($plugins['awards'] <= 1700)
+	if($plugins['awards'] <= 1800)
 	{
 		global $db;
 
