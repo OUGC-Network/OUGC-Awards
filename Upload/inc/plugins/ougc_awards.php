@@ -92,6 +92,8 @@ else
 	}
 }
 
+$plugins->add_hook('datahandler_user_insert', 'ougc_awards_insert_user');
+
 // PLUGINLIBRARY
 defined('PLUGINLIBRARY') or define('PLUGINLIBRARY', MYBB_ROOT.'inc/plugins/pluginlibrary.php');
 
@@ -110,6 +112,7 @@ function ougc_awards_info()
 		'version'		=> '1.8.3',
 		'versioncode'	=> 1803,
 		'compatibility'	=> '18*',
+		'codename'		=> 'ougc_awards',
 		'myalerts'		=> 105,
 		'pl'			=> array(
 			'version'	=> 12,
@@ -1066,6 +1069,12 @@ function update_ougc_awards()
 	global $awards;
 
 	$awards->update_cache();
+}
+
+// Fix strict MySQL engine
+function ougc_awards_insert_user(&$dh)
+{
+	$dh->user_insert_data['ougc_awards'] = '';
 }
 
 class OUGC_Awards
