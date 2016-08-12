@@ -317,14 +317,14 @@ elseif($mybb->get_input('action') == 'user')
 		$awards->admin_redirect($lang->ougc_awards_error_invaliduser, true);
 	}
 
-	$awards->set_url(array('action' => 'user', 'aid' => $award['aid']));
+	$awards->set_url(array('aid' => $award['aid']));
 
 	if(!($gived = $awards->get_gived_award($award['aid'], $mybb->get_input('uid', 1))))
 	{
 		$awards->admin_redirect($lang->ougc_awards_error_invaliduser, true);
 	}
 
-	$page->add_breadcrumb_item($lang->ougc_awards_acp_nav, $awards->build_url());
+	$page->add_breadcrumb_item($lang->ougc_awards_acp_nav, $awards->build_url(array('action' => 'users')));
 	$page->output_header($lang->ougc_awards_acp_nav);
 	$page->output_nav_tabs($sub_tabs, 'ougc_awards_edit_user');
 
@@ -335,11 +335,13 @@ elseif($mybb->get_input('action') == 'user')
 			'reason' => $mybb->input['reason']
 		));
 
+		$awards->set_url(array('action' => 'users'));
+
 		$awards->log_action();
 		$awards->admin_redirect($lang->ougc_awards_success_edit);
 	}
 
-	$form = new Form($awards->build_url(array('uid' => $mybb->get_input('uid', 1))));
+	$form = new Form($awards->build_url(array('action' => 'user', 'uid' => $mybb->get_input('uid', 1))), 'post');
 	$form_container = new FormContainer($lang->ougc_awards_tab_edit_user_d);
 
 	$form_container->output_row($lang->ougc_awards_form_reason, $lang->ougc_awards_form_reason_d, $form->generate_text_area('reason', isset($mybb->input['reason']) ? $mybb->input['reason'] : $gived['reason'], array('rows' => 8, 'style' => 'width:80%;')));
