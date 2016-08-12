@@ -61,11 +61,13 @@ $l['ougc_awards_acp_permissions'] = 'Can manage awards?';
 // ACP Module: Tabs
 $l['ougc_awards_acp_nav'] = 'Manage Awards';
 $l['ougc_awards_tab_view'] = 'View';
-$l['ougc_awards_tab_view_d'] = 'View all currently awards to manage.';
+$l['ougc_awards_tab_view_d'] = 'View all current awards to manage in this category.';
 $l['ougc_awards_tab_add'] = 'Add';
-$l['ougc_awards_tab_add_d'] = 'Add a new award to the award list.';
+$l['ougc_awards_tab_add_d'] = 'Add a new award.';
+$l['ougc_awards_tab_addc_desc'] = 'Add a new category.';
 $l['ougc_awards_tab_edit'] = 'Edit';
 $l['ougc_awards_tab_edit_d'] = 'Edit a existing award.';
+$l['ougc_awards_tab_editc_desc'] = 'Edit an existing category.';
 $l['ougc_awards_tab_give'] = 'Give';
 $l['ougc_awards_tab_give_d'] = 'Give award.';
 $l['ougc_awards_tab_revoke'] = 'Revoke';
@@ -76,19 +78,23 @@ $l['ougc_awards_tab_edit_user'] = 'Edit User Award';
 $l['ougc_awards_tab_edit_user_d'] = 'Edit this user\'s award data.';
 $l['ougc_awards_tab_delete'] = 'Delete';
 $l['ougc_awards_tab_cache'] = 'Rebuilt Cache';
+$l['ougc_awards_tab_categories'] = 'Categories';
+$l['ougc_awards_tab_categories_desc'] = 'View all current categories to manage.';
 
 // ACP Module: Form
-$l['ougc_awards_form_add'] = 'Add New Award';
+$l['ougc_awards_form_add'] = 'Add New Item';
 $l['ougc_awards_form_name'] = 'Name';
-$l['ougc_awards_form_name_d'] = 'Insert a short name for this award.';
+$l['ougc_awards_form_name_d'] = 'Insert a short name for this item.';
 $l['ougc_awards_form_username'] = 'Username';
 $l['ougc_awards_form_username_d'] = 'Insert the username of the user to give/revoke the selected award award.';
 $l['ougc_awards_form_reason'] = 'Reason';
 $l['ougc_awards_form_reason_d'] = 'Insert a reason for giving this award';
 $l['ougc_awards_form_gived'] = 'Select Given Award';
 $l['ougc_awards_form_gived_desc'] = 'Please select the given award you want to revoke.';
+$l['ougc_awards_form_category'] = 'Category';
+$l['ougc_awards_form_category_desc'] = 'Please select the category this award belongs to.';
 $l['ougc_awards_form_desc'] = 'Description';
-$l['ougc_awards_form_desc_d'] = 'Write a short description for this award.';
+$l['ougc_awards_form_desc_d'] = 'Write a short description for this item.';
 $l['ougc_awards_form_image'] = 'Image';
 $l['ougc_awards_form_image_d'] = 'Image of this award.<br/><span class="smalltext">&nbsp;&nbsp;{bburl} -> Forum URL<br />
 &nbsp;&nbsp;{homeurl} -> Home URL<br />
@@ -96,7 +102,7 @@ $l['ougc_awards_form_image_d'] = 'Image of this award.<br/><span class="smalltex
 </span>';
 $l['ougc_awards_form_visible'] = 'Visible';
 $l['ougc_awards_form_hidden'] = 'Hidden';
-$l['ougc_awards_form_visible_d'] = 'Is this award is visible?';
+$l['ougc_awards_form_visible_d'] = 'Is this item visible?';
 $l['ougc_awards_form_pm'] = 'PM';
 $l['ougc_awards_form_pm_d'] = 'Write the content of the PM to send when awarded.<br />
 	{1} = Username<br/>
@@ -106,7 +112,7 @@ $l['ougc_awards_form_pm_d'] = 'Write the content of the PM to send when awarded.
 $l['ougc_awards_form_type'] = 'Type';
 $l['ougc_awards_form_type_d'] = 'Choose if show only in posts, profile or both.';
 $l['ougc_awards_form_order'] = 'Order';
-$l['ougc_awards_form_order_d'] = 'Order on which this award will be processed.';
+$l['ougc_awards_form_order_d'] = 'Order on which this item will be processed.';
 $l['ougc_awards_form_type_0'] = 'Both';
 $l['ougc_awards_form_type_1'] = 'Profile';
 $l['ougc_awards_form_type_2'] = 'Posts';
@@ -114,9 +120,10 @@ $l['ougc_awards_button_submit'] = 'Submit';
 $l['ougc_awards_button_order'] = 'Update Order';
 
 // ACP Module: Messages
-$l['ougc_awards_error_add'] = 'There was a error while creating the new award';
-$l['ougc_awards_success_add'] = 'The award was created successfully.';
-$l['ougc_awards_success_edit'] = 'The award/user was edited successfully.';
+$l['ougc_awards_error_add'] = 'There was a error while creating the new item.';
+$l['ougc_awards_success_add'] = 'The item was created successfully.';
+$l['ougc_awards_success_edit'] = 'The item was edited successfully.';
+$l['ougc_awards_error_invalidcategory'] = 'The selected category is invalid.';
 $l['ougc_awards_error_invalidaward'] = 'The selected award is invalid.';
 $l['ougc_awards_error_invaliduser'] = 'The selected user is invalid.';
 $l['ougc_awards_error_invalidname'] = 'The inserted name is too short.';
@@ -127,13 +134,15 @@ $l['ougc_awards_error_giveperm'] = 'You don\'t have permission to edit the selec
 $l['ougc_awards_success_give'] = 'The selected user was awarded successfully.';
 $l['ougc_awards_error_revoke'] = 'The selected user doesn\'t has the selected award.';
 $l['ougc_awards_success_revoke'] = 'The selected award was revoked successfully.';
-$l['ougc_awards_success_delete'] = 'The award was deleted successfully.';
+$l['ougc_awards_success_delete'] = 'The item was deleted successfully.';
 $l['ougc_awards_success_cache'] = 'The cache was rebuild successfully.';
 
 // ACP Module: Home
 $l['ougc_awards_view_image'] = 'Image';
 $l['ougc_awards_view_actions'] = 'Options';
-$l['ougc_awards_view_empty'] = 'There are currently no awards to show.';
+$l['ougc_awards_view_empty'] = 'There are currently no items to show.';
+
+// ACP Module: Home
 
 // ACP Module: Users
 $l['ougc_awards_users_date'] = 'Date';

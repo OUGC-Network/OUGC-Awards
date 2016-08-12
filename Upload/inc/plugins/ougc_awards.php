@@ -76,7 +76,7 @@ else
 			if($mybb->input['action'] == 'profile')
 			{
 				$plugins->add_hook('member_profile_end', 'ougc_awards_profile');
-				$templatelist .= 'ougcawards_profile_row, ougcawards_profile, ougcawards_profile_multipage, multipage_prevpage, multipage_page, multipage_page_current, multipage_nextpage, multipage';
+				$templatelist .= 'ougcawards_profile_row, ougcawards_profile_row_category, ougcawards_profile, ougcawards_profile_multipage, multipage_prevpage, multipage_page, multipage_page_current, multipage_nextpage, multipage';
 			}
 			break;
 		case 'modcp.php':
@@ -108,13 +108,13 @@ function ougc_awards_info()
 		'website'		=> 'http://mods.mybb.com/view/ougc-awards',
 		'author'		=> 'Omar G.',
 		'authorsite'	=> 'http://omarg.me',
-		'version'		=> '1.8.3',
-		'versioncode'	=> 1803,
+		'version'		=> '1.8.7',
+		'versioncode'	=> 1807,
 		'compatibility'	=> '16*,18*',
 		'myalerts'		=> 105,
 		'pl'			=> array(
 			'version'	=> 12,
-			'url'		=> 'http://mods.mybb.com/view/pluginlibrary'
+			'url'		=> 'https://community.mybb.com/mods.php?action=view&pid=573'
 		)
 	);
 }
@@ -324,6 +324,11 @@ if(use_xmlhttprequest == "1")
 		<a href="{$mybb->settings[\'bburl\']}/awards.php?view={$award[\'aid\']}" title="{$award[\'name\']}"><img src="{$award[\'image\']}" alt="{$award[\'name\']}" /></a> {$award[\'reason\']}
 	</td>
 </tr>',
+		'profile_row_category'	=> '<tr>
+	<td class="tcat">
+		{$category[\'name\']}
+	</td>
+</tr>',
 		'profile_row_empty'	=> '<tr>
 	<td class="trow1">
 		{$lang->ougc_awards_profile_empty}
@@ -344,7 +349,7 @@ if(use_xmlhttprequest == "1")
 		'page_list'	=> '<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
 	<tr>
 		<td class="thead" colspan="4">
-			<strong>{$lang->ougc_awards_page_title}</strong>
+			<strong>{$category[\'name\']}</strong>
 		</td>
 	</tr>
 	<tr>
@@ -353,7 +358,8 @@ if(use_xmlhttprequest == "1")
 		<td class="tcat smalltext"><strong>{$lang->ougc_awards_page_list_description}</strong></td>
 	</tr>
 	{$award_list}
-</table>',
+</table>
+<br />',
 		'page_list_award'	=> '<tr>
 	<td class="{$trow}" align="center"><a href="{$mybb->settings[\'bburl\']}/awards.php?view={$award[\'aid\']}" title="{$award[\'name\']}"><img src="{$award[\'image\']}" alt="{$award[\'name\']}" /></a></td>
 	<td class="{$trow}"><a href="{$mybb->settings[\'bburl\']}/awards.php?view={$award[\'aid\']}" title="{$award[\'name\']}">{$award[\'name\']}</a></td>
@@ -413,6 +419,24 @@ if(use_xmlhttprequest == "1")
 	}
 
 	/*~*~* RUN UPDATES START *~*~*/
+	$collation = $db->build_create_table_collation();
+
+	if($plugins['awards'] <= 1803)
+	{
+		$db->field_exists('cid', 'ougc_awards') or $db->add_column('ougc_awards', 'cid', "int NOT NULL DEFAULT '0'");
+
+		$db->update_query('ougc_awards', array('cid' => 1), 'cid=0');
+
+		$db->write_query("CREATE TABLE `".TABLE_PREFIX."ougc_awards_categories` (
+				`cid` int UNSIGNED NOT NULL AUTO_INCREMENT,
+				`name` varchar(100) NOT NULL DEFAULT '',
+				`description` varchar(255) NOT NULL DEFAULT '',
+				`disporder` smallint NOT NULL DEFAULT '0',
+				`visible` tinyint(1) NOT NULL DEFAULT '1',
+				PRIMARY KEY (`cid`)
+			) ENGINE=MyISAM{$collation};"
+		);
+	}
 	if($plugins['awards'] <= 1800)
 	{
 		$tmpls = array(
@@ -496,9 +520,6 @@ if(use_xmlhttprequest == "1")
 
 		// Delete old template group
 		$db->delete_query('templategroups', 'prefix=\'ougc_awards\'');
-
-		// Now we need to refresh the cache.
-		$awards->update_cache();
 	}
 	if($plugins['awards'] <= 1803)
 	{
@@ -511,6 +532,8 @@ if(use_xmlhttprequest == "1")
 			$db->drop_index('ougc_awards_users', 'aiduid');
 		}
 	}
+
+	$awards->update_cache();
 	/*~*~* RUN UPDATES END *~*~*/
 
 	$plugins['awards'] = $info['versioncode'];
@@ -542,6 +565,7 @@ function ougc_awards_install()
 	$collation = $db->build_create_table_collation();
 	$db->write_query("CREATE TABLE `".TABLE_PREFIX."ougc_awards` (
 			`aid` int UNSIGNED NOT NULL AUTO_INCREMENT,
+			`cid` int NOT NULL DEFAULT '0',
 			`name` varchar(100) NOT NULL DEFAULT '',
 			`description` varchar(255) NOT NULL DEFAULT '',
 			`image` varchar(255) NOT NULL DEFAULT '',
@@ -550,6 +574,15 @@ function ougc_awards_install()
 			`pm` text NOT NULL,
 			`type` smallint(1) NOT NULL DEFAULT '0',
 			PRIMARY KEY (`aid`)
+		) ENGINE=MyISAM{$collation};"
+	);
+	$db->write_query("CREATE TABLE `".TABLE_PREFIX."ougc_awards_categories` (
+			`cid` int UNSIGNED NOT NULL AUTO_INCREMENT,
+			`name` varchar(100) NOT NULL DEFAULT '',
+			`description` varchar(255) NOT NULL DEFAULT '',
+			`disporder` smallint NOT NULL DEFAULT '0',
+			`visible` tinyint(1) NOT NULL DEFAULT '1',
+			PRIMARY KEY (`cid`)
 		) ENGINE=MyISAM{$collation};"
 	);
 	$db->write_query("CREATE TABLE `".TABLE_PREFIX."ougc_awards_users` (
@@ -563,7 +596,7 @@ function ougc_awards_install()
 	);
 
 	// Add DB entries
-	$db->field_exists('ougc_awards', 'users') or $db->add_column('users', 'ougc_awards', 'text NOT NULL');
+	//$db->field_exists('ougc_awards', 'users') or $db->add_column('users', 'ougc_awards', 'text NOT NULL');
 
 	if($db->table_exists('alert_settings') && $db->table_exists('alert_setting_values'))
 	{
@@ -611,6 +644,7 @@ function ougc_awards_uninstall()
 	// Drop DB entries
 	$db->drop_table('ougc_awards');
 	$db->drop_table('ougc_awards_users');
+	$db->drop_table('ougc_awards_categories');
 
 	!$db->field_exists('ougc_awards', 'users') or $db->drop_column('users', 'ougc_awards');
 
@@ -901,6 +935,17 @@ function ougc_awards_profile()
 
 	$awards->set_url(null, get_profile_link($memprofile['uid']));
 
+	$categories = $cids = array();
+
+	$query = $db->simple_select('ougc_awards_categories', '*', "visible='1'", array('order_by' => 'disporder'));
+	while($category = $db->fetch_array($query))
+	{
+		$cids[] = (int)$category['cid'];
+		$categories[] = $category;
+	}
+
+	$whereclause = "u.uid='".(int)$memprofile['uid']."' AND a.visible='1' AND a.type!='2' AND a.cid IN ('".implode("','", array_values($cids))."')";
+
 	// Query our data.
 	if($limit == -1)
 	{
@@ -909,7 +954,7 @@ function ougc_awards_profile()
 			SELECT u.*, a.*
 			FROM '.TABLE_PREFIX.'ougc_awards_users u
 			LEFT JOIN '.TABLE_PREFIX.'ougc_awards a ON (u.aid=a.aid)
-			WHERE u.uid=\''.(int)$memprofile['uid'].'\' AND a.visible=\'1\'
+			WHERE '.$whereclause.'
 			ORDER BY u.date desc'
 		);
 	}
@@ -920,7 +965,7 @@ function ougc_awards_profile()
 			SELECT COUNT(au.aid) AS awards
 			FROM '.TABLE_PREFIX.'ougc_awards_users au
 			LEFT JOIN '.TABLE_PREFIX.'ougc_awards a ON (au.aid=a.aid)
-			WHERE au.uid=\''.(int)$memprofile['uid'].'\' AND a.visible=\'1\'
+			WHERE a'.$whereclause.'
 			ORDER BY au.date desc
 		');
 		$awardscount = (int)$db->fetch_field($query, 'awards');
@@ -949,7 +994,7 @@ function ougc_awards_profile()
 			SELECT au.*, a.*
 			FROM '.TABLE_PREFIX.'ougc_awards_users au
 			LEFT JOIN '.TABLE_PREFIX.'ougc_awards a ON (au.aid=a.aid)
-			WHERE au.uid=\''.(int)$memprofile['uid'].'\' AND a.visible=\'1\'
+			WHERE a'.$whereclause.'
 			ORDER BY au.date desc
 			LIMIT '.$start.', '.$limit
 		);
@@ -962,36 +1007,55 @@ function ougc_awards_profile()
 	}
 	else
 	{
-		$awardlist = '';
 		while($award = $db->fetch_array($query))
 		{
-			$trow = alt_trow();
+			$_awards[(int)$award['cid']][] = $award;
+		}
 
-			if($name = $awards->get_award_info('name', $award['aid']))
+		$awardlist = '';
+		if(!empty($categories))
+		{
+			foreach($categories as $disporder => $category)
 			{
-				$award['name'] = $name;
+				if(!empty($_awards[(int)$category['cid']]))
+				{
+					$category['name'] = htmlspecialchars_uni($category['name']);
+					$category['description'] = htmlspecialchars_uni($category['description']);
+
+					eval('$awardlist .= "'.$templates->get('ougcawards_profile_row_category').'";');
+
+					$trow = alt_trow(1);
+					foreach($_awards[(int)$category['cid']] as $cid => $award)
+					{
+						if($name = $awards->get_award_info('name', $award['aid']))
+						{
+							$award['name'] = $name;
+						}
+						if($description = $awards->get_award_info('description', $award['aid']))
+						{
+							$award['description'] = $description;
+						}
+						if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid']))
+						{
+							$award['reason'] = $reason;
+						}
+
+						if(empty($award['reason']))
+						{
+							$award['reason'] = $lang->ougc_awards_pm_noreason;
+						}
+
+						$awards->parse_text($award['reason']);
+
+						$award['image'] = $awards->get_award_icon($award['aid']);
+
+						$award['date'] = $lang->sprintf($lang->ougc_awards_profile_tine, my_date($mybb->settings['dateformat'], $award['date']), my_date($mybb->settings['timeformat'], $award['date']));
+
+						eval('$awardlist .= "'.$templates->get('ougcawards_profile_row').'";');
+						$trow = alt_trow();
+					}
+				}
 			}
-			if($description = $awards->get_award_info('description', $award['aid']))
-			{
-				$award['description'] = $description;
-			}
-			if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid']))
-			{
-				$award['reason'] = $reason;
-			}
-
-			if(empty($award['reason']))
-			{
-				$award['reason'] = $lang->ougc_awards_pm_noreason;
-			}
-
-			$awards->parse_text($award['reason']);
-
-			$award['image'] = $awards->get_award_icon($award['aid']);
-
-			$award['date'] = $lang->sprintf($lang->ougc_awards_profile_tine, my_date($mybb->settings['dateformat'], $award['date']), my_date($mybb->settings['timeformat'], $award['date']));
-
-			eval('$awardlist .= "'.$templates->get('ougcawards_profile_row').'";');
 		}
 	}
 
@@ -1018,10 +1082,23 @@ function ougc_awards_postbit(&$post)
 
 	static $ougc_awards_cache = null;
 
+	if(!isset($ougc_awards_cache))
+	{
+		global $db;
+		$cids = array();
+
+		$query = $db->simple_select('ougc_awards_categories', '*', "visible='1'", array('order_by' => 'disporder'));
+		while($category = $db->fetch_array($query))
+		{
+			$cids[] = (int)$category['cid'];
+		}
+
+		$whereclause = "AND a.visible='1' AND a.type!='1' AND a.cid IN ('".implode("','", array_values($cids))."')";
+	}
+
 	// First we need to get our data
 	if(THIS_SCRIPT == 'showthread.php' && isset($GLOBALS['pids']) && !isset($ougc_awards_cache))
 	{
-		global $db;
 		$ougc_awards_cache = array();
 
 		$pids = array_filter(array_unique(array_map('intval', explode('\'', $GLOBALS['pids']))));
@@ -1030,7 +1107,7 @@ function ougc_awards_postbit(&$post)
 			FROM '.TABLE_PREFIX.'ougc_awards a
 			JOIN '.TABLE_PREFIX.'ougc_awards_users ag ON (ag.aid=a.aid)
 			JOIN '.TABLE_PREFIX.'posts p ON (p.uid=ag.uid)
-			WHERE p.pid IN (\''.implode('\',\'', $pids).'\') AND a.visible=\'1\' AND a.type!=\'1\'
+			WHERE p.pid IN (\''.implode('\',\'', $pids).'\') '.$whereclause.'
 			ORDER BY ag.date desc'
 		);
 		// how to limit by uid here?
@@ -1050,7 +1127,7 @@ function ougc_awards_postbit(&$post)
 			SELECT a.aid, a.name, a.image, ag.uid, ag.gid, ag.reason
 			FROM '.TABLE_PREFIX.'ougc_awards a
 			JOIN '.TABLE_PREFIX.'ougc_awards_users ag ON (ag.aid=a.aid)
-			WHERE ag.uid=\''.(int)$post['uid'].'\' AND a.visible=\'1\' AND a.type!=\'1\'
+			WHERE ag.uid=\''.(int)$post['uid'].'\' '.$whereclause.'
 			ORDER BY ag.date desc
 			'.($max_postbit == -1 ? '' : 'LIMIT '.$max_postbit)
 		);
@@ -1230,7 +1307,6 @@ class OUGC_Awards
 				'type'	=> (int)$award['type'],
 			);
 		}
-		#_dump(1, $d);
 
 		$cache->update('ougc_awards', $d);
 
@@ -1341,6 +1417,25 @@ class OUGC_Awards
 		return $this->cache['awards'][$aid];
 	}
 
+	// Get a category from the DB
+	function get_category($cid)
+	{
+		if(!isset($this->cache['categories'][$cid]))
+		{
+			global $db;
+			$this->cache['categories'][$cid] = false;
+
+			$query = $db->simple_select('ougc_awards_categories', '*', 'cid=\''.(int)$cid.'\'');
+			$award = $db->fetch_array($query);
+			if(isset($award['cid']))
+			{
+				$this->cache['categories'][$cid] = $award;
+			}
+		}
+
+		return $this->cache['categories'][$cid];
+	}
+
 	// Insert a new rate to the DB
 	function insert_award($data, $aid=null, $update=false)
 	{
@@ -1349,6 +1444,7 @@ class OUGC_Awards
 		$cleandata = array();
 
 		!isset($data['name']) or $cleandata['name'] = $db->escape_string($data['name']);
+		!isset($data['cid']) or $cleandata['cid'] = (int)$data['cid'];
 		!isset($data['description']) or $cleandata['description'] = $db->escape_string($data['description']);
 		!isset($data['image']) or $cleandata['image'] = $db->escape_string($data['image']);
 		!isset($data['disporder']) or $cleandata['disporder'] = (int)$data['disporder'];
@@ -1373,6 +1469,37 @@ class OUGC_Awards
 	function update_award($data, $aid)
 	{
 		$this->insert_award($data, $aid, true);
+	}
+
+	// Insert a new rate to the DB
+	function insert_category($data, $cid=null, $update=false)
+	{
+		global $db;
+
+		$cleandata = array();
+
+		!isset($data['name']) or $cleandata['name'] = $db->escape_string($data['name']);
+		!isset($data['description']) or $cleandata['description'] = $db->escape_string($data['description']);
+		!isset($data['disporder']) or $cleandata['disporder'] = (int)$data['disporder'];
+		!isset($data['visible']) or $cleandata['visible'] = (int)$data['visible'];
+
+		if($update)
+		{
+			$this->cid = (int)$cid;
+			$db->update_query('ougc_awards_categories', $cleandata, 'cid=\''.$this->cid.'\'');
+		}
+		else
+		{
+			$this->cid = (int)$db->insert_query('ougc_awards_categories', $cleandata);
+		}
+
+		return true;
+	}
+
+	// Update espesific rate
+	function update_category($data, $cid)
+	{
+		$this->insert_category($data, $cid, true);
 	}
 
 	// Redirect admin help function
@@ -1416,6 +1543,10 @@ class OUGC_Awards
 		if($this->gid)
 		{
 			$data['gid'] = $this->gid;
+		}
+		if($this->cid)
+		{
+			$data['cid'] = $this->cid;
 		}
 
 		$func($data);
@@ -1576,6 +1707,21 @@ class OUGC_Awards
 		}
 
 		$db->delete_query('ougc_awards', 'aid=\''.$this->aid.'\'');
+	}
+
+	// Completely removes an category data from the DB
+	function delete_category($cid)
+	{
+		global $db;
+		$this->cid = (int)$cid;
+
+		$query = $db->simple_select('ougc_awards', 'aid', 'cid=\''.$this->cid.'\'');
+		while($aid = $db->fetch_field($query, 'aid'))
+		{
+			$this->delete_award($aid);
+		}
+
+		$db->delete_query('ougc_awards_categories', 'cid=\''.$this->cid.'\'');
 	}
 
 	// Update a awarded user data
@@ -1915,6 +2061,37 @@ class OUGC_Awards
 			}
 
 			$select .= "<option value=\"{$gived['gid']}\"{$selected}>".$date.' ('.htmlspecialchars_uni($gived['reason']).")</option>";
+		}
+
+		$select .= "</select>";
+
+		return $select;
+	}
+	
+	function generate_category_select($aid, $input)
+	{
+		global $db, $mybb;
+
+		$select = "<select name=\"cid\">\n";
+
+		$aid = (int)$aid;
+		$input = (int)$input;
+
+		$query = $db->simple_select('ougc_awards_categories', '*', '', array('order_by' => 'disporder'));
+		while($category = $db->fetch_array($query))
+		{
+			$selected = '';
+			if($category['cid'] == $input)
+			{
+				$selected = 'selected="selected"';
+			}
+
+			if($reason = $this->get_award_info('reason', $category['aid'], $category['cid']))
+			{
+				$category['reason'] = $reason;
+			}
+
+			$select .= "<option value=\"{$category['cid']}\"{$selected}>{$category['name']}</option>";
 		}
 
 		$select .= "</select>";

@@ -141,7 +141,18 @@ if(!empty($mybb->input['view']))
 }
 else
 {
-	$query = $db->simple_select('ougc_awards', 'COUNT(aid) AS awards', 'visible=\'1\'');
+	$categories = $cids = array();
+
+	$query = $db->simple_select('ougc_awards_categories', '*', "visible='1'", array('order_by' => 'disporder'));
+	while($category = $db->fetch_array($query))
+	{
+		$cids[] = (int)$category['cid'];
+		$categories[] = $category;
+	}
+
+	$whereclause = "visible='1' AND cid IN ('".implode("','", array_values($cids))."')";
+
+	$query = $db->simple_select('ougc_awards', 'COUNT(aid) AS awards', $whereclause);
 	$awardscount = $db->fetch_field($query, 'awards');
 
 	if($awards->get_input('page', 1) > 0)
@@ -160,36 +171,56 @@ else
 		$mybb->input['page'] = 1;
 	}
 
-	$query = $db->simple_select('ougc_awards', '*', 'visible=\'1\'', array('limit_start' => $start, 'limit' => $limit, 'order_by' => 'disporder'));
+	$query = $db->simple_select('ougc_awards', '*', $whereclause, array('limit_start' => $start, 'limit' => $limit, 'order_by' => 'disporder'));
 
 	$multipage = (string)multipage($awardscount, $limit, $mybb->input['page'], $awards->build_url());
 
 	while($award = $db->fetch_array($query))
 	{
-		$trow = alt_trow();
-
-		$award['aid'] = (int)$award['aid'];
-		$award['image'] = $awards->get_award_icon($award['aid']);
-		if($name = $awards->get_award_info('name', $award['aid']))
-		{
-			$award['name'] = $name;
-		}
-		if($description = $awards->get_award_info('description', $award['aid']))
-		{
-			$award['description'] = $description;
-		}
-
-		eval('$award_list .= "'.$templates->get('ougcawards_page_list_award').'";');
+		$_awards[(int)$award['cid']][] = $award;
 	}
 
-	if(!$award_list)
+	$content = '';
+	if(!empty($categories))
 	{
-		eval('$award_list = "'.$templates->get('ougcawards_page_list_empty').'";');
+		foreach($categories as $disporder => $category)
+		{
+			$category['name'] = htmlspecialchars_uni($category['name']);
+			$category['description'] = htmlspecialchars_uni($category['description']);
+
+			$award_list = '';
+			if(!empty($_awards[(int)$category['cid']]))
+			{
+				$trow = alt_trow(1);
+				foreach($_awards[(int)$category['cid']] as $cid => $award)
+				{
+					$award['aid'] = (int)$award['aid'];
+					$award['image'] = $awards->get_award_icon($award['aid']);
+					if($name = $awards->get_award_info('name', $award['aid']))
+					{
+						$award['name'] = $name;
+					}
+					if($description = $awards->get_award_info('description', $award['aid']))
+					{
+						$award['description'] = $description;
+					}
+
+					eval('$award_list .= "'.$templates->get('ougcawards_page_list_award').'";');
+
+					$trow = alt_trow();
+				}
+			}
+
+			if(!$award_list)
+			{
+				eval('$award_list = "'.$templates->get('ougcawards_page_list_empty').'";');
+			}
+
+			$plugins->run_hooks('ougc_awards_end');
+
+			eval('$content .= "'.$templates->get('ougcawards_page_list').'";');
+		}
 	}
-
-	$plugins->run_hooks('ougc_awards_end');
-
-	eval('$content = "'.$templates->get('ougcawards_page_list').'";');
 }
 eval('$page = "'.$templates->get('ougcawards_page').'";');
 output_page($page);
