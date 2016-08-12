@@ -40,52 +40,52 @@ $sub_tabs['ougc_awards_add'] = array(
 	'description'	=> $lang->ougc_awards_tab_add_d
 );
 
-switch($mybb->get_input('action'))
+switch($awards->get_input('action'))
 {
 	case 'edit':
 		$sub_tabs['ougc_awards_edit'] = array(
 			'title'			=> $lang->ougc_awards_tab_edit,
-			'link'			=> 'index.php?module=user-ougc_awards&amp;action=edit&amp;aid='.$mybb->input['aid'],
+			'link'			=> 'index.php?module=user-ougc_awards&amp;action=edit&amp;aid='.$awards->get_input('aid', 1),
 			'description'	=> $lang->ougc_awards_tab_edit_d
 		);
 		break;
 	case 'give':
 		$sub_tabs['ougc_awards_give'] = array(
 			'title'			=> $lang->ougc_awards_tab_give,
-			'link'			=> 'index.php?module=user-ougc_awards&amp;action=give&amp;aid='.$mybb->input['aid'],
+			'link'			=> 'index.php?module=user-ougc_awards&amp;action=give&amp;aid='.$awards->get_input('aid', 1),
 			'description'	=> $lang->ougc_awards_tab_give_d
 		);
 		break;
 	case 'revoke':
 		$sub_tabs['ougc_awards_revoke'] = array(
 			'title'			=> $lang->ougc_awards_tab_revoke,
-			'link'			=> 'index.php?module=user-ougc_awards&amp;action=revoke&amp;aid='.$mybb->input['aid'],
+			'link'			=> 'index.php?module=user-ougc_awards&amp;action=revoke&amp;aid='.$awards->get_input('aid', 1),
 			'description'	=> $lang->ougc_awards_tab_revoke_d
 		);
 		break;
 	case 'users':
 		$sub_tabs['ougc_awards_users'] = array(
 			'title'			=> $lang->ougc_awards_tab_users,
-			'link'			=> 'index.php?module=user-ougc_awards&amp;action=users&amp;aid='.$mybb->input['aid'],
+			'link'			=> 'index.php?module=user-ougc_awards&amp;action=users&amp;aid='.$awards->get_input('aid', 1),
 			'description'	=> $lang->ougc_awards_tab_users_d
 		);
 		break;
 	case 'user':
 	$sub_tabs['ougc_awards_edit_user'] = array(
 		'title'			=> $lang->ougc_awards_tab_edit_user,
-		'link'			=> 'index.php?module=user-ougc_awards&amp;action=user&amp;aid='.$mybb->input['aid'].'&amp;uid='.$mybb->get_input('uid', 1),
+		'link'			=> 'index.php?module=user-ougc_awards&amp;action=user&amp;aid='.$awards->get_input('aid', 1).'&amp;uid='.$awards->get_input('uid', 1),
 		'description'	=> $lang->ougc_awards_tab_edit_user_d
 	);
 		break;
 }
 
-if($mybb->get_input('action') == 'add' || $mybb->get_input('action') == 'edit')
+if($awards->get_input('action') == 'add' || $awards->get_input('action') == 'edit')
 {
 	$page->add_breadcrumb_item($lang->ougc_awards_acp_nav, $awards->build_url());
 
-	if(!($add = $mybb->get_input('action') == 'add'))
+	if(!($add = $awards->get_input('action') == 'add'))
 	{
-		if(!($award = $awards->get_award((int)$mybb->input['aid'])))
+		if(!($award = $awards->get_award($awards->get_input('aid', 1))))
 		{
 			$awards->admin_redirect($lang->ougc_awards_error_invalidaward, true);
 		}
@@ -106,7 +106,7 @@ if($mybb->get_input('action') == 'add' || $mybb->get_input('action') == 'edit')
 	if($mybb->request_method == 'post')
 	{
 		$errors = array();
-		if(!$mybb->input['name'] || isset($mybb->input{100}))
+		if(!$awards->get_input('name') || isset($mybb->input{100}))
 		{
 			$errors[] = $lang->ougc_awards_error_invalidname;
 		}
@@ -119,14 +119,14 @@ if($mybb->get_input('action') == 'add' || $mybb->get_input('action') == 'edit')
 			$lang_val = $add ? 'ougc_awards_success_add' : 'ougc_awards_success_edit';
 
 			$awards->{$method}(array(
-				'name'			=> $mybb->input['name'],
-				'description'	=> $mybb->input['description'],
-				'image'			=> $mybb->input['image'],
-				'visible'		=> $mybb->input['visible'],
-				'pm'			=> $mybb->input['pm'],
-				'type'			=> $mybb->input['type'],
-				'disporder'		=> $mybb->input['disporder'],
-			), (int)$mybb->input['aid']);
+				'name'			=> $awards->get_input('name'),
+				'description'	=> $awards->get_input('description'),
+				'image'			=> $awards->get_input('image'),
+				'visible'		=> $awards->get_input('visible', 1),
+				'pm'			=> $awards->get_input('pm'),
+				'type'			=> $awards->get_input('type', 1),
+				'disporder'		=> $awards->get_input('disporder', 1),
+			), $awards->get_input('aid', 1));
 			$awards->update_cache();
 			$awards->log_action();
 			$awards->admin_redirect($lang->{$lang_val});
@@ -150,7 +150,7 @@ if($mybb->get_input('action') == 'add' || $mybb->get_input('action') == 'edit')
 		0 => $lang->ougc_awards_form_type_0,
 		1 => $lang->ougc_awards_form_type_1,
 		2 => $lang->ougc_awards_form_type_2
-	), (int)$mybb->input['type']));
+	), $awards->get_input('type', 1)));
 	$form_container->output_row($lang->ougc_awards_form_order, $lang->ougc_awards_form_order_d, $form->generate_text_box('disporder', (int)$mybb->input['disporder'], array('style' => 'text-align: center; width: 30px;" maxlength="5')));
 
 	$form_container->end();
@@ -158,9 +158,9 @@ if($mybb->get_input('action') == 'add' || $mybb->get_input('action') == 'edit')
 	$form->end();
 	$page->output_footer();
 }
-elseif($mybb->get_input('action') == 'delete')
+elseif($awards->get_input('action') == 'delete')
 {
-	if(!($award = $awards->get_award($mybb->input['aid'])))
+	if(!($award = $awards->get_award($awards->get_input('aid', 1))))
 	{
 		$awards->admin_redirect($lang->ougc_awards_error_invalidaward, true);
 	}
@@ -181,13 +181,14 @@ elseif($mybb->get_input('action') == 'delete')
 	}
 	$page->output_confirm_action($awards->build_url(array('action' => 'delete', 'aid' => $award['aid'], 'my_post_key' => $mybb->post_code)));
 }
-elseif($mybb->get_input('action') == 'give' || $mybb->get_input('action') == 'revoke')
+elseif($awards->get_input('action') == 'give' || $awards->get_input('action') == 'revoke')
 {
 	$page->add_breadcrumb_item($lang->ougc_awards_acp_nav, $awards->build_url());
 
-	$give = ($mybb->get_input('action') == 'give');
+	$give = ($awards->get_input('action') == 'give');
+	$revoke = ($awards->get_input('action') == 'revoke');
 
-	if(!($award = $awards->get_award($mybb->input['aid'])))
+	if(!($award = $awards->get_award($awards->get_input('aid', 1))))
 	{
 		$awards->admin_redirect($lang->ougc_awards_error_invalidaward, true);
 	}
@@ -196,6 +197,8 @@ elseif($mybb->get_input('action') == 'give' || $mybb->get_input('action') == 're
 	$page->output_header($lang->ougc_awards_acp_nav);
 	$page->output_nav_tabs($sub_tabs, $give ? 'ougc_awards_give' : 'ougc_awards_revoke');
 
+	$show_gived_list = false;
+
 	if($mybb->request_method == 'post')
 	{
 		$errors = array();
@@ -203,20 +206,34 @@ elseif($mybb->get_input('action') == 'give' || $mybb->get_input('action') == 're
 		{
 			$errors[] = $lang->ougc_awards_error_invaliduser;
 		}
-		if($give && $awards->get_gived_award($award['aid'], $user['uid']))
+		/*if($give && $awards->get_gived_award($award['aid'], $user['uid']))
 		{
 			$errors[] = $lang->ougc_awards_error_give;
-		}
-		if(!$give && !$awards->get_gived_award($award['aid'], $user['uid']))
+		}*/
+		if($revoke)
 		{
-			$errors[] = $lang->ougc_awards_error_revoke;
+			if(!$awards->get_gived_award($award['aid'], $user['uid']))
+			{
+				$errors[] = $lang->ougc_awards_error_revoke;
+			}
+			elseif(!$awards->get_input('gid'))
+			{
+				$show_gived_list = true;
+			}
+			else
+			{
+				if(!($gived = $awards->get_gived_award(null, null, $awards->get_input('gid', 1))))
+				{
+					$errors[] = $lang->ougc_awards_error_revoke;
+				}
+			}
 		}
 		if(!$awards->can_edit_user($user['uid']))
 		{
 			$errors[] = $lang->ougc_awards_error_giveperm;
 		}
 
-		if(empty($errors))
+		if(empty($errors) && !$show_gived_list)
 		{
 			if($give)
 			{
@@ -224,34 +241,51 @@ elseif($mybb->get_input('action') == 'give' || $mybb->get_input('action') == 're
 			}
 			else
 			{
-				$awards->revoke_award($award['aid'], $user['uid']);
+				$awards->revoke_award($gived['gid']);
 			}
 			$awards->log_action();
 
 			$lang_var = $give ? 'ougc_awards_success_give' : 'ougc_awards_success_revoke';
 			$awards->admin_redirect($lang->{$lang_var});
 		}
-		else
+		elseif(!$show_gived_list)
 		{
 			$page->output_inline_error($errors);
 		}
 	}
 
-	$form = new Form($awards->build_url(array('action' => $give ? 'give' : 'revoke', 'aid' => $award['aid'])), 'post');
+	$params = array('action' => $give ? 'give' : 'revoke', 'aid' => $award['aid']);
+
+	if($revoke && $show_gived_list)
+	{
+		$params['username'] = $awards->get_input('username');
+	}
+
+	$form = new Form($awards->build_url($params), 'post');
 	$form_container = new FormContainer($sub_tabs['ougc_awards_'.($give ? 'give' : 'revoke')]['description']);
 
-	$form_container->output_row($lang->ougc_awards_form_username.' <em>*</em>', $lang->ougc_awards_form_username_d, $form->generate_text_box('username', isset($mybb->input['username']) ? $mybb->input['username'] : ''));
+	if(!$revoke || !$show_gived_list)
+	{
+		$form_container->output_row($lang->ougc_awards_form_username.' <em>*</em>', $lang->ougc_awards_form_username_d, $form->generate_text_box('username', isset($mybb->input['username']) ? $mybb->input['username'] : ''));
+	}
 
-	!$give or $form_container->output_row($lang->ougc_awards_form_reason, $lang->ougc_awards_form_reason_d, $form->generate_text_area('reason', !empty($mybb->input['reason']) ? $mybb->input['reason'] : '', array('rows' => 8, 'style' => 'width:80%;')));
+	if($give)
+	{
+		$form_container->output_row($lang->ougc_awards_form_reason, $lang->ougc_awards_form_reason_d, $form->generate_text_area('reason', !empty($mybb->input['reason']) ? $mybb->input['reason'] : '', array('rows' => 8, 'style' => 'width:80%;')));
+	}
+	elseif($revoke && $show_gived_list)
+	{
+		$form_container->output_row($lang->ougc_awards_form_gived, $lang->ougc_awards_form_gived_desc, $awards->generate_gived_select($award['aid'], $user['uid'], $awards->get_input('gid')));
+	}
 
 	$form_container->end();
 	$form->output_submit_wrapper(array($form->generate_submit_button($lang->ougc_awards_button_submit), $form->generate_reset_button($lang->reset)));
 	$form->end();
 	$page->output_footer();
 }
-elseif($mybb->get_input('action') == 'users')
+elseif($awards->get_input('action') == 'users')
 {
-	if(!($award = $awards->get_award($mybb->input['aid'])))
+	if(!($award = $awards->get_award($awards->get_input('aid', 1))))
 	{
 		$awards->admin_redirect();
 	}
@@ -269,7 +303,7 @@ elseif($mybb->get_input('action') == 'users')
 
 	$limit = (int)$mybb->settings['ougc_awards_perpage'];
 	$limit = $limit > 100 ? 100 : ($limit < 1 ? 1 : $limit);
-	$mybb->input['page'] = (int)$mybb->input['page'];
+	$mybb->input['page'] = $awards->get_input('page', 1);
 	if($mybb->input['page'] > 0)
 	{
 		$start = ($mybb->input['page'] - 1)*$limit;
@@ -293,7 +327,7 @@ elseif($mybb->get_input('action') == 'users')
 		$query2 = $db->simple_select('ougc_awards_users', 'COUNT(uid) AS users', 'aid=\''.(int)$award['aid'].'\'');
 		$givedscount = (int)$db->fetch_field($query2, 'users');
 
-		echo draw_admin_pagination($mybb->input['page'], $limit, $givedscount, $view['url'].'index.php?module=user-ougc_awards&amp;action=users&amp;aid='.$award['aid']);
+		echo draw_admin_pagination($awards->get_input('page', 1), $limit, $givedscount, $view['url'].'index.php?module=user-ougc_awards&amp;action=users&amp;aid='.$award['aid']);
 
 		while($gived = $db->fetch_array($query))
 		{
@@ -301,7 +335,7 @@ elseif($mybb->get_input('action') == 'users')
 			$table->construct_cell("<a href=\"index.php?module=user-users&action=edit&uid={$gived['uid']}\">{$gived['username']}</a>");
 			$table->construct_cell(htmlspecialchars_uni($gived['reason']));
 			$table->construct_cell($lang->sprintf($lang->ougc_awards_users_time, my_date($mybb->settings['dateformat'], intval($gived['date'])), my_date($mybb->settings['timeformat'], intval($gived['date']))), array('class' => 'align_center'));
-			$table->construct_cell("<a href=\"index.php?module=user-ougc_awards&amp;action=user&amp;aid={$gived['aid']}&amp;uid={$gived['uid']}\">{$lang->ougc_awards_tab_edit}</a>", array('class' => 'align_center'));
+			$table->construct_cell("<a href=\"index.php?module=user-ougc_awards&amp;action=user&amp;gid={$gived['gid']}\">{$lang->ougc_awards_tab_edit}</a>", array('class' => 'align_center'));
 
 			$table->construct_row();
 		}
@@ -310,19 +344,19 @@ elseif($mybb->get_input('action') == 'users')
 	}
 	$page->output_footer();
 }
-elseif($mybb->get_input('action') == 'user')
+elseif($awards->get_input('action') == 'user')
 {
-	if(!($award = $awards->get_award($mybb->input['aid'])))
+	if(!($gived = $awards->get_gived_award(null, null, $awards->get_input('gid', 1))))
+	{
+		$awards->admin_redirect($lang->ougc_awards_error_invaliduser, true);
+	}
+
+	if(!($award = $awards->get_award($gived['aid'])))
 	{
 		$awards->admin_redirect($lang->ougc_awards_error_invaliduser, true);
 	}
 
 	$awards->set_url(array('aid' => $award['aid']));
-
-	if(!($gived = $awards->get_gived_award($award['aid'], $mybb->get_input('uid', 1))))
-	{
-		$awards->admin_redirect($lang->ougc_awards_error_invaliduser, true);
-	}
 
 	$page->add_breadcrumb_item($lang->ougc_awards_acp_nav, $awards->build_url(array('action' => 'users')));
 	$page->output_header($lang->ougc_awards_acp_nav);
@@ -341,11 +375,11 @@ elseif($mybb->get_input('action') == 'user')
 		$awards->admin_redirect($lang->ougc_awards_success_edit);
 	}
 
-	$form = new Form($awards->build_url(array('action' => 'user', 'uid' => $mybb->get_input('uid', 1))), 'post');
+	$form = new Form($awards->build_url(array('action' => 'user', 'gid' => $gived['gid'])), 'post');
 	$form_container = new FormContainer($lang->ougc_awards_tab_edit_user_d);
 
 	$form_container->output_row($lang->ougc_awards_form_reason, $lang->ougc_awards_form_reason_d, $form->generate_text_area('reason', isset($mybb->input['reason']) ? $mybb->input['reason'] : $gived['reason'], array('rows' => 8, 'style' => 'width:80%;')));
-	$form_container->output_row($lang->ougc_awards_users_timestamp, $lang->ougc_awards_users_timestamp_d, $form->generate_text_box('date', isset($mybb->input['date']) ? (int)$mybb->input['date'] : intval($gived['date'])));
+	$form_container->output_row($lang->ougc_awards_users_timestamp, $lang->ougc_awards_users_timestamp_d, $form->generate_text_box('date', isset($mybb->input['date']) ? $awards->get_input('date', 1) : intval($gived['date'])));
 
 	$form_container->end();
 	$form->output_submit_wrapper(array($form->generate_submit_button($lang->ougc_awards_button_submit), $form->generate_reset_button($lang->reset)));
@@ -369,9 +403,9 @@ else
 	$limit = (int)$mybb->settings['ougc_awards_perpage'];
 	$limit = $limit > 100 ? 100 : ($limit < 1 ? 1 : $limit);
 
-	if($mybb->get_input('page', 1) > 0)
+	if($awards->get_input('page', 1) > 0)
 	{
-		$start = ($mybb->get_input('page', 1)-1)*$limit;
+		$start = ($awards->get_input('page', 1)-1)*$limit;
 	}
 	else
 	{
@@ -389,7 +423,7 @@ else
 	}
 	else
 	{
-		if($mybb->request_method == 'post' && $mybb->get_input('action') == 'updatedisporder')
+		if($mybb->request_method == 'post' && $awards->get_input('action') == 'updatedisporder')
 		{
 			foreach($mybb->input['disporder'] as $aid => $disporder)
 			{
@@ -416,7 +450,7 @@ else
 			$table->construct_cell('<a href="'.$edit_link.'">'.$award['name'].'</a>');
 			$table->construct_cell($award['description']);
 			$table->construct_cell($form->generate_text_box('disporder['.$award['aid'].']', (int)$award['disporder'], array('style' => 'text-align: center; width: 30px;')), array('class' => 'align_center'));
-			$table->construct_cell('<img src="styles/default/images/icons/bullet_o'.(!$award['visible'] ? 'ff' : 'n').'.png" alt="" title="'.(!$award['visible'] ? $lang->ougc_awards_form_hidden : $lang->ougc_awards_form_visible).'" />', array('class' => 'align_center'));
+			$table->construct_cell('<img src="styles/default/images/icons/bullet_o'.(!$award['visible'] ? 'ff' : 'n').($mybb->version_code >= 1800 ? '.png' : '.gif').'" alt="" title="'.(!$award['visible'] ? $lang->ougc_awards_form_hidden : $lang->ougc_awards_form_visible).'" />', array('class' => 'align_center'));
 
 			$popup = new PopupMenu("award_{$award['aid']}", $lang->options);
 			$popup->add_item($lang->ougc_awards_tab_give, "index.php?module=user-ougc_awards&amp;action=give&amp;aid={$award['aid']}");

@@ -48,6 +48,7 @@ $l['ougc_awards_modcp_username'] = 'Username';
 $l['ougc_awards_modcp_give'] = 'Give';
 $l['ougc_awards_modcp_revoke'] = 'Revoke';
 $l['ougc_awards_modcp_reason'] = 'Reason';
+$l['ougc_awards_modcp_gived'] = 'Given Award';
 
 // Phrases
 $l['ougc_awards_modcp_title_give'] = 'Manage Award: {1}';

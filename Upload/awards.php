@@ -80,11 +80,11 @@ if(!empty($mybb->input['view']))
 	$query = $db->simple_select('ougc_awards_users', 'COUNT(gid) AS users', 'aid=\''.(int)$award['aid'].'\'');
 	$userscount = $db->fetch_field($query, 'users');
 
-	if($mybb->get_input('page', 1) > 0)
+	if($awards->get_input('page', 1) > 0)
 	{
-		$start = ($mybb->get_input('page', 1)-1)*$limit;
+		$start = ($awards->get_input('page', 1)-1)*$limit;
 		$pages = ceil($userscount/$limit);
-		if($mybb->get_input('page', 1) > $pages)
+		if($awards->get_input('page', 1) > $pages)
 		{
 			$start = 0;
 			$mybb->input['page'] = 1;
@@ -144,11 +144,11 @@ else
 	$query = $db->simple_select('ougc_awards', 'COUNT(aid) AS awards', 'visible=\'1\'');
 	$awardscount = $db->fetch_field($query, 'awards');
 
-	if($mybb->get_input('page', 1) > 0)
+	if($awards->get_input('page', 1) > 0)
 	{
-		$start = ($mybb->get_input('page', 1)-1)*$limit;
+		$start = ($awards->get_input('page', 1)-1)*$limit;
 		$pages = ceil($awardscount/$limit);
-		if($mybb->get_input('page', 1) > $pages)
+		if($awards->get_input('page', 1) > $pages)
 		{
 			$start = 0;
 			$mybb->input['page'] = 1;
