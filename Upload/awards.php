@@ -59,7 +59,7 @@ $users_list = $award_list = $multipage = '';
 
 if(!empty($mybb->input['view']))
 {
-	$aid = (int)$mybb->input['view'];
+	$aid = $awards->get_input('view', 1);
 	$award = $awards->get_award($aid);
 
 	// This award doesn't exists or is not visible.
@@ -106,7 +106,7 @@ if(!empty($mybb->input['view']))
 		LIMIT '.$start.', '.$limit.'
 	');
 
-	$multipage = (string)multipage($userscount, $limit, $mybb->input['page'], $awards->build_url('view='.$aid));
+	$multipage = (string)multipage($userscount, $limit, $awards->get_input('page', 1), $awards->build_url('view='.$aid));
 
 	while($gived = $db->fetch_array($query))
 	{
@@ -173,7 +173,7 @@ else
 
 	$query = $db->simple_select('ougc_awards', '*', $whereclause, array('limit_start' => $start, 'limit' => $limit, 'order_by' => 'disporder'));
 
-	$multipage = (string)multipage($awardscount, $limit, $mybb->input['page'], $awards->build_url());
+	$multipage = (string)multipage($awardscount, $limit, $awards->get_input('page', 1), $awards->build_url());
 
 	while($award = $db->fetch_array($query))
 	{

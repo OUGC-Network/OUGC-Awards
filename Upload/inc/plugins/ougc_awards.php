@@ -73,7 +73,7 @@ else
 		case 'member.php':
 			global $mybb;
 
-			if($mybb->input['action'] == 'profile')
+			if((string)$mybb->input['action'] == 'profile')
 			{
 				$plugins->add_hook('member_profile_end', 'ougc_awards_profile');
 				$templatelist .= 'ougcawards_profile_row, ougcawards_profile_row_category, ougcawards_profile, ougcawards_profile_multipage, multipage_prevpage, multipage_page, multipage_page_current, multipage_nextpage, multipage';
@@ -84,7 +84,7 @@ else
 
 			$plugins->add_hook('modcp_start', 'ougc_awards_modcp');
 			$templatelist .= 'ougcawards_modcp_nav';
-			if($mybb->input['action'] == 'awards')
+			if((string)$mybb->input['action'] == 'awards')
 			{
 				$templatelist .= ', ougcawards_modcp_list_award, ougcawards_modcp_list, ougcawards_modcp, ougcawards_modcp_manage_reason, ougcawards_modcp_manage, ougcawards_modcp_manage_username';
 			}
@@ -703,7 +703,7 @@ function ougc_awards_settings_change()
 {
 	global $db, $mybb;
 
-	$query = $db->simple_select('settinggroups', 'name', 'gid=\''.(int)$mybb->input['gid'].'\'');
+	$query = $db->simple_select('settinggroups', 'name', 'gid=\''.$awards->get_input('gid', 1).'\'');
 	$groupname = $db->fetch_field($query, 'name');
 	if($groupname == 'ougc_awards')
 	{
@@ -727,7 +727,7 @@ function ougc_awards_modcp()
 		$modcp_nav = str_replace('<!--OUGC_AWARDS-->', $awards_nav, $modcp_nav);
 	}
 
-	if($mybb->input['action'] != 'awards')
+	if($awards->get_input('action') != 'awards')
 	{
 		return;
 	}
@@ -742,10 +742,14 @@ function ougc_awards_modcp()
 	$error = array();
 	$errors = '';
 
+	$mybb->input['aid'] = $awards->get_input('aid', 1);
+	$mybb->input['username'] = $awards->get_input('username');
+	$mybb->input['reason'] = $awards->get_input('reason');
+
 	// We can give awards from the ModCP
-	if($mybb->input['manage'] == 'give')
+	if($awards->get_input('manage') == 'give')
 	{
-		if(!($award = $awards->get_award($mybb->input['aid'])))
+		if(!($award = $awards->get_award($awards->get_input('aid', 1))))
 		{
 			error($lang->ougc_awards_error_wrongaward);
 		}
@@ -760,7 +764,7 @@ function ougc_awards_modcp()
 
 		if($mybb->request_method == 'post')
 		{
-			if(!($user = $awards->get_user_by_username($mybb->input['username'])))
+			if(!($user = $awards->get_user_by_username($awards->get_input('username'))))
 			{
 				$errors = inline_error($lang->ougc_awards_error_invaliduser);
 			}
@@ -774,7 +778,7 @@ function ougc_awards_modcp()
 			}
 			else
 			{
-				$awards->give_award($award, $user, $mybb->input['reason']);
+				$awards->give_award($award, $user, $awards->get_input('reason'));
 				$awards->log_action();
 				$awards->redirect($lang->ougc_awards_redirect_gived);
 			}
@@ -791,9 +795,9 @@ function ougc_awards_modcp()
 		exit;
 	}
 	// We can revoke awards from the ModCP
-	elseif($mybb->input['manage'] == 'revoke')
+	elseif($awards->get_input('manage') == 'revoke')
 	{
-		if(!($award = $awards->get_award($mybb->input['aid'])))
+		if(!($award = $awards->get_award($awards->get_input('aid', 1))))
 		{
 			error($lang->ougc_awards_error_wrongaward);
 		}
@@ -810,7 +814,7 @@ function ougc_awards_modcp()
 
 		if($mybb->request_method == 'post')
 		{
-			if(!($user = $awards->get_user_by_username($mybb->input['username'])))
+			if(!($user = $awards->get_user_by_username($awards->get_input('username'))))
 			{
 				$errors = inline_error($lang->ougc_awards_error_invaliduser);
 			}
@@ -863,10 +867,9 @@ function ougc_awards_modcp()
 		$limit = (int)$mybb->settings['ougc_awards_perpage'];
 		$limit = $limit > 100 ? 100 : ($limit < 1 ? 1 : $limit);
 
-		$mybb->input['page'] = (int)$mybb->input['page'];
-		if($mybb->input['page'] && $mybb->input['page'] > 0)
+		if($awards->get_input('page', 1) > 0)
 		{
-			$start = ($mybb->input['page'] - 1)*$limit;
+			$start = ($awards->get_input('page', 1) - 1)*$limit;
 		}
 		else
 		{
@@ -904,7 +907,7 @@ function ougc_awards_modcp()
 			$awardscount = (int)$db->fetch_field($query, 'awards');
 
 			
-			$multipage = multipage($awardscount, $limit, $mybb->input['page'], $awards->build_url());
+			$multipage = multipage($awardscount, $limit, $awards->get_input('page', 1), $awards->build_url());
 			isset($multipage) or $multipage = '';
 		}
 
@@ -970,7 +973,7 @@ function ougc_awards_profile()
 		');
 		$awardscount = (int)$db->fetch_field($query, 'awards');
 
-		$page = (string)$mybb->input['view'] == 'awards' ? (int)$mybb->input['page'] : 0;
+		$page = $awards->get_input('view') == 'awards' ? $awards->get_input('page', 1) : 0;
 		if($page > 0)
 		{
 			$start = ($page - 1)*$limit;
@@ -1923,7 +1926,7 @@ class OUGC_Awards
 
 		if($mybb->request_method == 'post')
 		{
-			if(!verify_post_check($mybb->input['my_post_key']))
+			if(!verify_post_check($awards->get_input('my_post_key')))
 			{
 				flash_message($lang->invalid_post_verify_key2, 'error');
 				admin_redirect("index.php?module=config-plugins");
