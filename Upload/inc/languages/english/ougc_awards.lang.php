@@ -44,7 +44,7 @@ $l['ougc_awards_error_giveperm'] = 'You don\'t have permission to edit the selec
 $l['ougc_awards_error_active'] = 'The awards system is currently not active.';
 
 // Words
-$l['ougc_awards_modcp_username'] = 'Username';
+$l['ougc_awards_modcp_username'] = 'Username (<strong title="You can select multiple users starting the field with multiple: and separating each name with a comma. Example: multiple:username1,username2,username3">Tip</span>)';
 $l['ougc_awards_modcp_give'] = 'Give';
 $l['ougc_awards_modcp_revoke'] = 'Revoke';
 $l['ougc_awards_modcp_reason'] = 'Reason';

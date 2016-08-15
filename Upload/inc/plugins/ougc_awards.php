@@ -786,22 +786,58 @@ function ougc_awards_modcp()
 
 		if($mybb->request_method == 'post')
 		{
-			if(!($user = $awards->get_user_by_username($awards->get_input('username'))))
+			$users = array();
+			if(my_strpos($awards->get_input('username'), 'multiple:') === false)
 			{
-				$errors = inline_error($lang->ougc_awards_error_invaliduser);
+				$user = $awards->get_user_by_username($awards->get_input('username'));
+				if(!$user)
+				{
+					$errors = inline_error($lang->ougc_awards_error_invaliduser);
+				}
+				else
+				{
+					$users[] = $user;
+				}
 			}
+			else
+			{
+				$usernames = explode('multiple:', $awards->get_input('username'));
+				foreach(explode(',', $usernames[1]) as $username)
+				{
+					$user = $awards->get_user_by_username($username);
+					if(!$user)
+					{
+						$errors = inline_error($lang->ougc_awards_error_invaliduser);
+						break;
+					}
+					$users[] = $user;
+				}
+			}
+			unset($user, $usernames, $username);
+
+
+
+
 			/*elseif($awards->get_gived_award($award['aid'], $user['uid']))
 			{
 				$errors = inline_error($lang->ougc_awards_error_give);
 			}*/
-			elseif(!$awards->can_edit_user($user['uid']))
+			foreach($users as $user)
 			{
-				$errors = inline_error($lang->ougc_awards_error_giveperm);
+				if(!$awards->can_edit_user($user['uid']))
+				{
+					$errors = inline_error($lang->ougc_awards_error_giveperm);
+					break;
+				}
 			}
-			else
+
+			if(empty($errors))
 			{
-				$awards->give_award($award, $user, $awards->get_input('reason'));
-				$awards->log_action();
+				foreach($users as $user)
+				{
+					$awards->give_award($award, $user, $awards->get_input('reason'));
+					$awards->log_action();
+				}
 				$awards->redirect($lang->ougc_awards_redirect_gived);
 			}
 		}

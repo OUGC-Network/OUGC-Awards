@@ -220,11 +220,35 @@ elseif($awards->get_input('action') == 'give' || $awards->get_input('action') ==
 
 	if($mybb->request_method == 'post')
 	{
-		$errors = array();
-		if(!($user = $awards->get_user_by_username($mybb->input['username'])))
+		$errors = $users = array();
+		if(my_strpos($mybb->input['username'], 'multiple:') === false)
 		{
-			$errors[] = $lang->ougc_awards_error_invaliduser;
+			$user = $awards->get_user_by_username($mybb->input['username']);
+			if(!$user)
+			{
+				$errors[] = $lang->ougc_awards_error_invaliduser;
+			}
+			else
+			{
+				$users[] = $user;
+			}
 		}
+		else
+		{
+			$usernames = explode('multiple:', $mybb->input['username']);
+			foreach(explode(',', $usernames[1]) as $username)
+			{
+				$user = $awards->get_user_by_username($username);
+				if(!$user)
+				{
+					$errors[] = $lang->ougc_awards_error_invaliduser;
+					break;
+				}
+				$users[] = $user;
+			}
+		}
+		unset($user, $usernames, $username);
+
 		/*if($give && $awards->get_gived_award($award['aid'], $user['uid']))
 		{
 			$errors[] = $lang->ougc_awards_error_give;
@@ -247,22 +271,31 @@ elseif($awards->get_input('action') == 'give' || $awards->get_input('action') ==
 				}
 			}
 		}
-		if(!$awards->can_edit_user($user['uid']))
+
+		foreach($users as $user)
 		{
-			$errors[] = $lang->ougc_awards_error_giveperm;
+			if(!$awards->can_edit_user($user['uid']))
+			{
+				$errors[] = $lang->ougc_awards_error_giveperm;
+				break;
+			}
 		}
 
 		if(empty($errors) && !$show_gived_list)
 		{
 			if($give)
 			{
-				$awards->give_award($award, $user, $mybb->input['reason']);
+				foreach($users as $user)
+				{
+					$awards->give_award($award, $user, $mybb->input['reason']);
+					$awards->log_action();
+				}
 			}
 			else
 			{
 				$awards->revoke_award($gived['gid']);
+				$awards->log_action();
 			}
-			$awards->log_action();
 
 			$lang_var = $give ? 'ougc_awards_success_give' : 'ougc_awards_success_revoke';
 			$awards->admin_redirect($lang->{$lang_var});

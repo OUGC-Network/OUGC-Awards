@@ -86,7 +86,7 @@ $l['ougc_awards_form_add'] = 'Add New Item';
 $l['ougc_awards_form_name'] = 'Name';
 $l['ougc_awards_form_name_d'] = 'Insert a short name for this item.';
 $l['ougc_awards_form_username'] = 'Username';
-$l['ougc_awards_form_username_d'] = 'Insert the username of the user to give/revoke the selected award award.';
+$l['ougc_awards_form_username_d'] = 'Insert the username of the user to give/revoke the selected award. <strong title="You can select multiple users starting the field with multiple: and separating each name with a comma. Example: multiple:username1,username2,username3">Tip</span>';
 $l['ougc_awards_form_reason'] = 'Reason';
 $l['ougc_awards_form_reason_d'] = 'Insert a reason for giving this award';
 $l['ougc_awards_form_gived'] = 'Select Given Award';
