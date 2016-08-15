@@ -30,7 +30,7 @@
 // Boring stuff..
 define('IN_MYBB', 1);
 define('THIS_SCRIPT', substr($_SERVER['SCRIPT_NAME'], -strpos(strrev($_SERVER['SCRIPT_NAME']), '/')));
-$templatelist = 'ougcawards_page_list_award, ougcawards_page_list, ougcawards_page, ougcawards_page_list_empty, ougcawards_page_view_row, ougcawards_page_view';
+$templatelist = 'ougcawards_page_list_award, ougcawards_page_list_award_request, ougcawards_page_list_request, ougcawards_page_list, ougcawards_page, ougcawards_page_list_empty, ougcawards_page_view_row, ougcawards_page_view';
 require_once './global.php';
 
 // Load lang
@@ -38,7 +38,6 @@ $awards->lang_load();
 
 // If plugin no active or user is guest then stop.
 $awards->is_active or error($lang->ougc_awards_error_active);
-$mybb->user['uid'] or error_no_permission();
 
 if(!$mybb->settings['ougc_awards_pagegroups'] || ($mybb->settings['ougc_awards_pagegroups'] != -1 && !$awards->is_member($mybb->settings['ougc_awards_pagegroups'])))
 {
@@ -61,11 +60,17 @@ if(!empty($mybb->input['view']))
 {
 	$aid = $awards->get_input('view', 1);
 	$award = $awards->get_award($aid);
+	$category = $awards->get_category($award['cid']);
 
 	// This award doesn't exists or is not visible.
 	if(!$award['aid'] || !$award['visible'])
 	{
 		error($lang->ougc_awards_error_wrongaward);
+	}
+
+	if(!$category['cid'] || !$category['visible'])
+	{
+		$error = $lang->ougc_awards_error_invalidcategory;
 	}
 
 	$plugins->run_hooks('ougc_awards_view_start');
@@ -75,6 +80,8 @@ if(!empty($mybb->input['view']))
 	{
 		$award['name'] = $name;
 	}
+
+	add_breadcrumb(strip_tags($category['name']));
 	add_breadcrumb(strip_tags($award['name']));
 
 	$query = $db->simple_select('ougc_awards_users', 'COUNT(gid) AS users', 'aid=\''.(int)$award['aid'].'\'');
@@ -130,14 +137,94 @@ if(!empty($mybb->input['view']))
 		eval('$users_list .= "'.$templates->get('ougcawards_page_view_row').'";');
 	}
 
+	$request_button = '';
+
 	if(!$users_list)
 	{
 		eval('$users_list = "'.$templates->get('ougcawards_page_view_empty').'";');
+	}
+	elseif($category['allowrequests'] && $award['allowrequests'])
+	{
+		$request_button = eval($templates->render('ougcawards_page_view_request'));
 	}
 
 	$plugins->run_hooks('ougc_awards_view_end');
 
 	eval('$content = "'.$templates->get('ougcawards_page_view').'";');
+}
+elseif($awards->get_input('action') == 'request')
+{
+	if(!($award = $awards->get_award($awards->get_input('aid', 1))))
+	{
+		$error = $lang->ougc_awards_error_wrongaward;
+	}
+
+	if(!$award['visible'] || !$award['allowrequests'])
+	{
+		$error = $lang->ougc_awards_error_wrongaward;
+	}
+
+	if(!($category = $awards->get_category($award['cid'])))
+	{
+		$error = $lang->ougc_awards_error_invalidcategory;
+	}
+
+	if(!$category['visible'] || !$category['allowrequests'])
+	{
+		$error = $lang->ougc_awards_error_invalidcategory;
+	}
+
+	$request = $awards->get_request($mybb->user['uid'], $award['aid']);
+	if(!empty($request) && $request['status'] == 1)
+	{
+		$error = $lang->ougc_awards_error_pendingrequest;
+	}
+
+	$trow = alt_trow();
+
+	$button = '&nbsp;';
+
+	if($error)
+	{
+		if($mybb->request_method == 'post')
+		{
+			_dump($error, $mybb->input);
+		}
+		$content = eval($templates->render('ougcawards_page_request_error'));
+	}
+	else
+	{
+		if($mybb->request_method == 'post')
+		{
+			$awards->insert_request(array(
+				'uid' => $mybb->user['uid'],
+				'aid' => $award['aid'],
+				'message' => $awards->get_input('message')
+			));
+
+			$awards->log_action();
+
+			$error = $lang->ougc_awards_redirect_request;
+			$content = eval($templates->render('ougcawards_page_request_error'));
+
+			$modal = eval($templates->render('ougcawards_page_request_modal', 1, 0));
+			echo $modal;
+			exit;
+		}
+		else
+		{
+			$award['image'] = $awards->get_award_icon($award['aid']);
+			$award['name'] = htmlspecialchars_uni($award['name']);
+
+			$button = eval($templates->render('ougcawards_page_request_form_button'));
+			$content = eval($templates->render('ougcawards_page_request_form'));
+		}
+	}
+
+	$modal = eval($templates->render('ougcawards_page_request_modal', 1, 0));
+	$page = eval($templates->render('ougcawards_page_request', 1, 0));
+	echo $page;
+	exit;
 }
 else
 {
@@ -185,6 +272,14 @@ else
 	{
 		foreach($categories as $disporder => $category)
 		{
+			$request = '';
+			$colspan_thead = 3;
+			if($category['allowrequests'])
+			{
+				$request = eval($templates->render('ougcawards_page_list_request'));
+				++$colspan_thead;
+			}
+
 			$category['name'] = htmlspecialchars_uni($category['name']);
 			$category['description'] = htmlspecialchars_uni($category['description']);
 
@@ -194,6 +289,14 @@ else
 				$trow = alt_trow(1);
 				foreach($_awards[(int)$category['cid']] as $cid => $award)
 				{
+					$award_request = '';
+					$colspan_trow = 2;
+					if($category['allowrequests'] && $award['allowrequests'])
+					{
+						$award_request = eval($templates->render('ougcawards_page_list_award_request'));
+						--$colspan_trow;
+					}
+
 					$award['aid'] = (int)$award['aid'];
 					$award['image'] = $awards->get_award_icon($award['aid']);
 					if($name = $awards->get_award_info('name', $award['aid']))

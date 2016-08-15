@@ -101,8 +101,10 @@ $l['ougc_awards_form_image_d'] = 'Image of this award.<br/><span class="smalltex
 &nbsp;&nbsp;{imgdir} -> Theme Directory URL
 </span>';
 $l['ougc_awards_form_visible'] = 'Visible';
+$l['ougc_awards_form_allowrequests'] = 'Allow Requests';
 $l['ougc_awards_form_hidden'] = 'Hidden';
 $l['ougc_awards_form_visible_d'] = 'Is this item visible?';
+$l['ougc_awards_form_allowrequests_desc'] = 'Do you want to allow users to request from this item?';
 $l['ougc_awards_form_pm'] = 'PM';
 $l['ougc_awards_form_pm_d'] = 'Write the content of the PM to send when awarded.<br />
 	{1} = Username<br/>

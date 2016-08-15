@@ -36,12 +36,14 @@ $l['ougc_awards_modcp_list_desc'] = 'Here you can fast give or revoke awards.';
 $l['ougc_awards_modcp_list_note'] = '<b>Note:</b> To add / remove / edit awards you need ACP access.';
 
 // Errors.
-$l['ougc_awards_error_wrongaward'] = 'Invalid award.';
+$l['ougc_awards_error_wrongaward'] = 'The selected award does not exists.';
+$l['ougc_awards_error_invalidcategory'] = 'The selected category does not exists.';
 $l['ougc_awards_error_invaliduser'] = 'The selected user is invalid.';
 $l['ougc_awards_error_give'] = 'The selected user already has this award.';
 $l['ougc_awards_error_notgive'] = 'The selected user already has not this award.';
 $l['ougc_awards_error_giveperm'] = 'You don\'t have permission to edit the selected user.';
 $l['ougc_awards_error_active'] = 'The awards system is currently not active.';
+$l['ougc_awards_error_pendingrequest'] = 'There is a active request pending for this award from you.';
 
 // Words
 $l['ougc_awards_modcp_username'] = 'Username (<strong title="You can select multiple users starting the field with multiple: and separating each name with a comma. Example: multiple:username1,username2,username3">Tip</span>)';
@@ -59,6 +61,7 @@ $l['ougc_awards_modcp_cache'] = 'Update Cache';
 $l['ougc_awards_redirect_gived'] = 'Award given successfully.';
 $l['ougc_awards_redirect_revoked'] = 'Award revoked successfully.';
 $l['ougc_awards_redirect_cache'] = 'Cache updated successfully.';
+$l['ougc_awards_redirect_request'] = 'Award requested successfully.';
 
 // Profile
 $l['ougc_awards_profile_empty'] = 'This user has no awards at this time.';
@@ -75,5 +78,13 @@ $l['ougc_awards_page_list_empty'] = 'No awards were found.';
 $l['ougc_awards_page_list_award'] = 'Award';
 $l['ougc_awards_page_list_name'] = 'Name';
 $l['ougc_awards_page_list_description'] = 'Description';
+$l['ougc_awards_page_list_request'] = 'Request';
 $l['ougc_awards_page_view_date'] = 'Date';
 $l['ougc_awards_page_view_empty'] = 'No users were found.';
+
+// Modal
+$l['ougc_awards_request_title'] = 'Request Award';
+$l['ougc_awards_request_desc'] = 'Request this award to a moderator.';
+$l['ougc_awards_request_name'] = 'Award:';
+$l['ougc_awards_request_message'] = 'Message:';
+$l['ougc_awards_request_button'] = 'Submit';

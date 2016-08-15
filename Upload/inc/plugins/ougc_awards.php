@@ -338,6 +338,7 @@ if(use_xmlhttprequest == "1")
 	<head>
 		<title>{$mybb->settings[\'bbname\']} - {$lang->ougc_awards_page_title}</title>
 		{$headerinclude}
+		<script type="text/javascript" src="{$mybb->asset_url}/jscripts/ougc_awards.js"></script>
 	</head>
 	<body>
 		{$header}
@@ -348,7 +349,7 @@ if(use_xmlhttprequest == "1")
 </html>',
 		'page_list'	=> '<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
 	<tr>
-		<td class="thead" colspan="4">
+		<td class="thead" colspan="{$colspan_thead}">
 			<strong>{$category[\'name\']}</strong>
 		</td>
 	</tr>
@@ -356,17 +357,21 @@ if(use_xmlhttprequest == "1")
 		<td class="tcat smalltext" align="center" width="1%"><strong>{$lang->ougc_awards_page_list_award}</strong></td>
 		<td class="tcat smalltext" width="15%"><strong>{$lang->ougc_awards_page_list_name}</strong></td>
 		<td class="tcat smalltext"><strong>{$lang->ougc_awards_page_list_description}</strong></td>
+		{$request}
 	</tr>
 	{$award_list}
 </table>
 <br />',
+		'page_list_request'	=> '<td class="tcat smalltext" width="15%"><strong>{$lang->ougc_awards_page_list_request}</strong></td>',
 		'page_list_award'	=> '<tr>
 	<td class="{$trow}" align="center"><a href="{$mybb->settings[\'bburl\']}/awards.php?view={$award[\'aid\']}" title="{$award[\'name\']}"><img src="{$award[\'image\']}" alt="{$award[\'name\']}" /></a></td>
 	<td class="{$trow}"><a href="{$mybb->settings[\'bburl\']}/awards.php?view={$award[\'aid\']}" title="{$award[\'name\']}">{$award[\'name\']}</a></td>
-	<td class="{$trow}">{$award[\'description\']}</td>
+	<td class="{$trow}" colspan="{$colspan_trow}">{$award[\'description\']}</td>
+	{$award_request}
 </tr>',
+		'page_list_award_request'	=> '<td class="{$trow} postbit_buttons post_management_buttons" align="center"><a href="javascript:OUGC_Plugins.RequestAward(\'{$award[\'aid\']}\');" title="{$lang->ougc_awards_page_list_request}" class="postbit_report"><span>{$lang->ougc_awards_page_list_request}</span></a></td>',
 		'page_list_empty'	=> '<tr>
-	<td class="trow1" colspan="4" align="center">
+	<td class="trow1" colspan="{$colspan_thead}" align="center">
 		{$lang->ougc_awards_page_list_empty}
 	</td>
 </tr>',
@@ -382,7 +387,8 @@ if(use_xmlhttprequest == "1")
 		<td class="tcat smalltext" align="center" width="20%"><strong>{$lang->ougc_awards_page_view_date}</strong></td>
 	</tr>
 	{$users_list}
-</table>',
+</table>
+{$request_button}',
 		'page_view_empty'	=> '<tr>
 	<td class="trow1" colspan="3" align="center">{$lang->ougc_awards_page_view_empty}</td>
 </tr>',
@@ -391,6 +397,51 @@ if(use_xmlhttprequest == "1")
 	<td class="{$trow}">{$gived[\'reason\']}</td>
 	<td class="{$trow}" align="center">{$gived[\'date\']}</td>
 </tr>',
+		'page_request_error'	=> '<tr>
+		<td class="{$trow}">{$error}</td>
+</tr>',
+		'page_request'	=> '<div class="modal">
+	{$modal}
+</div>',
+		'page_request_modal'	=> '<div style="overflow-y: auto; max-height: 400px;" class="modal_{$award[\'aid\']}">
+		<form action="{$mybb->settings[\'bburl\']}/awards.php" method="post" onsubmit="javascript: return Report.submitRequest(\'{$mybb->user[\'uid\']}\', \'{$award[\'aid\']}\');" class="requestdata_{$award[\'aid\']}">
+		<input type="hidden" name="my_post_key" value="{$mybb->post_code}" />
+		<input type="hidden" name="action" value="request" />
+		<input type="hidden" name="aid" value="{$award[\'aid\']}" />
+		<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
+			<tr>
+				<td class="thead"><strong>{$lang->ougc_awards_request_title}</strong></td>
+			</tr>
+			<tr>
+				<td class="tcat">{$lang->ougc_awards_request_desc}</td>
+			</tr>
+			{$content}
+			<tr>
+				<td class="tfoot" align="center">{$button}</td>
+			</tr>
+		</table>
+	</form>
+</div>',
+		'page_request_form'	=> '<tr>
+	<td class="{$trow}"><strong>{$lang->ougc_awards_request_name}</strong></td>
+</tr>
+<tr>
+		<td class="{$trow}" align="center"><a href="{$mybb->settings[\'bburl\']}/awards.php?view={$award[\'aid\']}" title="{$award[\'name\']}"><img src="{$award[\'image\']}" alt="{$award[\'name\']}" /></a><br />{$award[\'name\']}</td>
+</tr>
+<tr>
+	<td class="{$trow}"><strong>{$lang->ougc_awards_request_message}</strong></td>
+</tr>
+<tr>
+		<td class="{$trow}"><input type="text" class="textbox" name="message" size="40" maxlength="250" /></td>
+</tr>',
+		'page_request_form_button'	=> '<input type="submit" class="button" value="{$lang->ougc_awards_request_button}" tabindex="2" accesskey="s">',
+		'page_view_request'	=> '<br class="clear" />
+<div class="float_right"><a href="javascript:OUGC_Plugins.RequestAward(\'{$award[\'aid\']}\');" class="button new_thread_button"><span>{$lang->ougc_awards_page_list_request}</span></a></div>
+<br class="clear" />',
+		''	=> '',
+		''	=> '',
+		''	=> '',
+		''	=> '',
 	));
 
 	// Modify templates
@@ -430,8 +481,21 @@ if(use_xmlhttprequest == "1")
 		}
 		else
 		{
-			$db->add_column('users', 'ougc_awards', 'text NOT NULL');
+			
 		}
+
+		$db->field_exists('allowrequests', 'ougc_awards') or $db->add_column('ougc_awards', 'allowrequests', "tinyint(1) NOT NULL DEFAULT '1'");
+		$db->field_exists('allowrequests', 'ougc_awards_categories') or $db->add_column('ougc_awards_categories', 'allowrequests', "tinyint(1) NOT NULL DEFAULT '1'");
+
+		$db->write_query("CREATE TABLE `".TABLE_PREFIX."ougc_awards_requests` (
+				`rid` int UNSIGNED NOT NULL AUTO_INCREMENT,
+				`aid` int NOT NULL DEFAULT '0',
+				`uid` int NOT NULL DEFAULT '0',
+				`message` text NOT NULL,
+				`status` smallint(1) NOT NULL DEFAULT '1',
+				PRIMARY KEY (`rid`)
+			) ENGINE=MyISAM{$collation};"
+		);
 	}
 
 	if($plugins['awards'] <= 1803)
@@ -592,6 +656,7 @@ function ougc_awards_install()
 			`description` varchar(255) NOT NULL DEFAULT '',
 			`image` varchar(255) NOT NULL DEFAULT '',
 			`disporder` smallint(5) NOT NULL DEFAULT '0',
+			`allowrequests` tinyint(1) NOT NULL DEFAULT '1',
 			`visible` smallint(1) NOT NULL DEFAULT '1',
 			`pm` text NOT NULL,
 			`type` smallint(1) NOT NULL DEFAULT '0',
@@ -603,6 +668,7 @@ function ougc_awards_install()
 			`name` varchar(100) NOT NULL DEFAULT '',
 			`description` varchar(255) NOT NULL DEFAULT '',
 			`disporder` smallint NOT NULL DEFAULT '0',
+			`allowrequests` tinyint(1) NOT NULL DEFAULT '1',
 			`visible` tinyint(1) NOT NULL DEFAULT '1',
 			PRIMARY KEY (`cid`)
 		) ENGINE=MyISAM{$collation};"
@@ -614,6 +680,15 @@ function ougc_awards_install()
 			`reason` text NOT NULL,
 			`date` int(10) NOT NULL DEFAULT '0',
 			PRIMARY KEY (`gid`)
+		) ENGINE=MyISAM{$collation};"
+	);
+	$db->write_query("CREATE TABLE `".TABLE_PREFIX."ougc_awards_requests` (
+			`rid` int UNSIGNED NOT NULL AUTO_INCREMENT,
+			`aid` int NOT NULL DEFAULT '0',
+			`uid` int NOT NULL DEFAULT '0',
+			`message` text NOT NULL,
+			`status` smallint(1) NOT NULL DEFAULT '1',
+			PRIMARY KEY (`rid`)
 		) ENGINE=MyISAM{$collation};"
 	);
 
@@ -723,7 +798,7 @@ function ougc_awards_pl_check()
 // Language support for settings
 function ougc_awards_settings_change()
 {
-	global $db, $mybb;
+	global $db, $mybb, $awards;
 
 	$query = $db->simple_select('settinggroups', 'name', 'gid=\''.$awards->get_input('gid', 1).'\'');
 	$groupname = $db->fetch_field($query, 'name');
@@ -1478,6 +1553,28 @@ class OUGC_Awards
 		return $this->cache['awards'][$aid];
 	}
 
+	// Get a request from the DB
+	function get_request($uid, $aid)
+	{
+		if(!isset($this->cache['requests'][$uid][$aid]))
+		{
+			global $db;
+			$this->cache['requests'][$uid][$aid] = false;
+
+			$uid = (int)$uid;
+			$aid = (int)$aid;
+
+			$query = $db->simple_select('ougc_awards_requests', '*', "uid='{$uid}' AND aid='{$aid}'");
+			$request = $db->fetch_array($query);
+			if(isset($request['rid']))
+			{
+				$this->cache['requests'][$uid][$aid] = $request;
+			}
+		}
+
+		return $this->cache['requests'][$uid][$aid];
+	}
+
 	// Get a category from the DB
 	function get_category($cid)
 	{
@@ -1497,7 +1594,7 @@ class OUGC_Awards
 		return $this->cache['categories'][$cid];
 	}
 
-	// Insert a new rate to the DB
+	// Insert a new award to the DB
 	function insert_award($data, $aid=null, $update=false)
 	{
 		global $db;
@@ -1526,13 +1623,44 @@ class OUGC_Awards
 		return true;
 	}
 
-	// Update espesific rate
+	// Update espesific award
 	function update_award($data, $aid)
 	{
 		$this->insert_award($data, $aid, true);
 	}
 
-	// Insert a new rate to the DB
+	// Insert a new request to the DB
+	function insert_request($data, $rid=null, $update=false)
+	{
+		global $db;
+
+		$cleandata = array();
+
+		!isset($data['uid']) or $cleandata['uid'] = (int)$data['uid'];
+		!isset($data['aid']) or $cleandata['aid'] = (int)$data['aid'];
+		!isset($data['message']) or $cleandata['message'] = $db->escape_string($data['message']);
+		!isset($data['status']) or $cleandata['status'] = (int)$data['status'];
+
+		if($update)
+		{
+			$this->rid = (int)$rid;
+			$db->update_query('ougc_awards_requests', $cleandata, 'rid=\''.$this->rid.'\'');
+		}
+		else
+		{
+			$this->rid = (int)$db->insert_query('ougc_awards_requests', $cleandata);
+		}
+
+		return true;
+	}
+
+	// Update espesific request
+	function update_request($data, $rid)
+	{
+		$this->insert_request($data, $aid, true);
+	}
+
+	// Insert a new category to the DB
 	function insert_category($data, $cid=null, $update=false)
 	{
 		global $db;
@@ -1557,7 +1685,7 @@ class OUGC_Awards
 		return true;
 	}
 
-	// Update espesific rate
+	// Update espesific category
 	function update_category($data, $cid)
 	{
 		$this->insert_category($data, $cid, true);
@@ -1608,6 +1736,10 @@ class OUGC_Awards
 		if($this->cid)
 		{
 			$data['cid'] = $this->cid;
+		}
+		if($this->rid)
+		{
+			$data['rid'] = $this->rid;
 		}
 
 		$func($data);

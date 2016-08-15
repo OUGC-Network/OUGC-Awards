@@ -109,7 +109,7 @@ if($awards->get_input('action') == 'add' || $awards->get_input('action') == 'edi
 	}
 
 	$mergeinput = array();
-	foreach(array('name', 'cid', 'description', 'image', 'visible', 'pm', 'type', 'disporder') as $key)
+	foreach(array('name', 'cid', 'description', 'image', 'allowrequests', 'visible', 'pm', 'type', 'disporder') as $key)
 	{
 		$mergeinput[$key] = isset($mybb->input[$key]) ? $mybb->input[$key] : ($add ? '' : $award[$key]);
 	}
@@ -139,6 +139,7 @@ if($awards->get_input('action') == 'add' || $awards->get_input('action') == 'edi
 				'cid'			=> $awards->get_input('cid', 1),
 				'description'	=> $awards->get_input('description'),
 				'image'			=> $awards->get_input('image'),
+				'allowrequests'	=> $awards->get_input('allowrequests', 1),
 				'visible'		=> $awards->get_input('visible', 1),
 				'pm'			=> $awards->get_input('pm'),
 				'type'			=> $awards->get_input('type', 1),
@@ -162,6 +163,7 @@ if($awards->get_input('action') == 'add' || $awards->get_input('action') == 'edi
 	$form_container->output_row($lang->ougc_awards_form_desc, $lang->ougc_awards_form_desc_d, $form->generate_text_box('description', $mybb->input['description']));
 	$form_container->output_row($lang->ougc_awards_form_category, $lang->ougc_awards_form_category_desc, $awards->generate_category_select($award['aid'], $awards->get_input('cid')));
 	$form_container->output_row($lang->ougc_awards_form_image, $lang->ougc_awards_form_image_d, $form->generate_text_box('image', $mybb->input['image']));
+	$form_container->output_row($lang->ougc_awards_form_allowrequests, $lang->ougc_awards_form_allowrequests_desc, $form->generate_yes_no_radio('allowrequests', (int)$mybb->input['allowrequests']));
 	$form_container->output_row($lang->ougc_awards_form_visible, $lang->ougc_awards_form_visible_d, $form->generate_yes_no_radio('visible', (int)$mybb->input['visible']));
 	$form_container->output_row($lang->ougc_awards_form_pm, $lang->ougc_awards_form_pm_d, $form->generate_text_area('pm', $mybb->input['pm'], array('rows' => 8, 'style' => 'width:80%;')));
 	$form_container->output_row($lang->ougc_awards_form_type, $lang->ougc_awards_form_type_d, $form->generate_select_box('type', array(
@@ -559,7 +561,7 @@ if($awards->get_input('action') == 'add' || $awards->get_input('action') == 'edi
 	}
 
 	$mergeinput = array();
-	foreach(array('name', 'description', 'visible', 'disporder') as $key)
+	foreach(array('name', 'description', 'allowrequests', 'visible', 'disporder') as $key)
 	{
 		$mergeinput[$key] = isset($mybb->input[$key]) ? $mybb->input[$key] : ($add ? '' : $category[$key]);
 	}
@@ -586,6 +588,7 @@ if($awards->get_input('action') == 'add' || $awards->get_input('action') == 'edi
 			$awards->{$method}(array(
 				'name'			=> $awards->get_input('name'),
 				'description'	=> $awards->get_input('description'),
+				'allowrequests'	=> $awards->get_input('allowrequests', 1),
 				'visible'		=> $awards->get_input('visible', 1),
 				'disporder'		=> $awards->get_input('disporder', 1),
 			), $awards->get_input('cid', 1));
@@ -604,6 +607,7 @@ if($awards->get_input('action') == 'add' || $awards->get_input('action') == 'edi
 
 	$form_container->output_row($lang->ougc_awards_form_name.' <em>*</em>', $lang->ougc_awards_form_name_d, $form->generate_text_box('name', $mybb->input['name']));
 	$form_container->output_row($lang->ougc_awards_form_desc, $lang->ougc_awards_form_desc_d, $form->generate_text_box('description', $mybb->input['description']));
+	$form_container->output_row($lang->ougc_awards_form_allowrequests, $lang->ougc_awards_form_allowrequests_desc, $form->generate_yes_no_radio('allowrequests', (int)$mybb->input['allowrequests']));
 	$form_container->output_row($lang->ougc_awards_form_visible, $lang->ougc_awards_form_visible_d, $form->generate_yes_no_radio('visible', (int)$mybb->input['visible']));
 	$form_container->output_row($lang->ougc_awards_form_order, $lang->ougc_awards_form_order_d, $form->generate_text_box('disporder', (int)$mybb->input['disporder'], array('style' => 'text-align: center; width: 30px;" maxlength="5')));
 
