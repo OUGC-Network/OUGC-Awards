@@ -421,11 +421,22 @@ if(use_xmlhttprequest == "1")
 	/*~*~* RUN UPDATES START *~*~*/
 	$collation = $db->build_create_table_collation();
 
+	if($plugins['awards'] <= 1807)
+	{
+		// TODO
+		if($db->field_exists('ougc_awards', 'users'))
+		{
+			$db->modify_column('users', 'ougc_awards', 'text NOT NULL');
+		}
+		else
+		{
+			$db->add_column('users', 'ougc_awards', 'text NOT NULL');
+		}
+	}
+
 	if($plugins['awards'] <= 1803)
 	{
 		$db->field_exists('cid', 'ougc_awards') or $db->add_column('ougc_awards', 'cid', "int NOT NULL DEFAULT '0'");
-
-		$db->update_query('ougc_awards', array('cid' => 1), 'cid=0');
 
 		$db->write_query("CREATE TABLE `".TABLE_PREFIX."ougc_awards_categories` (
 				`cid` int UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -436,6 +447,19 @@ if(use_xmlhttprequest == "1")
 				PRIMARY KEY (`cid`)
 			) ENGINE=MyISAM{$collation};"
 		);
+
+		$query = $db->simple_select('ougc_awards', 'aid');
+		$numawards = $db->num_rows($query);
+
+		if($numawards)
+		{
+			$awards->insert_category(array(
+				'name'			=> 'Default',
+				'description'	=> 'Default category created after an update.'
+			));
+
+			$db->update_query('ougc_awards', array('cid' => $awards->cid));
+		}
 	}
 	if($plugins['awards'] <= 1800)
 	{
@@ -495,8 +519,6 @@ if(use_xmlhttprequest == "1")
 		// Modify table colunms
 		$db->modify_column('ougc_awards', 'aid', 'int UNSIGNED NOT NULL AUTO_INCREMENT');
 		$db->modify_column('ougc_awards', 'pm', 'text NOT NULL');
-
-		!$db->field_exists('users', 'ougc_awards') or $db->drop_column('ougc_awards', 'users');
 
 		if(!$db->field_exists('disporder', 'ougc_awards'))
 		{
@@ -596,7 +618,7 @@ function ougc_awards_install()
 	);
 
 	// Add DB entries
-	//$db->field_exists('ougc_awards', 'users') or $db->add_column('users', 'ougc_awards', 'text NOT NULL');
+	$db->field_exists('ougc_awards', 'users') or $db->add_column('users', 'ougc_awards', 'text NOT NULL');
 
 	if($db->table_exists('alert_settings') && $db->table_exists('alert_setting_values'))
 	{
