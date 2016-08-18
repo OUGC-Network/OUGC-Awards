@@ -471,22 +471,24 @@ if(use_xmlhttprequest == "1")
 
 	/*~*~* RUN UPDATES START *~*~*/
 	$collation = $db->build_create_table_collation();
+	// TODO here we check that each table exist, if it exists check each field then, if it does not then create it
+	foreach($awards->_db_columns() as $table => $columns)
+	{
+		foreach($columns as $name => $definition)
+		{
+			if($db->field_exists($name, $table))
+			{
+				$db->modify_column($table, $name, $definition);
+			}
+			else
+			{
+				$db->add_column($table, $name, $definition);
+			}
+		}
+	}
 
 	if($plugins['awards'] <= 1807)
 	{
-		// TODO
-		if($db->field_exists('ougc_awards', 'users'))
-		{
-			$db->modify_column('users', 'ougc_awards', 'text NOT NULL');
-		}
-		else
-		{
-			
-		}
-
-		$db->field_exists('allowrequests', 'ougc_awards') or $db->add_column('ougc_awards', 'allowrequests', "tinyint(1) NOT NULL DEFAULT '1'");
-		$db->field_exists('allowrequests', 'ougc_awards_categories') or $db->add_column('ougc_awards_categories', 'allowrequests', "tinyint(1) NOT NULL DEFAULT '1'");
-
 		$db->write_query("CREATE TABLE `".TABLE_PREFIX."ougc_awards_requests` (
 				`rid` int UNSIGNED NOT NULL AUTO_INCREMENT,
 				`aid` int NOT NULL DEFAULT '0',
@@ -500,8 +502,6 @@ if(use_xmlhttprequest == "1")
 
 	if($plugins['awards'] <= 1803)
 	{
-		$db->field_exists('cid', 'ougc_awards') or $db->add_column('ougc_awards', 'cid', "int NOT NULL DEFAULT '0'");
-
 		$db->write_query("CREATE TABLE `".TABLE_PREFIX."ougc_awards_categories` (
 				`cid` int UNSIGNED NOT NULL AUTO_INCREMENT,
 				`name` varchar(100) NOT NULL DEFAULT '',
@@ -584,11 +584,6 @@ if(use_xmlhttprequest == "1")
 		$db->modify_column('ougc_awards', 'aid', 'int UNSIGNED NOT NULL AUTO_INCREMENT');
 		$db->modify_column('ougc_awards', 'pm', 'text NOT NULL');
 
-		if(!$db->field_exists('disporder', 'ougc_awards'))
-		{
-			$db->add_column('ougc_awards', 'disporder', 'smallint(5) NOT NULL DEFAULT \'0\'');
-		}
-
 		$db->modify_column('ougc_awards_users', 'gid', 'int UNSIGNED NOT NULL AUTO_INCREMENT');
 		$db->modify_column('ougc_awards_users', 'uid', 'int NOT NULL DEFAULT \'0\'');
 		$db->modify_column('ougc_awards_users', 'aid', 'int NOT NULL DEFAULT \'0\'');
@@ -645,55 +640,17 @@ function ougc_awards_deactivate()
 // _install() routine
 function ougc_awards_install()
 {
-	global $db;
+	global $db, $awards;
 
 	// Create our table(s)
-	$collation = $db->build_create_table_collation();
-	$db->write_query("CREATE TABLE `".TABLE_PREFIX."ougc_awards` (
-			`aid` int UNSIGNED NOT NULL AUTO_INCREMENT,
-			`cid` int NOT NULL DEFAULT '0',
-			`name` varchar(100) NOT NULL DEFAULT '',
-			`description` varchar(255) NOT NULL DEFAULT '',
-			`image` varchar(255) NOT NULL DEFAULT '',
-			`disporder` smallint(5) NOT NULL DEFAULT '0',
-			`allowrequests` tinyint(1) NOT NULL DEFAULT '1',
-			`visible` smallint(1) NOT NULL DEFAULT '1',
-			`pm` text NOT NULL,
-			`type` smallint(1) NOT NULL DEFAULT '0',
-			PRIMARY KEY (`aid`)
-		) ENGINE=MyISAM{$collation};"
-	);
-	$db->write_query("CREATE TABLE `".TABLE_PREFIX."ougc_awards_categories` (
-			`cid` int UNSIGNED NOT NULL AUTO_INCREMENT,
-			`name` varchar(100) NOT NULL DEFAULT '',
-			`description` varchar(255) NOT NULL DEFAULT '',
-			`disporder` smallint NOT NULL DEFAULT '0',
-			`allowrequests` tinyint(1) NOT NULL DEFAULT '1',
-			`visible` tinyint(1) NOT NULL DEFAULT '1',
-			PRIMARY KEY (`cid`)
-		) ENGINE=MyISAM{$collation};"
-	);
-	$db->write_query("CREATE TABLE `".TABLE_PREFIX."ougc_awards_users` (
-			`gid` int UNSIGNED NOT NULL AUTO_INCREMENT,
-			`uid` int NOT NULL DEFAULT '0',
-			`aid` int NOT NULL DEFAULT '0',
-			`reason` text NOT NULL,
-			`date` int(10) NOT NULL DEFAULT '0',
-			PRIMARY KEY (`gid`)
-		) ENGINE=MyISAM{$collation};"
-	);
-	$db->write_query("CREATE TABLE `".TABLE_PREFIX."ougc_awards_requests` (
-			`rid` int UNSIGNED NOT NULL AUTO_INCREMENT,
-			`aid` int NOT NULL DEFAULT '0',
-			`uid` int NOT NULL DEFAULT '0',
-			`message` text NOT NULL,
-			`status` smallint(1) NOT NULL DEFAULT '1',
-			PRIMARY KEY (`rid`)
-		) ENGINE=MyISAM{$collation};"
-	);
-
-	// Add DB entries
-	$db->field_exists('ougc_awards', 'users') or $db->add_column('users', 'ougc_awards', 'text NOT NULL');
+	$awards->_db_verify_tables();
+	foreach($awards->_db_columns() as $table => $columns)
+	{
+		foreach($columns as $name => $definition)
+		{
+			$db->field_exists($name, $table) or $db->add_column($table, $name, $definition);
+		}
+	}
 
 	if($db->table_exists('alert_settings') && $db->table_exists('alert_setting_values'))
 	{
@@ -735,15 +692,21 @@ function ougc_awards_is_installed()
 // _uninstall() routine
 function ougc_awards_uninstall()
 {
-	global $db, $PL, $cache;
+	global $db, $PL, $cache, $awards;
 	ougc_awards_pl_check();
 
 	// Drop DB entries
-	$db->drop_table('ougc_awards');
-	$db->drop_table('ougc_awards_users');
-	$db->drop_table('ougc_awards_categories');
-
-	!$db->field_exists('ougc_awards', 'users') or $db->drop_column('users', 'ougc_awards');
+	foreach($awards->_db_tables() as $name => $table)
+	{
+		$db->drop_table($name);
+	}
+	foreach($awards->_db_columns() as $table => $columns)
+	{
+		foreach($columns as $name => $definition)
+		{
+			!$db->field_exists($name, $table) or $db->drop_column($table, $name);
+		}
+	}
 
 	$PL->settings_delete('ougc_awards');
 	$PL->templates_delete('ougcawards');
@@ -1393,6 +1356,155 @@ class OUGC_Awards
 		}
 	}
 
+	// List of tables
+	function _db_tables()
+	{
+		$tables = array(
+			'ougc_awards'				=> array(
+				'aid'			=> "int UNSIGNED NOT NULL AUTO_INCREMENT",
+				'cid'			=> "int NOT NULL DEFAULT '0'",
+				'name'			=> "varchar(100) NOT NULL DEFAULT ''",
+				'description'	=> "varchar(255) NOT NULL DEFAULT ''",
+				'image'			=> "varchar(255) NOT NULL DEFAULT ''",
+				'disporder'		=> "smallint(5) NOT NULL DEFAULT '0'",
+				'allowrequests'	=> "tinyint(1) NOT NULL DEFAULT '1'",
+				'visible'		=> "smallint(1) NOT NULL DEFAULT '1'",
+				'pm'			=> "text NOT NULL",
+				'type'			=> "smallint(1) NOT NULL DEFAULT '0'",
+				'prymary_key'	=> "aid"
+			),
+			'ougc_awards_users'			=> array(
+				'gid'			=> "int UNSIGNED NOT NULL AUTO_INCREMENT",
+				'uid'			=> "int NOT NULL DEFAULT '0'",
+				'aid'			=> "int NOT NULL DEFAULT '0'",
+				'reason'		=> "text NOT NULL",
+				'date'			=> "int(10) NOT NULL DEFAULT '0'",
+				'prymary_key'	=> "gid"
+			),
+			'ougc_awards_categories'	=> array(
+				'cid'			=> "int UNSIGNED NOT NULL AUTO_INCREMENT",
+				'name'			=> "varchar(100) NOT NULL DEFAULT ''",
+				'description'	=> "varchar(255) NOT NULL DEFAULT ''",
+				'disporder'		=> "smallint NOT NULL DEFAULT '0'",
+				'allowrequests'	=> "tinyint(1) NOT NULL DEFAULT '1'",
+				'visible'		=> "tinyint(1) NOT NULL DEFAULT '1'",
+				'prymary_key'	=> "cid"
+			),
+			'ougc_awards_requests'		=> array(
+				'rid'			=> "int UNSIGNED NOT NULL AUTO_INCREMENT",
+				'aid'			=> "int NOT NULL DEFAULT '0'",
+				'uid'			=> "int NOT NULL DEFAULT '0'",
+				'message'		=> "text NOT NULL",
+				'status'		=> "smallint(1) NOT NULL DEFAULT '1'",
+				'prymary_key'	=> "rid"
+			),
+			'ougc_awards_tasks'			=> array(
+				'tid'					=> "int UNSIGNED NOT NULL AUTO_INCREMENT",
+				'name'					=> "varchar(100) NOT NULL DEFAULT ''",
+				'description'			=> "varchar(255) NOT NULL DEFAULT ''",
+				'disporder'				=> "smallint(5) NOT NULL DEFAULT '0'",
+				'active'				=> "smallint(1) NOT NULL DEFAULT '1'",
+				'logging'				=> "smallint(1) NOT NULL DEFAULT '1'",
+				'requirements'			=> "varchar(200) NOT NULL DEFAULT ''",
+				'usergroups'			=> "text NOT NULL",
+				'give'					=> "text NOT NULL",
+				'revoke'				=> "text NOT NULL",
+				'posts'					=> "int UNSIGNED NOT NULL DEFAULT '0'",
+				'poststype'				=> "char(2) NOT NULL DEFAULT ''",
+				'threads'				=> "int UNSIGNED NOT NULL DEFAULT '0'",
+				'threadstype'			=> "char(2) NOT NULL DEFAULT ''",
+				'fposts'				=> "int UNSIGNED NOT NULL DEFAULT '0'",
+				'fpoststype'			=> "char(2) NOT NULL DEFAULT ''",
+				'fpostsforums'			=> "text NOT NULL",
+				'fthreads'				=> "int UNSIGNED NOT NULL DEFAULT '0'",
+				'fthreadstype'			=> "char(2) NOT NULL DEFAULT ''",
+				'fthreadsforums'		=> "text NOT NULL",
+				'registered'			=> "int UNSIGNED NOT NULL DEFAULT '0'",
+				'registeredtype'		=> "varchar(20) NOT NULL DEFAULT ''",
+				'online'				=> "int UNSIGNED NOT NULL DEFAULT '0'",
+				'onlinetype'			=> "varchar(20) NOT NULL DEFAULT ''",
+				'reputations'			=> "int NOT NULL DEFAULT '0'",
+				'reputationtype'		=> "char(2) NOT NULL DEFAULT ''",
+				'referrals'				=> "int UNSIGNED NOT NULL DEFAULT '0'",
+				'referralstype'			=> "char(2) NOT NULL DEFAULT ''",
+				'warnings'				=> "int UNSIGNED NOT NULL DEFAULT '0'",
+				'warningstype'			=> "char(2) NOT NULL DEFAULT ''",
+				'newpoints'				=> "int NOT NULL DEFAULT '0'",
+				'newpointstype'			=> "char(2) NOT NULL DEFAULT ''",
+				'profilefields'			=> "text NOT NULL",
+				'mydownloads'			=> "int UNSIGNED NOT NULL DEFAULT '0'",
+				'mydownloadstype'		=> "char(2) NOT NULL DEFAULT ''",
+				'ougc_customrep_r'		=> "int UNSIGNED NOT NULL DEFAULT '0'",
+				'ougc_customreptype_r'	=> "char(2) NOT NULL DEFAULT ''",
+				'ougc_customrepids_r'	=> "text NOT NULL",
+				'ougc_customrep_g'		=> "int UNSIGNED NOT NULL DEFAULT '0'",
+				'ougc_customreptype_g'	=> "char(2) NOT NULL DEFAULT ''",
+				'ougc_customrepids_g'	=> "text NOT NULL",
+				'prymary_key'	=> "tid"
+			)
+		);
+
+		return $tables;
+	}
+
+	// List of columns
+	function _db_columns()
+	{
+		$tables = array(
+			'users'			=> array(
+				'ougc_awards' => 'text NOT NULL'
+			),
+		);
+
+		return $tables;
+	}
+
+	// List of columns
+	function _db_verify_tables()
+	{
+		$collation = $db->build_create_table_collation();
+		foreach($this->_db_tables() as $name => $fields)
+		{
+			if($db->table_exists($table))
+			{
+				foreach($fields as $field => $definition)
+				{
+					if($field == 'prymary_key')
+					{
+						continue;
+					}
+
+					if($db->field_exists($field, $table))
+					{
+						$db->modify_column($table, $field, $definition);
+					}
+					else
+					{
+						$db->add_column($table, $field, $definition);
+					}
+				}
+			}
+			else
+			{
+				$query = "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX."{$name}` (";
+				foreach($fields as $field => $definition)
+				{
+					if($field == 'prymary_key')
+					{
+						$query .= "PRIMARY KEY (`{$definition}`)";
+					}
+					else
+					{
+						$query .= "`{$field}` {$definition},";
+					}
+				}
+				$db->write_query($query);
+				$query .= ") ENGINE=MyISAM{$collation};";
+			}
+			$db->drop_table($name);
+		}
+	}
+
 	// Loads language strings
 	function lang_load($extra=false)
 	{
@@ -1447,6 +1559,7 @@ class OUGC_Awards
 		$cache->update('ougc_awards', $d);
 
 		return true;
+		//TODO
 	}
 
 	// Clean input
@@ -2093,6 +2206,8 @@ class OUGC_Awards
 	// Importer
 	function run_importer()
 	{
+		global $plugins;
+
 		$awards = &$this;
 
 		if(!($type = $awards->get_input('ougc_awards_import')))
@@ -2102,14 +2217,30 @@ class OUGC_Awards
 
 		switch($type)
 		{
-			#case 'mybbcentral';
+			case 'nickawards';
+				$tables = array('awards' => 'awards', 'users' => 'awards_given');
+				$keys = array('name' => 'name', 'description' => '', 'image' => 'image', 'original_id' => 'id', 'original_id_u' => 'award_id', 'uid' => 'to_uid', 'reason' => 'reason', 'TIME_NOW' => 'date_given');
+				$img_prefix = '{bburl}/uploads/awards/';
+				$lang_var = 'ougc_awards_import_confirm_mybbcentral';
+				break;
 			default;
 				$tables = array('awards' => 'myawards', 'users' => 'myawards_users');
-				$keys = array('name' => 'awname', 'description' => 'awdescr', 'image' => 'awimg', 'original_id' => 'awid', 'uid' => 'awuid', 'reason' => 'awreason', 'TIME_NOW' => 'awutime');
+				$keys = array('name' => 'awname', 'description' => 'awdescr', 'image' => 'awimg', 'original_id' => 'awid', 'original_id_u' => 'awid', 'uid' => 'awuid', 'reason' => 'awreason', 'TIME_NOW' => 'awutime');
 				$img_prefix = '{bburl}/uploads/awards/';
 				$lang_var = 'ougc_awards_import_confirm_mybbcentral';
 				break;
 		}
+
+		$args = array(
+			'this'			=> &$this,
+			'tables'		=> &$tables,
+			'keys'			=> &$keys,
+			'img_prefix'	=> &$img_prefix,
+			'lang_var'		=> &$lang_var,
+			'keys'			=> &$this
+		);
+
+		$plugins->run_hooks('ougc_awards_importer_start', $args);
 
 		global $lang, $mybb, $page;
 		$awards->lang_load();
@@ -2129,6 +2260,11 @@ class OUGC_Awards
 
 			global $db;
 
+			$awards->insert_category(array(
+				'name'			=> 'Imported Awards',
+				'description'	=> 'Automatic category created after an import.'
+			));
+
 			$query = $db->simple_select('ougc_awards', 'MAX(disporder) AS max_disporder');
 			$disporder = (int)$db->fetch_field($query, 'max_disporder');
 
@@ -2136,6 +2272,7 @@ class OUGC_Awards
 			while($award = $db->fetch_array($query))
 			{
 				$insert_award = array(
+					'cid'			=> $awards->cid,
 					'name'			=> $award[$keys['name']],
 					'description'	=> $award[$keys['description']],
 					'image'			=> $img_prefix.$award[$keys['image']],
@@ -2165,6 +2302,8 @@ class OUGC_Awards
 
 				$awards->give_award($insert_award, array('uid' => $insert_award['uid']), $insert_award['reason']);
 			}
+
+			$plugins->run_hooks('ougc_awards_importer_end', $args);
 
 			flash_message($lang->ougc_awards_import_end, 'success');
 			admin_redirect('index.php?module=config-plugins');
