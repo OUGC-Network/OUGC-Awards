@@ -35,11 +35,309 @@ $sub_tabs['ougc_awards_categories'] = array(
 	'description'	=> $lang->ougc_awards_tab_categories_desc
 );
 
+$aid = $awards->get_input('aid', 1);
 $cid = $awards->get_input('cid', 1);
+$tid = $awards->get_input('tid', 1);
+
 $category = $awards->get_category($cid);
 $category_url = $awards->build_url();
 
-if($awards->get_input('view') == 'category' && $category):
+$sub_tabs['ougc_awards_tasks'] = array(
+	'title'			=> $lang->ougc_awards_tab_tasks,
+	'link'			=> 'index.php?module=user-ougc_awards&amp;view=tasks',
+	'description'	=> $lang->ougc_awards_tab_tasks_desc
+);
+
+if($awards->get_input('view') == 'tasks'):
+
+$awards->set_url('view=tasks');
+
+$lang->load($run_module.'_group_promotions', false, true);
+
+$sub_tabs['ougc_awards_add'] = array(
+	'title'			=> $lang->ougc_awards_tab_add,
+	'link'			=> $awards->build_url('action=add'),
+	'description'	=> $lang->ougc_awards_tab_add_d
+);
+
+switch($awards->get_input('action'))
+{
+	case 'edit':
+		$sub_tabs['ougc_awards_edit'] = array(
+			'title'			=> $lang->ougc_awards_tab_edit,
+			'link'			=> 'index.php?module=user-ougc_awards&amp;view=tasks&amp;action=edit&amp;tid='.$tid,
+			'description'	=> $lang->ougc_awards_tab_editc_desc
+		);
+		break;
+}
+
+$sub_tabs['ougc_awards_tasks_logs'] = array(
+	'title'			=> $lang->ougc_awards_tab_tasks_logs,
+	'link'			=> 'index.php?module=user-ougc_awards&amp;view=tasks&amp;action=logs',
+	'description'	=> $lang->ougc_awards_tab_tasks_logs_desc
+);
+
+if($awards->get_input('action') == 'add' || $awards->get_input('action') == 'edit')
+{
+	$page->add_breadcrumb_item($lang->ougc_awards_acp_nav, $awards->build_url());
+	$page->add_breadcrumb_item($category['name'], $category_url);
+
+	if(!($add = $awards->get_input('action') == 'add'))
+	{
+		if(!($task = $awards->get_task($awards->get_input('tid', 1))))
+		{
+			$awards->admin_redirect($lang->ougc_awards_error_invalitask, true);
+		}
+
+		$page->add_breadcrumb_item(strip_tags($task['name']));
+
+		foreach(array('requirements', 'usergroups', 'give', 'revoke', 'profilefields') as $k)
+		{
+			//_dump($task, $task[$k]);
+			$task[$k] = explode(',', $task[$k]);
+		}
+	}
+
+	$mergeinput = array();
+	foreach(array('name', 'description', 'disporder', 'active', 'logging', 'requirements', 'usergroups', 'give', 'reason', 'revoke', 'posts', 'poststype', 'threads', 'threadstype', 'fposts', 'fpoststype', 'fpostsforums', 'fthreads', 'fthreadstype', 'fthreadsforums', 'registered', 'registeredtype', 'online', 'onlinetype', 'reputation', 'reputationtype', 'referrals', 'referralstype', 'warnings', 'warningstype', 'newpoints', 'newpointstype', 'profilefields', 'mydownloads', 'mydownloadstype', 'myarcadechampions', 'myarcadechampionstype', 'myarcadescores', 'myarcadescorestype', 'ougc_customrep_r', 'ougc_customreptype_r', 'ougc_customrepids_r', 'ougc_customrep_g', 'ougc_customreptype_g', 'ougc_customrepids_g') as $key)
+	{
+		$mergeinput[$key] = isset($mybb->input[$key]) ? $mybb->input[$key] : ($add ? '' : $task[$key]);
+	}
+	$mybb->input = array_merge($mybb->input, $mergeinput);
+	//_dump($mybb->input);
+
+	$page->output_header($lang->ougc_awards_acp_nav);
+	$page->output_nav_tabs($sub_tabs, $add ? 'ougc_awards_add' : 'ougc_awards_edit');
+
+	if($mybb->request_method == 'post')
+	{
+		$errors = array();
+
+		if(!$awards->get_input('name') || isset($mybb->input{100}))
+		{
+			$errors[] = $lang->ougc_awards_error_invalidname;
+		}
+		!isset($mybb->input['description']{255}) or $errors[] = $lang->ougc_awards_error_invaliddesscription;
+		!isset($mybb->input['image']{255}) or $errors[] = $lang->ougc_awards_error_invalidimage;
+
+		if(empty($errors))
+		{
+			$method = $add ? 'insert_task' : 'update_task';
+			$lang_val = $add ? 'ougc_awards_success_add' : 'ougc_awards_success_edit';
+
+			$awards->{$method}(array(
+				'name'					=> $awards->get_input('name'),
+				'description'			=> $awards->get_input('description'),
+				'active'				=> $awards->get_input('active', 1),
+				'logging'				=> $awards->get_input('logging', 1),
+				'requirements'			=> $awards->get_input('requirements', 2),
+				'usergroups'			=> $awards->get_input('usergroups', 2),
+				'give'					=> $awards->get_input('give', 2),
+				'reason'				=> $awards->get_input('reason'),
+				'revoke'				=> $awards->get_input('revoke', 2),
+				'disporder'				=> $awards->get_input('disporder', 1),
+				'posts'					=> $awards->get_input('posts', 1),
+				'poststype'				=> $awards->get_input('poststype'),
+				'threads'				=> $awards->get_input('threads', 1),
+				'threadstype'			=> $awards->get_input('threadstype'),
+				'fposts'				=> $awards->get_input('fposts', 1),
+				'fpoststype'			=> $awards->get_input('fpoststype'),
+				'fpostsforums'			=> $awards->get_input('fpostsforums', 1),
+				'fthreads'				=> $awards->get_input('fthreads', 1),
+				'fthreadstype'			=> $awards->get_input('fthreadstype'),
+				'fthreadsforums'		=> $awards->get_input('fthreadsforums', 1),
+				'registered'			=> $awards->get_input('registered', 1),
+				'registeredtype'		=> $awards->get_input('registeredtype'),
+				'online'				=> $awards->get_input('online', 1),
+				'onlinetype'			=> $awards->get_input('onlinetype'),
+				'reputation'			=> $awards->get_input('reputation', 1),
+				'reputationtype'		=> $awards->get_input('reputationtype'),
+				'referrals'				=> $awards->get_input('referrals', 1),
+				'referralstype'			=> $awards->get_input('referralstype'),
+				'warnings'				=> $awards->get_input('warnings', 1),
+				'warningstype'			=> $awards->get_input('warningstype'),
+				'newpoints'				=> $awards->get_input('newpoints', 1),
+				'newpointstype'			=> $awards->get_input('newpointstype'),
+				'profilefields'			=> $awards->get_input('profilefields', 2),
+				'mydownloads'			=> $awards->get_input('mydownloads', 1),
+				'mydownloadstype'		=> $awards->get_input('mydownloadstype'),
+				'myarcadechampions'		=> $awards->get_input('myarcadechampions', 1),
+				'myarcadechampionstype'	=> $awards->get_input('myarcadechampionstype'),
+				'myarcadescores'		=> $awards->get_input('myarcadescores', 1),
+				'myarcadescorestype'	=> $awards->get_input('myarcadescorestype'),
+				'ougc_customrep_r'		=> $awards->get_input('ougc_customrep_r', 1),
+				'ougc_customreptype_r'	=> $awards->get_input('ougc_customreptype_r'),
+				'ougc_customrepids_r'	=> $awards->get_input('ougc_customrepids_r', 1),
+				'ougc_customrep_g'		=> $awards->get_input('ougc_customrep_g', 1),
+				'ougc_customreptype_g'	=> $awards->get_input('ougc_customreptype_g'),
+				'ougc_customrepids_g'	=> $awards->get_input('ougc_customrepids_g', 1)
+			), $awards->get_input('tid', 1));
+
+			$awards->update_cache();
+			$awards->log_action();
+			$awards->admin_redirect($lang->{$lang_val});
+		}
+		else
+		{
+			$page->output_inline_error($errors);
+		}
+	}
+
+	$form = new Form($awards->build_url(($add ? 'action=add' : array('action' => 'edit', 'tid' => $task['tid']))), 'post');
+	$form_container = new FormContainer(($add ? $lang->ougc_awards_form_add : $lang->ougc_awards_tab_editt_desc));
+
+	$form_container->output_row($lang->ougc_awards_form_name.' <em>*</em>', $lang->ougc_awards_form_name_d, $form->generate_text_box('name', $mybb->input['name']));
+	$form_container->output_row($lang->ougc_awards_form_desc, $lang->ougc_awards_form_desc_d, $form->generate_text_box('description', $mybb->input['description']));
+	$form_container->output_row($lang->ougc_awards_form_active, $lang->ougc_awards_form_active_desc, $form->generate_yes_no_radio('active', (int)$mybb->input['active']));
+	$form_container->output_row($lang->ougc_awards_form_logging, $lang->ougc_awards_form_logging_desc, $form->generate_yes_no_radio('logging', (int)$mybb->input['logging']));
+	$form_container->output_row($lang->ougc_awards_form_requirements, $lang->ougc_awards_form_requirements_desc, $form->generate_select_box('requirements[]', array(
+		'posts'				=> $lang->post_count,
+		'threads'			=> $lang->thread_count,
+		'fposts'			=> $lang->ougc_awards_form_requirements_fposts,
+		'fthreads'			=> $lang->ougc_awards_form_requirements_fthreads,
+		'registered'		=> $lang->time_registered,
+		'online'			=> $lang->time_online,
+		'reputation'		=> $lang->reputation,
+		'referrals'			=> $lang->referrals,
+		'warnings'			=> $lang->warning_points,
+		'newpoints'			=> $lang->ougc_awards_form_requirements_newpoints,
+		'profilefields'		=> $lang->ougc_awards_form_requirements_profilefields,
+		'mydownloads'		=> $lang->ougc_awards_form_requirements_mydownloads,
+		'myarcadechampions'	=> $lang->ougc_awards_form_requirements_myarcadechampions,
+		'myarcadescores'	=> $lang->ougc_awards_form_requirements_myarcadescores,
+		'ougc_customrep_r'	=> $lang->ougc_awards_form_requirements_ougc_customrep_r,
+		'ougc_customrep_g'	=> $lang->ougc_awards_form_requirements_ougc_customrep_g
+	), $awards->get_input('requirements', 2), array('multiple' => true, 'size' => 5)));
+	$form_container->output_row($lang->ougc_awards_form_usergroups, $lang->ougc_awards_form_usergroups_desc, $form->generate_group_select('usergroups[]', $mybb->input['usergroups'], array('multiple' => true)));
+	$form_container->output_row($lang->ougc_awards_form_give, $lang->ougc_awards_form_give_desc, $awards->generate_awards_select('give[]', $mybb->input['give'], array('multiple' => true)));
+	$form_container->output_row($lang->ougc_awards_form_reason, $lang->ougc_awards_form_reason_d, $form->generate_text_area('reason', (string)$mybb->input['reason'], array('rows' => 8, 'style' => 'width:80%;')));
+	$form_container->output_row($lang->ougc_awards_form_revoke, $lang->ougc_awards_form_revoke_desc, $awards->generate_awards_select('revoke[]', $mybb->input['revoke'], array('multiple' => true)));
+	$form_container->output_row($lang->ougc_awards_form_order, $lang->ougc_awards_form_order_d, $form->generate_text_box('disporder', (int)$mybb->input['disporder'], array('style' => 'text-align: center; width: 30px;" maxlength="5')));
+	$form_container->end();
+
+	$options_type = array(
+		'>'		=> $lang->greater_than,
+		'>='	=> $lang->greater_than_or_equal_to,
+		'='		=> $lang->equal_to,
+		'<='	=> $lang->less_than_or_equal_to,
+		'<'		=> $lang->less_than
+	);
+	$options_time = array(
+		'hours'		=> $lang->hours,
+		'days'	=> $lang->days,
+		'weeks'		=> $lang->weeks,
+		'months'	=> $lang->months,
+		'years'		=> $lang->years
+	);
+
+	$form_container = new FormContainer($lang->ougc_awards_form_requirements);
+	$form_container->output_row($lang->post_count, $lang->post_count_desc, $form->generate_numeric_field('posts', $awards->get_input('posts', 1), array('id' => 'posts', 'min' => 0)).' '.$form->generate_select_box('poststype', $options_type, $awards->get_input('poststype'), array('id' => 'poststype')), 'posts');
+	$form_container->output_row($lang->thread_count, $lang->thread_count_desc, $form->generate_numeric_field('threads', $awards->get_input('threads', 1), array('id' => 'threads', 'min' => 0)).' '.$form->generate_select_box('threadstype', $options_type, $awards->get_input('threadstype'), array('id' => 'threadstype')), 'threads');
+	$form_container->output_row($lang->ougc_awards_form_requirements_fposts, $lang->ougc_awards_form_requirements_fposts_desc, $form->generate_numeric_field('fposts', $awards->get_input('fposts', 1), array('id' => 'fposts', 'min' => 0)).' '.$form->generate_select_box('fpoststype', $options_type, $awards->get_input('fpoststype'), array('id' => 'fpoststype')).''.$form->generate_forum_select('fpostsforums', $awards->get_input('fpostsforums', 1)), 'fposts');
+	$form_container->output_row($lang->ougc_awards_form_requirements_fthreads, $lang->ougc_awards_form_requirements_fthreads_desc, $form->generate_numeric_field('fthreads', $awards->get_input('fthreads', 1), array('id' => 'fthreads', 'min' => 0)).' '.$form->generate_select_box('fthreadstype', $options_type, $awards->get_input('fthreadstype'), array('id' => 'fthreadstype')).''.$form->generate_forum_select('fthreadsforums', $awards->get_input('fthreadsforums', 1)), 'fthreads');
+	$form_container->output_row($lang->time_registered, $lang->time_registered_desc, $form->generate_numeric_field('registered', $awards->get_input('registered', 1), array('id' => 'registered', 'min' => 0)).' '.$form->generate_select_box('registeredtype', $options_time, $awards->get_input('registeredtype'), array('id' => 'registeredtype')), 'registered');
+	$form_container->output_row($lang->time_online, $lang->time_online_desc, $form->generate_numeric_field('online', $awards->get_input('online', 1), array('id' => 'online', 'min' => 0)).' '.$form->generate_select_box('onlinetype', $options_time, $awards->get_input('onlinetype'), array('id' => 'onlinetype')), 'online');
+	$form_container->output_row($lang->reputation_count, $lang->reputation_count_desc, $form->generate_numeric_field('reputation', $awards->get_input('reputation', 1), array('id' => 'reputation', 'min' => 0)).''.$form->generate_select_box('reputationtype', $options_type, $awards->get_input('reputationtype'), array('id' => 'reputationtype')), 'reputation');
+	$form_container->output_row($lang->referral_count, $lang->referral_count_desc, $form->generate_numeric_field('referrals', $awards->get_input('referrals', 1), array('id' => 'referrals', 'min' => 0)).''.$form->generate_select_box('referralstype', $options_type, $awards->get_input('referralstype'), array('id' => 'referralstype')), 'referrals');
+	$form_container->output_row($lang->warning_points, $lang->warning_points_desc, $form->generate_numeric_field('warnings', $awards->get_input('warnings', 1), array('id' => 'warnings', 'min' => 0)).''.$form->generate_select_box('warningstype', $options_type, $awards->get_input('warningstype'), array('id' => 'warningstype')), 'warnings');
+	$form_container->output_row($lang->ougc_awards_form_requirements_newpoints, $lang->ougc_awards_form_requirements_newpoints_desc, $form->generate_numeric_field('newpoints', $awards->get_input('newpoints', 1), array('id' => 'newpoints', 'min' => 0)).' '.$form->generate_select_box('newpointstype', $options_type, $awards->get_input('newpointstype'), array('id' => 'newpointstype')), 'newpoints');
+	$form_container->output_row($lang->ougc_awards_form_requirements_profilefields, $lang->ougc_awards_form_requirements_profilefields_desc, $awards->generate_profilefields_select('profilefields[]', $awards->get_input('profilefields', 2), array('multiple' => true, 'id' => 'profilefields')), 'profilefields');
+	$form_container->output_row($lang->ougc_awards_form_requirements_mydownloads, $lang->ougc_awards_form_requirements_mydownloads_desc, $form->generate_numeric_field('mydownloads', $awards->get_input('mydownloads', 1), array('id' => 'mydownloads', 'min' => 0)).' '.$form->generate_select_box('mydownloadstype', $options_type, $awards->get_input('mydownloadstype'), array('id' => 'mydownloadstype')), 'mydownloads');
+	$form_container->output_row($lang->ougc_awards_form_requirements_myarcadechampions, $lang->ougc_awards_form_requirements_myarcadechampions_desc, $form->generate_numeric_field('myarcadechampions', $awards->get_input('myarcadechampions', 1), array('id' => 'myarcadechampions', 'min' => 0)).' '.$form->generate_select_box('myarcadechampionstype', $options_type, $awards->get_input('myarcadechampionstype'), array('id' => 'myarcadechampionstype')), 'myarcadechampions');
+	$form_container->output_row($lang->ougc_awards_form_requirements_myarcadescores, $lang->ougc_awards_form_requirements_myarcadescores_desc, $form->generate_numeric_field('myarcadescores', $awards->get_input('myarcadescores', 1), array('id' => 'myarcadescores', 'min' => 0)).' '.$form->generate_select_box('myarcadescorestype', $options_type, $awards->get_input('myarcadescorestype'), array('id' => 'myarcadescorestype')), 'myarcadescores');
+	$form_container->output_row($lang->ougc_awards_form_requirements_ougc_customrep_r, $lang->ougc_awards_form_requirements_ougc_customrep_r_desc, $form->generate_numeric_field('ougc_customrep_r', $awards->get_input('ougc_customrep_r', 1), array('id' => 'ougc_customrep_r', 'min' => 0)).' '.$form->generate_select_box('ougc_customreptype_r', $options_type, $awards->get_input('ougc_customreptype_r'), array('id' => 'ougc_customreptype_r')).''.$awards->generate_ougc_custom_reputation_select('ougc_customrepids_r', $awards->get_input('ougc_customrepids_r', 1)), 'ougc_customrep_r');
+	$form_container->output_row($lang->ougc_awards_form_requirements_ougc_customrep_g, $lang->ougc_awards_form_requirements_ougc_customrep_g_desc, $form->generate_numeric_field('ougc_customrep_g', $awards->get_input('ougc_customrep_g', 1), array('id' => 'ougc_customrep_g', 'min' => 0)).' '.$form->generate_select_box('ougc_customreptype_g', $options_type, $awards->get_input('ougc_customreptype_g'), array('id' => 'ougc_customreptype_g')).''.$awards->generate_ougc_custom_reputation_select('ougc_customrepids_g', $awards->get_input('ougc_customrepids_g', 1)), 'ougc_customrep_g');
+	$form_container->end();
+
+	$form->output_submit_wrapper(array($form->generate_submit_button($lang->ougc_awards_button_submit), $form->generate_reset_button($lang->reset)));
+	$form->end();
+	$page->output_footer();
+}
+elseif($awards->get_input('action') == 'delete')
+{
+	
+}
+else
+{
+	$page->add_breadcrumb_item($lang->ougc_awards_acp_nav, $awards->build_url());
+	$page->add_breadcrumb_item($sub_tabs['ougc_awards_tasks']);
+	$page->output_header($lang->ougc_awards_acp_nav);
+	$page->output_nav_tabs($sub_tabs, 'ougc_awards_tasks');
+
+	$table = new Table;
+	$table->construct_header($lang->ougc_awards_form_name, array('width' => '20%'));
+	$table->construct_header($lang->ougc_awards_form_desc, array('width' => '45%'));
+	$table->construct_header($lang->ougc_awards_form_order, array('width' => '10%', 'class' => 'align_center'));
+	$table->construct_header($lang->ougc_awards_form_active, array('width' => '10%', 'class' => 'align_center'));
+	$table->construct_header($lang->ougc_awards_view_actions, array('width' => '15%', 'class' => 'align_center'));
+
+	$limit = (int)$mybb->settings['ougc_awards_perpage'];
+	$limit = $limit > 100 ? 100 : ($limit < 1 ? 1 : $limit);
+
+	if($awards->get_input('page', 1) > 0)
+	{
+		$start = ($awards->get_input('page', 1)-1)*$limit;
+	}
+	else
+	{
+		$start = 0;
+		$mybb->input['page'] = 1;
+	}
+
+	$query = $db->simple_select('ougc_awards_tasks', '*', '', array('limit_start' => $start, 'limit' => $limit, 'order_by' => 'disporder'));
+	
+	if(!$db->num_rows($query))
+	{
+		$table->construct_cell('<div align="center">'.$lang->ougc_awards_view_empty.'</div>', array('colspan' => 5));
+		$table->construct_row();
+		$table->output($sub_tabs['ougc_awards_tasks']['description']);
+	}
+	else
+	{
+		if($mybb->request_method == 'post' && $awards->get_input('action') == 'updatedisporder')
+		{
+			foreach($mybb->input['disporder'] as $tid => $disporder)
+			{
+				$awards->update_task(array('disporder' => $disporder), $tid);
+			}
+			$awards->update_cache();
+			$awards->admin_redirect();
+		}
+
+		$form = new Form($awards->build_url('action=updatedisporder'), 'post');
+
+		$query2 = $db->simple_select('ougc_awards_tasks', 'COUNT(tid) AS tasks');
+		$taskcount = (int)$db->fetch_field($query2, 'tasks');
+
+		echo draw_admin_pagination($mybb->input['page'], $limit, $taskcount, 'index.php?module=user-ougc_awards&amp;view=tasks');
+
+		while($task = $db->fetch_array($query))
+		{
+			$edit_link = "index.php?module=user-ougc_awards&amp;view=tasks&amp;action=edit&amp;tid={$task['tid']}";
+
+			$task['active'] or $task['name'] = '<i>'.$task['name'].'</i>';
+
+			$table->construct_cell('<a href="'.$edit_link.'">'.$task['name'].'</a>');
+			$table->construct_cell($task['description']);
+			$table->construct_cell($form->generate_text_box('disporder['.$task['tid'].']', (int)$task['disporder'], array('style' => 'text-align: center; width: 30px;')), array('class' => 'align_center'));
+			$table->construct_cell('<img src="styles/default/images/icons/bullet_o'.(!$task['active'] ? 'ff' : 'n').($mybb->version_code >= 1800 ? '.png' : '.gif').'" alt="" title="'.(!$task['active'] ? $lang->ougc_awards_form_hidden : $lang->ougc_awards_form_visible).'" />', array('class' => 'align_center'));
+
+			$popup = new PopupMenu("award_{$task['tid']}", $lang->options);
+			$popup->add_item($lang->ougc_awards_tab_edit, $edit_link);
+			$popup->add_item($lang->ougc_awards_tab_delete, "index.php?module=user-ougc_awards&amp;view=tasks&amp;action=delete&amp;tid={$task['tid']}");
+			$table->construct_cell($popup->fetch(), array('class' => 'align_center'));
+
+			$table->construct_row();
+		}
+		$table->output($lang->ougc_awards_tab_view_d);
+
+		$form->output_submit_wrapper(array($form->generate_submit_button($lang->ougc_awards_button_order), $form->generate_reset_button($lang->reset)));
+		$form->end();
+	}
+	$page->output_footer();	
+}
+
+elseif($awards->get_input('view') == 'category' && $category):
 
 $awards->set_url(array('view' => 'category', 'cid' => $cid));
 

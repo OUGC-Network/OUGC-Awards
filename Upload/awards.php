@@ -44,6 +44,9 @@ if(!$mybb->settings['ougc_awards_pagegroups'] || ($mybb->settings['ougc_awards_p
 	error_no_permission();
 }
 
+$awards->update_cache(); //TODO
+//ougc_awards_activate(); //TODO
+
 // Set url
 $awards->set_url(null, THIS_SCRIPT);
 
@@ -71,6 +74,20 @@ if(!empty($mybb->input['view']))
 	if(!$category['cid'] || !$category['visible'])
 	{
 		$error = $lang->ougc_awards_error_invalidcategory;
+	}
+
+	$mybb->user['uid'] = (int)$mybb->user['uid'];
+	$query = $db->simple_select('ougc_awards_requests', 'COUNT(rid) as pending_total', "uid='{$mybb->user['uid']}' AND status='1'");
+	$pending_total = (int)$db->fetch_field($query, 'pending_total');
+
+	if($pending_total)
+	{
+		$message = $lang->sprintf($lang->ougc_awards_page_pending_requests, my_number_format($pending_total));
+		$pending_requests = eval($templates->render('ougcawards_global_notification'));
+	}
+	else
+	{
+		$pending_requests = '';
 	}
 
 	$plugins->run_hooks('ougc_awards_view_start');
@@ -237,9 +254,9 @@ else
 		$categories[] = $category;
 	}
 
-	$whereclause = "visible='1' AND cid IN ('".implode("','", array_values($cids))."')";
+	$whereclause = "a.visible='1' AND a.cid IN ('".implode("','", array_values($cids))."')";
 
-	$query = $db->simple_select('ougc_awards', 'COUNT(aid) AS awards', $whereclause);
+	$query = $db->simple_select('ougc_awards a', 'COUNT(a.aid) AS awards', $whereclause);
 	$awardscount = $db->fetch_field($query, 'awards');
 
 	if($awards->get_input('page', 1) > 0)
@@ -258,9 +275,9 @@ else
 		$mybb->input['page'] = 1;
 	}
 
-	$query = $db->simple_select('ougc_awards', '*', $whereclause, array('limit_start' => $start, 'limit' => $limit, 'order_by' => 'disporder'));
-
 	$multipage = (string)multipage($awardscount, $limit, $awards->get_input('page', 1), $awards->build_url());
+
+	$query = $db->simple_select('ougc_awards a', 'a.*', $whereclause, array('limit_start' => $start, 'limit' => $limit, 'order_by' => 'a.disporder'));
 
 	while($award = $db->fetch_array($query))
 	{
@@ -325,6 +342,8 @@ else
 		}
 	}
 }
+
+$jscriptfile = eval($templates->render('ougcawards_js'));
 eval('$page = "'.$templates->get('ougcawards_page').'";');
 output_page($page);
 exit;

@@ -46,7 +46,8 @@ $l['ougc_awards_error_active'] = 'The awards system is currently not active.';
 $l['ougc_awards_error_pendingrequest'] = 'There is a active request pending for this award from you.';
 
 // Words
-$l['ougc_awards_modcp_username'] = 'Username (<strong title="You can select multiple users starting the field with multiple: and separating each name with a comma. Example: multiple:username1,username2,username3">Tip</span>)';
+//$l['ougc_awards_modcp_username'] = 'Username (<strong title="You can select multiple users starting the field with multiple: and separating each name with a comma. Example: multiple:username1,username2,username3">Tip</span>)';
+$l['ougc_awards_modcp_username'] = 'Username';
 $l['ougc_awards_modcp_give'] = 'Give';
 $l['ougc_awards_modcp_revoke'] = 'Revoke';
 $l['ougc_awards_modcp_reason'] = 'Reason';
@@ -88,3 +89,17 @@ $l['ougc_awards_request_desc'] = 'Request this award to a moderator.';
 $l['ougc_awards_request_name'] = 'Award:';
 $l['ougc_awards_request_message'] = 'Message:';
 $l['ougc_awards_request_button'] = 'Submit';
+
+// Stats
+$l['ougc_awards_stats_most'] = 'Most Awarded';
+$l['ougc_awards_stats_last'] = 'Lastest Awarded';
+$l['ougc_awards_stats_empty'] = 'There are currently no stats to display.';
+$l['ougc_awards_stats_username'] = 'Username';
+$l['ougc_awards_stats_total'] = 'Total';
+$l['ougc_awards_stats_viewall'] = 'View All';
+
+// Global
+$l['ougc_awards_global_menu'] = 'Awards';
+$l['ougc_awards_page_pending_requests'] = 'You have {1} pending request(s) for this award.';
+$l['ougc_awards_page_pending_requests_moderator'] = '<a href="{1}/modcp.php?action=awards&amp;manage=requests"><strong>Moderator Notice:</strong> There is an award request pending for review.</a>';
+$l['ougc_awards_page_pending_requests_moderator_plural'] = '<a href="{1}/modcp.php?action=awards&amp;manage=requests"><strong>Moderator Notice:</strong> There are {2} award requests pending for review.</a>';
