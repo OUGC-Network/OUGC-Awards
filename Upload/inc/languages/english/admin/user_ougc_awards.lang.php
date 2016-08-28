@@ -40,6 +40,8 @@ $l['ougc_awards_import_end'] = 'Awards Imported Successfully.';
 // Settings
 $l['setting_ougc_awards_postbit'] = 'Maximum Awards in Posts';
 $l['setting_ougc_awards_postbit_desc'] = 'Maximum number of awards to be shown in posts. -1 for unlimited.';
+$l['setting_ougc_awards_postbit_maxperline'] = 'Maximum Awards Per Line';
+$l['setting_ougc_awards_postbit_maxperline_desc'] = 'Maximum number of awards to be shown in the same line in posts before adding a break tag. Leave 0 to disable.';
 $l['setting_ougc_awards_profile'] = 'Maximum Awards in Profile';
 $l['setting_ougc_awards_profile_desc'] = 'Maximum number of awards to be shown in profiles. -1 for unlimited.';
 $l['setting_ougc_awards_modcp'] = 'Enable ModCP Panel';
@@ -59,6 +61,16 @@ $l['setting_ougc_awards_myalerts_desc'] = 'Do you want to send an alert to users
 
 // Administrator Permissions
 $l['ougc_awards_acp_permissions'] = 'Can manage awards?';
+
+// ACP Module: Logs
+$l['ougc_awards_logs_task'] = 'Task';
+$l['ougc_awards_logs_user'] = 'User';
+$l['ougc_awards_logs_received'] = 'Award Received';
+$l['ougc_awards_logs_revoked'] = 'Award Revoked';
+$l['ougc_awards_logs_date'] = 'Date';
+$l['ougc_awards_logs_empty'] = 'There are currently no logs to show.';
+$l['ougc_awards_logs_prune'] = 'Prune';
+$l['ougc_awards_logs_none'] = 'None';
 
 // ACP Module: Tabs
 $l['ougc_awards_acp_nav'] = 'Manage Awards';
@@ -93,9 +105,14 @@ $l['ougc_awards_form_add'] = 'Add New Item';
 $l['ougc_awards_form_name'] = 'Name';
 $l['ougc_awards_form_name_d'] = 'Insert a short name for this item.';
 $l['ougc_awards_form_username'] = 'Username';
-$l['ougc_awards_form_username_d'] = 'Insert the username of the user to give/revoke the selected award. <strong title="You can select multiple users starting the field with multiple: and separating each name with a comma. Example: multiple:username1,username2,username3">Tip</span>';
+$l['ougc_awards_form_username_d'] = 'Insert the username of the user to give/revoke the selected award.';
 $l['ougc_awards_form_reason'] = 'Reason';
 $l['ougc_awards_form_reason_d'] = 'Insert a reason for giving this award';
+$l['ougc_awards_form_multiple'] = 'Multiple Users';
+$l['ougc_awards_form_multiple_desc'] = 'Select whether or not you are giving this award to multiple users at once.<br />
+You need to separate each username with a comma without spaces inside the field above.<br />
+The same reason will be used for all users.<br />
+All usernames must be correct.';
 $l['ougc_awards_form_gived'] = 'Select Given Award';
 $l['ougc_awards_form_gived_desc'] = 'Please select the given award you want to revoke.';
 $l['ougc_awards_form_category'] = 'Category';
@@ -149,17 +166,21 @@ $l['ougc_awards_error_revoke'] = 'The selected user doesn\'t has the selected aw
 $l['ougc_awards_success_revoke'] = 'The selected award was revoked successfully.';
 $l['ougc_awards_success_delete'] = 'The item was deleted successfully.';
 $l['ougc_awards_success_cache'] = 'The cache was rebuild successfully.';
+$l['ougc_awards_success_prunelogs'] = 'The task logs were successfully pruned.';
 
 // Tasks
 $l['ougc_awards_form_requirements'] = 'Requirements';
 $l['ougc_awards_form_usergroups'] = 'User Groups';
 $l['ougc_awards_form_usergroups_desc'] = 'Select which user group or user groups the user must be in for the task to run.';
+$l['ougc_awards_form_additionalgroups'] = 'Secondary User Groups';
+$l['ougc_awards_form_additionalgroups_desc'] = 'Select whether the task should check for additional user groups as well.';
 $l['ougc_awards_form_give'] = 'Give Award';
 $l['ougc_awards_form_give_desc'] = 'Seleect the award(s) to give to the user.';
 $l['ougc_awards_form_revoke'] = 'Revoke Award';
 $l['ougc_awards_form_revoke_desc'] = 'Seleect the award(s) to be revoked from the user.';
 $l['ougc_awards_form_requirements'] = 'Requirements';
 $l['ougc_awards_form_requirements_desc'] = 'Seleect the rules to execute this task on users.';
+$l['ougc_awards_form_requirements_post'] = 'Post Count';
 $l['ougc_awards_form_requirements_post'] = 'Post Count';
 $l['ougc_awards_form_requirements_threads'] = 'Thread Count';
 $l['ougc_awards_form_requirements_fposts'] = 'Forum Post Count';
@@ -173,6 +194,8 @@ $l['ougc_awards_form_requirements_referrals'] = 'Referrals';
 $l['ougc_awards_form_requirements_warnings'] = 'Warning Points';
 $l['ougc_awards_form_requirements_newpoints'] = 'Newpoints Points';
 $l['ougc_awards_form_requirements_newpoints_desc'] = 'Enter the number of Newpoints points required. Newpoints points must be selected as a required value for this to be included. Select the type of comparison for Newpoints points.';
+$l['ougc_awards_form_requirements_previousawards'] = 'Previous Awards';
+$l['ougc_awards_form_requirements_previousawards_desc'] = 'Select the awards the user must have required to meet the criteria. Previous awards must be selected as a required value for this to be included.';
 $l['ougc_awards_form_requirements_profilefields'] = 'Filled Profile Fields';
 $l['ougc_awards_form_requirements_profilefields_desc'] = 'Select the filled profile fields required. Filled profile fields must be selected as a required value for this to be included.';
 $l['ougc_awards_form_requirements_mydownloads'] = 'MyDownloads Files Count';
@@ -190,8 +213,6 @@ $l['ougc_awards_form_requirements_ougc_customrep_g_desc'] = 'Enter the number of
 $l['ougc_awards_view_image'] = 'Image';
 $l['ougc_awards_view_actions'] = 'Options';
 $l['ougc_awards_view_empty'] = 'There are currently no items to show.';
-
-// ACP Module: Home
 
 // ACP Module: Users
 $l['ougc_awards_users_date'] = 'Date';

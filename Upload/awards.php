@@ -44,9 +44,6 @@ if(!$mybb->settings['ougc_awards_pagegroups'] || ($mybb->settings['ougc_awards_p
 	error_no_permission();
 }
 
-$awards->update_cache(); //TODO
-//ougc_awards_activate(); //TODO
-
 // Set url
 $awards->set_url(null, THIS_SCRIPT);
 
@@ -77,7 +74,7 @@ if(!empty($mybb->input['view']))
 	}
 
 	$mybb->user['uid'] = (int)$mybb->user['uid'];
-	$query = $db->simple_select('ougc_awards_requests', 'COUNT(rid) as pending_total', "uid='{$mybb->user['uid']}' AND status='1'");
+	$query = $db->simple_select('ougc_awards_requests', 'COUNT(rid) as pending_total', "status='1' AND uid='{$mybb->user['uid']}' AND aid='{$award['aid']}'");
 	$pending_total = (int)$db->fetch_field($query, 'pending_total');
 
 	if($pending_total)
@@ -154,13 +151,14 @@ if(!empty($mybb->input['view']))
 		eval('$users_list .= "'.$templates->get('ougcawards_page_view_row').'";');
 	}
 
-	$request_button = '';
-
 	if(!$users_list)
 	{
 		eval('$users_list = "'.$templates->get('ougcawards_page_view_empty').'";');
 	}
-	elseif($category['allowrequests'] && $award['allowrequests'])
+
+	$request_button = '';
+
+	if(!$pending_total && $category['allowrequests'] && $award['allowrequests'])
 	{
 		$request_button = eval($templates->render('ougcawards_page_view_request'));
 	}
@@ -191,8 +189,11 @@ elseif($awards->get_input('action') == 'request')
 		$error = $lang->ougc_awards_error_invalidcategory;
 	}
 
-	$request = $awards->get_request($mybb->user['uid'], $award['aid']);
-	if(!empty($request) && $request['status'] == 1)
+	$award['aid'] = (int)$award['aid'];
+	$mybb->user['uid'] = (int)$mybb->user['uid'];
+
+	$query = $db->simple_select('ougc_awards_requests', '*', "status='1' AND uid='{$mybb->user['uid']}' AND aid='{$award['aid']}'", array('limit' => 1));
+	if($db->fetch_array($query))
 	{
 		$error = $lang->ougc_awards_error_pendingrequest;
 	}
@@ -203,10 +204,6 @@ elseif($awards->get_input('action') == 'request')
 
 	if($error)
 	{
-		if($mybb->request_method == 'post')
-		{
-			_dump($error, $mybb->input);
-		}
 		$content = eval($templates->render('ougcawards_page_request_error'));
 	}
 	else
@@ -214,18 +211,20 @@ elseif($awards->get_input('action') == 'request')
 		if($mybb->request_method == 'post')
 		{
 			$awards->insert_request(array(
-				'uid' => $mybb->user['uid'],
-				'aid' => $award['aid'],
-				'message' => $awards->get_input('message')
+				'uid'		=> $mybb->user['uid'],
+				'aid'		=> $award['aid'],
+				'message'	=> $awards->get_input('message')
 			));
 
 			$awards->log_action();
 
-			$error = $lang->ougc_awards_redirect_request;
-			$content = eval($templates->render('ougcawards_page_request_error'));
+			header('Content-type: application/json; charset='.$lang->settings['charset']);
 
-			$modal = eval($templates->render('ougcawards_page_request_modal', 1, 0));
-			echo $modal;
+			$content = eval($templates->render('ougcawards_page_request_success'));
+			$modal = eval($templates->render('ougcawards_page_request', 1, 0));
+			$data = array('modal' => $modal);
+
+			echo json_encode($data);
 			exit;
 		}
 		else
@@ -238,10 +237,8 @@ elseif($awards->get_input('action') == 'request')
 		}
 	}
 
-	$modal = eval($templates->render('ougcawards_page_request_modal', 1, 0));
 	$page = eval($templates->render('ougcawards_page_request', 1, 0));
-	echo $page;
-	exit;
+	exit($page);
 }
 else
 {

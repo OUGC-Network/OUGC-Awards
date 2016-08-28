@@ -30,27 +30,37 @@ var OUGC_Plugins = OUGC_Plugins || {};
 $.extend(true, OUGC_Plugins, {
 	RequestAward: function(aid)
 	{
-		MyBB.popupWindow('/awards.php?action=request&modal=1&aid=' + aid);
+		var postData = 'action=request&modal=1&aid=' + parseInt(aid);
+
+		MyBB.popupWindow('/awards.php?' + postData);
 	},
 	
-	submitRequest: function(uid, aid)
+	DoRequestAward: function(aid)
 	{
-		var datastring = $('.requestdata' + aid).serialize();
-		$.ajax({
+		// Get form, serialize it and send it
+		var postData = $('.request_form_' + parseInt(aid)).serialize();
+
+		$.ajax(
+		{
 			type: 'post',
-			url: 'awards.php?action=request&modal=1',
-			data: datastring,
-			dataType: 'html',
-			success: function(data) {
-				$('.modal_' + aid).fadeOut('slow', function() {
-					/*$('.modal_' + aid).html(data);
-					$('.modal_' + aid).fadeIn('slow');
-					$('.modal').fadeIn('slow');*/
-				});
-				//$('.modal').fadeOut('slow');
+			dataType: 'json',
+			url: 'awards.php',
+			data: postData,
+			success: function (request)
+			{
+				if(request.error)
+				{
+					alert(request.error);
+				}
+				else
+				{
+					$.modal.close();
+					$(request.modal).appendTo('body').modal({ fadeDuration: 250}).fadeIn('slow');
+				}
 			},
-			error: function(){
-				  alert(lang.unknown_error);
+			error: function (xhr)
+			{
+				location.reload(true);
 			}
 		});
 
