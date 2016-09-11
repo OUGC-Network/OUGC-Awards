@@ -67,8 +67,10 @@ $.extend(true, OUGC_Plugins, {
 		return false;
 	},
 
-	ViewAll: function(uid)
+	ViewAll: function(uid, page)
 	{
-		alert('coming soon!' + uid);
+		var postData = 'action=viewall&modal=1&uid=' + parseInt(uid) + '&page=' + parseInt(page);
+
+		MyBB.popupWindow('/awards.php?' + postData);
 	}
 });

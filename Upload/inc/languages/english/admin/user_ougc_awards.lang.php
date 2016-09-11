@@ -33,8 +33,10 @@ $l['setting_group_ougc_awards_desc'] = 'Extend your forum with a powerful awards
 
 // Importer
 $l['ougc_awards_import_title'] = 'Import Awards';
-$l['ougc_awards_import_desc'] = '<br />&nbsp;&nbsp;&nbsp;<a href="./index.php?module=config-plugins&amp;ougc_awards_import=mybbcentral">Import MyAwards by MyBB-Central</a>';
-$l['ougc_awards_import_confirm_mybbcentral'] = 'Are you sure you want to import awards from MyAwards by MyBB-Central?';
+$l['ougc_awards_import_desc'] = '<br />&nbsp;&nbsp;&nbsp;<a href="./index.php?module=config-plugins&amp;ougc_awards_import=myawards">Import From MyAwards</a>
+<br />&nbsp;&nbsp;&nbsp;<a href="./index.php?module=config-plugins&amp;ougc_awards_import=nickawards">Import From Nickman\'s Awards System</a>';
+$l['ougc_awards_import_confirm_myawards'] = 'Are you sure you want to import awards from MyAwards?';
+$l['ougc_awards_import_confirm_nickawards'] = 'Are you sure you want to import awards from Nickman\'s award system?';
 $l['ougc_awards_import_end'] = 'Awards Imported Successfully.';
 
 // Settings
@@ -51,7 +53,7 @@ $l['setting_ougc_awards_modgroups_desc'] = 'Allowed groups to moderate this feat
 $l['setting_ougc_awards_pagegroups'] = 'Awards Page Allowed Groups';
 $l['setting_ougc_awards_pagegroups_desc'] = 'Allowed groups to view the awards page.';
 $l['setting_ougc_awards_perpage'] = 'Items Per Page';
-$l['setting_ougc_awards_perpage_desc'] = 'Maximum number of items to show per page in the ModCP queue list.';
+$l['setting_ougc_awards_perpage_desc'] = 'Maximum number of items to show per page in the Stats page.';
 $l['setting_ougc_awards_sendpm'] = 'Send PM';
 $l['setting_ougc_awards_sendpm_desc'] = 'Do you want to send an PM to users when receiving an award?';
 $l['setting_ougc_awards_enablestatspage'] = 'Enable Stats';
@@ -155,6 +157,7 @@ $l['ougc_awards_success_add'] = 'The item was created successfully.';
 $l['ougc_awards_success_edit'] = 'The item was edited successfully.';
 $l['ougc_awards_error_invalidcategory'] = 'The selected category is invalid.';
 $l['ougc_awards_error_invalidaward'] = 'The selected award is invalid.';
+$l['ougc_awards_error_invalidtask'] = 'The selected task is invalid.';
 $l['ougc_awards_error_invaliduser'] = 'The selected user is invalid.';
 $l['ougc_awards_error_invalidname'] = 'The inserted name is too short.';
 $l['ougc_awards_error_invaliddesscription'] = 'The inserted description is too long.';
@@ -176,6 +179,8 @@ $l['ougc_awards_form_additionalgroups'] = 'Secondary User Groups';
 $l['ougc_awards_form_additionalgroups_desc'] = 'Select whether the task should check for additional user groups as well.';
 $l['ougc_awards_form_give'] = 'Give Award';
 $l['ougc_awards_form_give_desc'] = 'Seleect the award(s) to give to the user.';
+$l['ougc_awards_form_allowmultiple'] = 'Allow Multiple Awards';
+$l['ougc_awards_form_allowmultiple_desc'] = 'Select whether the task should give the award even if the user already has it.';
 $l['ougc_awards_form_revoke'] = 'Revoke Award';
 $l['ougc_awards_form_revoke_desc'] = 'Seleect the award(s) to be revoked from the user.';
 $l['ougc_awards_form_requirements'] = 'Requirements';

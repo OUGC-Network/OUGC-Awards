@@ -218,7 +218,7 @@ function task_ougc_awards($task)
 			$where_clause[] = "ocg.ougc_custom_reputation_gived{$award_task['ougc_customreptype_g']}'{$award_task['ougc_customrep_g']}'";
 		}
 
-		$log_inserts = $uids = array();
+		$log_inserts = array();
 
 		if(is_object($plugins))
 		{
@@ -226,54 +226,84 @@ function task_ougc_awards($task)
 				'task'			=> &$task,
 				'award_task'	=> &$award_task,
 				'left_join'		=> &$left_join,
-				'where_clause'	=> &$where_clause,
-				'uids'			=> &$uids
+				'where_clause'	=> &$where_clause
 			);
 
 			$plugins->run_hooks('task_ougc_awards', $args);
 		}
 
-		$query2 = $db->simple_select('users u '.implode(' ', $left_join), 'u.uid', implode(' AND ', $where_clause));
+		$query2 = $db->simple_select('users u '.implode(' ', $left_join), 'u.uid, u.username', implode(' AND ', $where_clause));
 
-		while($uid = $db->fetch_field($query2, 'uid'))
+		while($user = $db->fetch_array($query2))
 		{
-			$log_inserts[] = array(
-				'tid'		=> (int)$award_task['tid'],
-				'uid'		=> (int)$uid,
-				'gave'		=> $db->escape_string($award_task['give']),
-				'revoked'	=> $db->escape_string($award_task['revoke']),
-				'date'		=> TIME_NOW
-			);
+			$log = false;
+			$gave_cache = $revoke_cache = $aids = $gave_list = $revoke_list = array();
 
-			$uids[] = $uid;
+			if(($award_task['give'] && !$award_task['allowmultiple']) || $award_task['revoke'])
+			{
+				$q1 = $db->simple_select('ougc_awards_users', 'gid, aid', "uid='{$user['uid']}' AND aid IN ('".implode("','", explode(',', $award_task['revoke'].','.$award_task['give']))."')");
+				while($gave = $db->fetch_array($q1))
+				{
+					if(my_strpos(','.$award_task['give'].',', ','.$gave['aid'].',') !== false)
+					{
+						$gave_cache[] = $gave['aid'];
+					}
+					if(my_strpos(','.$award_task['revoke'].',', ','.$gave['aid'].',') !== false)
+					{
+						$revoke_cache[$gave['gid']] = $gave['aid'];
+					}
+				}
+			}
 
 			if($award_task['give'])
 			{
-				foreach(explode(',', $award_task['give']) as $aid)
+				$aids = array_flip(explode(',', $award_task['give']));
+				if(!$award_task['allowmultiple'])
 				{
-					$award = $awards->get_award($aid);
-					$awards->give_award($award, array('user' => $uid), $award_task['reason']);
+					foreach($gave_cache as $aid)
+					{
+						if(isset($aids[$aid]))
+						{
+							unset($aids[$aid]);
+						}
+					}
+				}
+
+				if(!empty($aids))
+				{
+					foreach($aids as $aid => $i)
+					{
+						$gave_list[] = $aid;
+						$award = $awards->get_award($aid);
+						$awards->give_award($award, $user, $award_task['reason']);
+						$log = true;
+					}
 				}
 			}
 
 			if($award_task['revoke'])
 			{
-				$q = $db->simple_select('ougc_awards_users', 'gid', "uid='{uid}' AND aid IN ('".implode("','", explode(',', $award_task['revoke']))."')");
-				while($gid = $db->fetch_field($q, 'gid'))
+				foreach($revoke_cache as $gid => $aid)
 				{
+					$revoke_list[] = $aid;
 					$awards->revoke_award($gid);
+					$log = true;
 				}
 			}
+
+			!$log or $log_inserts[] = array(
+				'tid'		=> (int)$award_task['tid'],
+				'uid'		=> (int)$user['uid'],
+				'gave'		=> $db->escape_string(implode(',', $gave_list)),
+				'revoked'	=> $db->escape_string(implode(',', $revoke_list)),
+				'date'		=> TIME_NOW
+			);
 		}
 
-		if(count($uids) > 0)
+		if(count($log_inserts) > 0)
 		{
-			if(!empty($log_inserts))
-			{
-				$db->insert_query_multiple('ougc_awards_tasks_logs', $log_inserts);
-			}
+			$db->insert_query_multiple('ougc_awards_tasks_logs', $log_inserts);
 
-			$uids = array();
 			$log_inserts = array();
 		}
 	}

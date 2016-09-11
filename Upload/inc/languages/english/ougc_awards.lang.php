@@ -95,6 +95,10 @@ $l['ougc_awards_pm_noreason_request_rejected_message'] = 'Hi {1}. This is an aut
 
 Greetings.';
 
+// Viall
+$l['ougc_awards_viewall'] = 'View User Awards';
+$l['ougc_awards_viewall_title'] = '{1}\'s Awards';
+
 // Page langs
 $l['ougc_awards_page_title'] = 'Awards';
 $l['ougc_awards_page_list_empty'] = 'No awards were found.';

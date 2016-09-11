@@ -26,7 +26,7 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************/
-
+$mybb->settings['ougc_awards_perpage'] = 100;
 $awards->lang_load();
 
 $sub_tabs['ougc_awards_categories'] = array(
@@ -99,7 +99,7 @@ if($awards->get_input('action') == 'add' || $awards->get_input('action') == 'edi
 	}
 
 	$mergeinput = array();
-	foreach(array('name', 'description', 'disporder', 'active', 'logging', 'requirements', 'usergroups', 'additionalgroups', 'give', 'reason', 'revoke', 'posts', 'poststype', 'threads', 'threadstype', 'fposts', 'fpoststype', 'fpostsforums', 'fthreads', 'fthreadstype', 'fthreadsforums', 'registered', 'registeredtype', 'online', 'onlinetype', 'reputation', 'reputationtype', 'referrals', 'referralstype', 'warnings', 'warningstype', 'newpoints', 'newpointstype', 'previousawards', 'profilefields', 'mydownloads', 'mydownloadstype', 'myarcadechampions', 'myarcadechampionstype', 'myarcadescores', 'myarcadescorestype', 'ougc_customrep_r', 'ougc_customreptype_r', 'ougc_customrepids_r', 'ougc_customrep_g', 'ougc_customreptype_g', 'ougc_customrepids_g') as $key)
+	foreach(array('name', 'description', 'disporder', 'active', 'logging', 'requirements', 'usergroups', 'additionalgroups', 'give', 'reason', 'allowmultiple', 'revoke', 'posts', 'poststype', 'threads', 'threadstype', 'fposts', 'fpoststype', 'fpostsforums', 'fthreads', 'fthreadstype', 'fthreadsforums', 'registered', 'registeredtype', 'online', 'onlinetype', 'reputation', 'reputationtype', 'referrals', 'referralstype', 'warnings', 'warningstype', 'newpoints', 'newpointstype', 'previousawards', 'profilefields', 'mydownloads', 'mydownloadstype', 'myarcadechampions', 'myarcadechampionstype', 'myarcadescores', 'myarcadescorestype', 'ougc_customrep_r', 'ougc_customreptype_r', 'ougc_customrepids_r', 'ougc_customrep_g', 'ougc_customreptype_g', 'ougc_customrepids_g') as $key)
 	{
 		$mergeinput[$key] = isset($mybb->input[$key]) ? $mybb->input[$key] : ($add ? '' : $task[$key]);
 	}
@@ -135,6 +135,7 @@ if($awards->get_input('action') == 'add' || $awards->get_input('action') == 'edi
 				'additionalgroups'		=> $awards->get_input('additionalgroups', 1),
 				'give'					=> $awards->get_input('give', 2),
 				'reason'				=> $awards->get_input('reason'),
+				'allowmultiple'			=> $awards->get_input('allowmultiple', 1),
 				'revoke'				=> $awards->get_input('revoke', 2),
 				'disporder'				=> $awards->get_input('disporder', 1),
 				'posts'					=> $awards->get_input('posts', 1),
@@ -214,6 +215,7 @@ if($awards->get_input('action') == 'add' || $awards->get_input('action') == 'edi
 	), $awards->get_input('requirements', 2), array('multiple' => true, 'size' => 5)));
 	$form_container->output_row($lang->ougc_awards_form_give, $lang->ougc_awards_form_give_desc, $awards->generate_awards_select('give[]', $mybb->input['give'], array('multiple' => true)));
 	$form_container->output_row($lang->ougc_awards_form_reason, $lang->ougc_awards_form_reason_d, $form->generate_text_area('reason', (string)$mybb->input['reason'], array('rows' => 8, 'style' => 'width:80%;')));
+	$form_container->output_row($lang->ougc_awards_form_allowmultiple, $lang->ougc_awards_form_allowmultiple_desc, $form->generate_yes_no_radio('allowmultiple', (int)$mybb->input['allowmultiple']));
 	$form_container->output_row($lang->ougc_awards_form_revoke, $lang->ougc_awards_form_revoke_desc, $awards->generate_awards_select('revoke[]', $mybb->input['revoke'], array('multiple' => true)));
 	$form_container->output_row($lang->ougc_awards_form_order, $lang->ougc_awards_form_order_d, $form->generate_text_box('disporder', (int)$mybb->input['disporder'], array('style' => 'text-align: center; width: 30px;" maxlength="5')));
 	$form_container->end();
@@ -261,7 +263,26 @@ if($awards->get_input('action') == 'add' || $awards->get_input('action') == 'edi
 }
 elseif($awards->get_input('action') == 'delete')
 {
-	
+	if(!($task = $awards->get_task($awards->get_input('tid', 1))))
+	{
+		$awards->admin_redirect($lang->ougc_awards_error_invalidtask, true);
+	}
+
+	if($mybb->request_method == 'post')
+	{
+		if(!verify_post_check($mybb->input['my_post_key'], true))
+		{
+			$awards->admin_redirect($lang->invalid_post_verify_key2, true);
+		}
+
+		!isset($mybb->input['no']) or $awards->admin_redirect();
+
+		$awards->delete_task($task['tid']);
+		$awards->update_cache();
+		$awards->log_action();
+		$awards->admin_redirect($lang->ougc_awards_success_delete);
+	}
+	$page->output_confirm_action($awards->build_url(array('action' => 'delete', 'tid' => $task['tid'], 'my_post_key' => $mybb->post_code)));
 }
 elseif($awards->get_input('action') == 'logs')
 {
@@ -277,12 +298,9 @@ elseif($awards->get_input('action') == 'logs')
 	$table->construct_header($lang->ougc_awards_logs_revoked, array('width' => '15%'));
 	$table->construct_header($lang->ougc_awards_logs_date, array('width' => '10%', 'class' => 'align_center'));
 
-	$limit = (int)$mybb->settings['ougc_awards_perpage'];
-	$limit = $limit > 100 ? 100 : ($limit < 1 ? 1 : $limit);
-
 	if($awards->get_input('page', 1) > 0)
 	{
-		$start = ($awards->get_input('page', 1)-1)*$limit;
+		$start = ($awards->get_input('page', 1)-1)*$awards->query_limit;
 	}
 	else
 	{
@@ -290,7 +308,7 @@ elseif($awards->get_input('action') == 'logs')
 		$mybb->input['page'] = 1;
 	}
 
-	$query = $db->simple_select('ougc_awards_tasks_logs', '*', '', array('limit_start' => $start, 'limit' => $limit, 'order_by' => 'date', 'order_dir' => 'desc'));
+	$query = $db->simple_select('ougc_awards_tasks_logs', '*', '', array('limit_start' => $start, 'limit' => $awards->query_limit, 'order_by' => 'date', 'order_dir' => 'desc'));
 
 	if(!$db->num_rows($query))
 	{
@@ -314,7 +332,7 @@ elseif($awards->get_input('action') == 'logs')
 		$query2 = $db->simple_select('ougc_awards_tasks_logs', 'COUNT(lid) AS logs');
 		$logscount = (int)$db->fetch_field($query2, 'logs');
 
-		echo draw_admin_pagination($mybb->input['page'], $limit, $logscount, 'index.php?module=user-ougc_awards&amp;view=tasks');
+		echo draw_admin_pagination($mybb->input['page'], $awards->query_limit, $logscount, 'index.php?module=user-ougc_awards&amp;view=tasks');
 
 		while($log = $db->fetch_array($query))
 		{
@@ -371,12 +389,9 @@ else
 	$table->construct_header($lang->ougc_awards_form_active, array('width' => '10%', 'class' => 'align_center'));
 	$table->construct_header($lang->ougc_awards_view_actions, array('width' => '15%', 'class' => 'align_center'));
 
-	$limit = (int)$mybb->settings['ougc_awards_perpage'];
-	$limit = $limit > 100 ? 100 : ($limit < 1 ? 1 : $limit);
-
 	if($awards->get_input('page', 1) > 0)
 	{
-		$start = ($awards->get_input('page', 1)-1)*$limit;
+		$start = ($awards->get_input('page', 1)-1)*$awards->query_limit;
 	}
 	else
 	{
@@ -384,7 +399,7 @@ else
 		$mybb->input['page'] = 1;
 	}
 
-	$query = $db->simple_select('ougc_awards_tasks', '*', '', array('limit_start' => $start, 'limit' => $limit, 'order_by' => 'disporder'));
+	$query = $db->simple_select('ougc_awards_tasks', '*', '', array('limit_start' => $start, 'limit' => $awards->query_limit, 'order_by' => 'disporder'));
 	
 	if(!$db->num_rows($query))
 	{
@@ -409,7 +424,7 @@ else
 		$query2 = $db->simple_select('ougc_awards_tasks', 'COUNT(tid) AS tasks');
 		$taskcount = (int)$db->fetch_field($query2, 'tasks');
 
-		echo draw_admin_pagination($mybb->input['page'], $limit, $taskcount, 'index.php?module=user-ougc_awards&amp;view=tasks');
+		echo draw_admin_pagination($mybb->input['page'], $awards->query_limit, $taskcount, 'index.php?module=user-ougc_awards&amp;view=tasks');
 
 		while($task = $db->fetch_array($query))
 		{
@@ -754,12 +769,10 @@ elseif($awards->get_input('action') == 'users')
 	$table->construct_header($lang->ougc_awards_users_date, array('width' => '25%', 'class' => 'align_center'));
 	$table->construct_header($lang->ougc_awards_view_actions, array('width' => '15%', 'class' => 'align_center'));
 
-	$limit = (int)$mybb->settings['ougc_awards_perpage'];
-	$limit = $limit > 100 ? 100 : ($limit < 1 ? 1 : $limit);
 	$mybb->input['page'] = $awards->get_input('page', 1);
 	if($mybb->input['page'] > 0)
 	{
-		$start = ($mybb->input['page'] - 1)*$limit;
+		$start = ($mybb->input['page'] - 1)*$awards->query_limit;
 	}
 	else
 	{
@@ -767,7 +780,7 @@ elseif($awards->get_input('action') == 'users')
 		$mybb->input['page'] = 1;
 	}
 
-	$query = $db->simple_select('ougc_awards_users au LEFT JOIN '.TABLE_PREFIX.'users u ON (u.uid=au.uid)', 'au.*, u.username, u.usergroup, u.displaygroup', 'au.aid=\''.(int)$award['aid'].'\'', array('limit_start' => $start, 'limit' => $limit));
+	$query = $db->simple_select('ougc_awards_users au LEFT JOIN '.TABLE_PREFIX.'users u ON (u.uid=au.uid)', 'au.*, u.username, u.usergroup, u.displaygroup', 'au.aid=\''.(int)$award['aid'].'\'', array('limit_start' => $start, 'limit' => $awards->query_limit, 'order_by' => 'au.date', 'order_dir' => 'desc'));
 
 	if(!$db->num_rows($query))
 	{
@@ -780,7 +793,7 @@ elseif($awards->get_input('action') == 'users')
 		$query2 = $db->simple_select('ougc_awards_users', 'COUNT(uid) AS users', 'aid=\''.(int)$award['aid'].'\'');
 		$givedscount = (int)$db->fetch_field($query2, 'users');
 
-		echo draw_admin_pagination($awards->get_input('page', 1), $limit, $givedscount, $view['url'].'index.php?module=user-ougc_awards&amp;view=category&amp;cid='.$cid.'&amp;action=users&amp;aid='.$award['aid']);
+		echo draw_admin_pagination($awards->get_input('page', 1), $awards->query_limit, $givedscount, $view['url'].'index.php?module=user-ougc_awards&amp;view=category&amp;cid='.$cid.'&amp;action=users&amp;aid='.$award['aid']);
 
 		while($gived = $db->fetch_array($query))
 		{
@@ -854,12 +867,9 @@ else
 	$table->construct_header($lang->ougc_awards_form_visible, array('width' => '10%', 'class' => 'align_center'));
 	$table->construct_header($lang->ougc_awards_view_actions, array('width' => '15%', 'class' => 'align_center'));
 
-	$limit = (int)$mybb->settings['ougc_awards_perpage'];
-	$limit = $limit > 100 ? 100 : ($limit < 1 ? 1 : $limit);
-
 	if($awards->get_input('page', 1) > 0)
 	{
-		$start = ($awards->get_input('page', 1)-1)*$limit;
+		$start = ($awards->get_input('page', 1)-1)*$awards->query_limit;
 	}
 	else
 	{
@@ -867,7 +877,7 @@ else
 		$mybb->input['page'] = 1;
 	}
 
-	$query = $db->simple_select('ougc_awards', '*', "cid='{$cid}'", array('limit_start' => $start, 'limit' => $limit, 'order_by' => 'disporder'));
+	$query = $db->simple_select('ougc_awards', '*', "cid='{$cid}'", array('limit_start' => $start, 'limit' => $awards->query_limit, 'order_by' => 'disporder'));
 	
 	if(!$db->num_rows($query))
 	{
@@ -892,7 +902,7 @@ else
 		$query2 = $db->simple_select('ougc_awards', 'COUNT(aid) AS awards', "cid='{$cid}'");
 		$awardscount = (int)$db->fetch_field($query2, 'awards');
 
-		echo draw_admin_pagination($mybb->input['page'], $limit, $awardscount, 'index.php?module=user-ougc_awards&amp;view=category&amp;cid='.$cid.'');
+		echo draw_admin_pagination($mybb->input['page'], $awards->query_limit, $awardscount, 'index.php?module=user-ougc_awards&amp;view=category&amp;cid='.$cid.'');
 
 		while($award = $db->fetch_array($query))
 		{
@@ -1051,12 +1061,9 @@ else
 	$table->construct_header($lang->ougc_awards_form_visible, array('width' => '10%', 'class' => 'align_center'));
 	$table->construct_header($lang->ougc_awards_view_actions, array('width' => '15%', 'class' => 'align_center'));
 
-	$limit = (int)$mybb->settings['ougc_awards_perpage'];
-	$limit = $limit > 100 ? 100 : ($limit < 1 ? 1 : $limit);
-
 	if($awards->get_input('page', 1) > 0)
 	{
-		$start = ($awards->get_input('page', 1)-1)*$limit;
+		$start = ($awards->get_input('page', 1)-1)*$awards->query_limit;
 	}
 	else
 	{
@@ -1064,7 +1071,7 @@ else
 		$mybb->input['page'] = 1;
 	}
 
-	$query = $db->simple_select('ougc_awards_categories', '*', '', array('limit_start' => $start, 'limit' => $limit, 'order_by' => 'disporder'));
+	$query = $db->simple_select('ougc_awards_categories', '*', '', array('limit_start' => $start, 'limit' => $awards->query_limit, 'order_by' => 'disporder'));
 	
 	if(!$db->num_rows($query))
 	{
@@ -1089,7 +1096,7 @@ else
 		$query2 = $db->simple_select('ougc_awards', 'COUNT(cid) AS awards');
 		$awardscount = (int)$db->fetch_field($query2, 'awards');
 
-		echo draw_admin_pagination($mybb->input['page'], $limit, $awardscount, 'index.php?module=user-ougc_awards');
+		echo draw_admin_pagination($mybb->input['page'], $awards->query_limit, $awardscount, 'index.php?module=user-ougc_awards');
 
 		while($category = $db->fetch_array($query))
 		{
