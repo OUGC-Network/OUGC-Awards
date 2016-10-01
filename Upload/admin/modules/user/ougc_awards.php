@@ -26,7 +26,7 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************/
-$mybb->settings['ougc_awards_perpage'] = 100;
+
 $awards->lang_load();
 
 $sub_tabs['ougc_awards_categories'] = array(

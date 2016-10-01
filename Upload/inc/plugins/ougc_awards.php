@@ -149,12 +149,12 @@ function ougc_awards_activate()
 		   'optionscode'	=> 'text',
 			'value'			=>	0,
 		),
-		'profile'	=> array(
+		/*'profile'	=> array(
 		   'title'			=> $lang->setting_ougc_awards_profile,
 		   'description'	=> $lang->setting_ougc_awards_profile_desc,
 		   'optionscode'	=> 'text',
 			'value'			=>	4,
-		),
+		),*/
 		'modcp'	=> array(
 		   'title'			=> $lang->setting_ougc_awards_modcp,
 		   'description'	=> $lang->setting_ougc_awards_modcp_desc,
@@ -173,12 +173,12 @@ function ougc_awards_activate()
 		   'optionscode'	=> ($mybb->version_code >= 1800 ? 'groupselect' : 'text'),
 			'value'			=>	'2,3,4,5,6',
 		),
-		'perpage'	=> array(
+		/*'perpage'	=> array(
 		   'title'			=> $lang->setting_ougc_awards_perpage,
 		   'description'	=> $lang->setting_ougc_awards_perpage_desc,
 		   'optionscode'	=> 'text',
 			'value'			=>	20,
-		),
+		),*/
 		'sendpm'			=> array(
 		   'title'			=> $lang->setting_ougc_awards_sendpm,
 		   'description'	=> $lang->setting_ougc_awards_sendpm_desc,
@@ -920,12 +920,9 @@ function ougc_awards_modcp()
 
 	$where_aids = implode("','", $where_aids);
 
-	$limit = (int)$mybb->settings['ougc_awards_perpage'];
-	$limit = $limit > 100 ? 100 : ($limit < 1 ? 1 : $limit);
-
 	if($awards->get_input('page', 1) > 0)
 	{
-		$start = ($awards->get_input('page', 1) - 1)*$limit;
+		$start = ($awards->get_input('page', 1) - 1)*$awards->query_limit;
 	}
 	else
 	{
@@ -1007,7 +1004,7 @@ function ougc_awards_modcp()
 		}
 
 		$requestslist = $multipage = $buttons = '';
-		$query = $db->simple_select('ougc_awards_requests', '*', "status{$status} AND aid IN ('{$where_aids}')", array('limit_start' => $start, 'limit' => $limit));
+		$query = $db->simple_select('ougc_awards_requests', '*', "status{$status} AND aid IN ('{$where_aids}')", array('limit_start' => $start, 'limit' => $awards->query_limit));
 		if(!$db->num_rows($query))
 		{
 			eval('$requestslist = "'.$templates->get('ougcawards_modcp_requests_list_empty').'";');
@@ -1035,7 +1032,7 @@ function ougc_awards_modcp()
 			$query = $db->simple_select('ougc_awards_requests', 'COUNT(rid) AS requests', "status{$status} AND aid IN ('{$where_aids}')");
 			$requestscount = (int)$db->fetch_field($query, 'requests');
 
-			$multipage = multipage($requestscount, $limit, $awards->get_input('page', 1), $awards->build_url('manage=requests'));
+			$multipage = multipage($requestscount, $awards->query_limit, $awards->get_input('page', 1), $awards->build_url('manage=requests'));
 
 			$trow = alt_trow(true);
 			foreach($requests as $request)
@@ -1256,7 +1253,7 @@ function ougc_awards_modcp()
 	{
 		$awardlist = $multipage = '';
 
-		$query = $db->simple_select('ougc_awards', '*', "visible='1' AND aid IN ('{$where_aids}') AND cid IN ('{$where_cids}')", array('limit_start' => $start, 'limit' => $limit));
+		$query = $db->simple_select('ougc_awards', '*', "visible='1' AND aid IN ('{$where_aids}') AND cid IN ('{$where_cids}')", array('limit_start' => $start, 'limit' => $awards->query_limit));
 		if(!$db->num_rows($query))
 		{
 			eval('$awardlist = "'.$templates->get('ougcawards_modcp_list_empty').'";');
@@ -1284,7 +1281,7 @@ function ougc_awards_modcp()
 			$query = $db->simple_select('ougc_awards', 'COUNT(aid) AS awards', $where);
 			$awardscount = (int)$db->fetch_field($query, 'awards');
 
-			$multipage = multipage($awardscount, $limit, $awards->get_input('page', 1), $awards->build_url());
+			$multipage = multipage($awardscount, $awards->query_limit, $awards->get_input('page', 1), $awards->build_url());
 			isset($multipage) or $multipage = '';
 		}
 
@@ -1306,10 +1303,7 @@ function ougc_awards_profile()
 
 	$memprofile['ougc_awards'] = '';
 
-	$limit = (int)$mybb->settings['ougc_awards_profile'];
-	$limit = $limit > 100 ? 100 : ($limit < 1 && $limit != -1 ? 1 : $limit);
-
-	if(($limit < 0 && $limit != -1) || my_strpos($templates->cache['member_profile'], '{$memprofile[\'ougc_awards\']}') === false)
+	if(($awards->query_limit_profile < 0 && $awards->query_limit_profile != -1) || my_strpos($templates->cache['member_profile'], '{$memprofile[\'ougc_awards\']}') === false)
 	{
 		return;
 	}
@@ -1331,7 +1325,7 @@ function ougc_awards_profile()
 	$whereclause = "u.uid='".(int)$memprofile['uid']."' AND a.visible='1' AND a.type!='2' AND a.cid IN ('".implode("','", array_values($cids))."')";
 
 	// Query our data.
-	if($limit == -1)
+	if($awards->query_limit_profile == -1)
 	{
 		// Get awards
 		$query = $db->query('
@@ -1357,8 +1351,8 @@ function ougc_awards_profile()
 		$page = $awards->get_input('view') == 'awards' ? $awards->get_input('page', 1) : 0;
 		if($page > 0)
 		{
-			$start = ($page - 1)*$limit;
-			if($page > ceil($awardscount/$limit))
+			$start = ($page - 1)*$awards->query_limit_profile;
+			if($page > ceil($awardscount/$awards->query_limit_profile))
 			{
 				$start = 0;
 				$page = 1;
@@ -1371,7 +1365,7 @@ function ougc_awards_profile()
 		}
 		// We want to keep $mybb->input['view'] intact for other plugins, ;)
 
-		$multipage = (string)multipage($awardscount, $limit, $page, $awards->build_url('view=awards'));
+		$multipage = (string)multipage($awardscount, $awards->query_limit_profile, $page, $awards->build_url('view=awards'));
 		eval('$multipage = "'.$templates->get('ougcawards_profile_multipage').'";');
 
 		$query = $db->query('
@@ -1380,7 +1374,7 @@ function ougc_awards_profile()
 			LEFT JOIN '.TABLE_PREFIX.'ougc_awards a ON (au.aid=a.aid)
 			WHERE a'.$whereclause.'
 			ORDER BY au.date desc
-			LIMIT '.$start.', '.$limit
+			LIMIT '.$start.', '.$awards->query_limit_profile
 		);
 	}
 
@@ -1810,8 +1804,10 @@ class OUGC_Awards
 			$mybb->settings['myalerts_alert_ougc_awards'] = 1;
 		}
 
-		$this->query_limit = $this->query_limit_profile = 99999999;
+		//$this->query_limit = $mybb->settings['ougc_awards_perpage'] > 100 ? 100 : ($mybb->settings['ougc_awards_perpage'] < 1 ? 1 : (int)$mybb->settings['ougc_awards_perpage']);
+		//$this->query_limit_profile = $mybb->settings['ougc_awards_profile'] > 100 ? 100 : ($mybb->settings['ougc_awards_profile'] < 1 && $mybb->settings['ougc_awards_profile'] != -1 ? 1 : (int)$mybb->settings['ougc_awards_profile']);
 
+		$this->query_limit = $this->query_limit_profile = 99999999;
 		$this->query_limit_postbit = (int)$mybb->settings['ougc_awards_postbit'];
 	}
 
