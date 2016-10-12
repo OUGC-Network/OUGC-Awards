@@ -192,7 +192,7 @@ function task_ougc_awards($task)
 			$where_clause[] = "mya.scores{$award_task['myarcadescorestype']}'{$award_task['myarcadescores']}'";
 		}
 
-		if(in_array('ougc_customrep_r', $requirements) && (int)$award_task['ougc_customrep_r'] >= 0 && !empty($award_task['ougc_customrep_r']))
+		if(in_array('ougc_customrep_r', $requirements) && (int)$award_task['ougc_customrep_r'] >= 0 && !empty($award_task['ougc_customrep_r']) && $db->table_exists('ougc_customrep'))
 		{
 			$left_join[] = "LEFT JOIN (
 				SELECT p.uid, l.rid, COUNT(l.lid) AS ougc_custom_reputation_receieved FROM ".TABLE_PREFIX."ougc_customrep_log l
@@ -205,7 +205,7 @@ function task_ougc_awards($task)
 			$where_clause[] = "ocr.ougc_custom_reputation_receieved{$award_task['ougc_customreptype_r']}'{$award_task['ougc_customrep_r']}'";
 		}
 
-		if(in_array('ougc_customrep_g', $requirements) && (int)$award_task['ougc_customrep_g'] >= 0 && !empty($award_task['ougc_customrep_g']))
+		if(in_array('ougc_customrep_g', $requirements) && (int)$award_task['ougc_customrep_g'] >= 0 && !empty($award_task['ougc_customrep_g']) && $db->table_exists('ougc_customrep'))
 		{
 			$left_join[] = "LEFT JOIN (
 				SELECT l.uid, l.rid, COUNT(l.lid) AS ougc_custom_reputation_gived FROM ".TABLE_PREFIX."ougc_customrep_log l

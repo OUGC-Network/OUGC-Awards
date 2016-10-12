@@ -3265,6 +3265,11 @@ class OUGC_Awards
 	{
 		global $db, $mybb;
 
+		if(!$db->table_exists('ougc_customrep'))
+		{
+			return false;
+		}
+
 		$select = "<select name=\"{$name}\"";
 
 		!isset($options['multiple']) or $select .= " multiple=\"multiple\"";
