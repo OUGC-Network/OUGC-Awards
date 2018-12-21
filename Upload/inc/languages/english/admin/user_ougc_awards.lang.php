@@ -52,6 +52,8 @@ $l['setting_ougc_awards_perpage'] = 'Items Per Page';
 $l['setting_ougc_awards_perpage_desc'] = 'Maximum number of items to show per page in the ModCP queue list.';
 $l['setting_ougc_awards_sendpm'] = 'Send PM';
 $l['setting_ougc_awards_sendpm_desc'] = 'Do you want to send an PM to users when receiving an award?';
+$l['setting_ougc_awards_welcomeblock'] = 'Display Welcome Block List';
+$l['setting_ougc_awards_welcomeblock_desc'] = 'Enabling this feature, a full list of earned awards will be displayed inside the header user welcome block.';
 $l['setting_ougc_awards_myalerts'] = 'MyAlerts Integration';
 $l['setting_ougc_awards_myalerts_desc'] = 'Do you want to send an alert to users when receiving an award';
 

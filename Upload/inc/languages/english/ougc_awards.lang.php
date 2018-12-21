@@ -76,3 +76,7 @@ $l['ougc_awards_page_list_name'] = 'Name';
 $l['ougc_awards_page_list_description'] = 'Description';
 $l['ougc_awards_page_view_date'] = 'Date';
 $l['ougc_awards_page_view_empty'] = 'No users were found.';
+
+// Welcomeblock
+$l['ougc_awards_welcomeblock'] = 'Your awards: ';
+$l['ougc_awards_welcomeblock_empty'] = 'Your award list is currently empty.';
