@@ -257,9 +257,9 @@ if($awards->get_input('action') == 'add' || $awards->get_input('action') == 'edi
 	{
 		$form_container->output_row($lang->ougc_awards_form_requirements_ougc_customrep_r, $lang->ougc_awards_form_requirements_ougc_customrep_r_desc, $form->generate_numeric_field('ougc_customrep_r', $awards->get_input('ougc_customrep_r', 1), array('id' => 'ougc_customrep_r', 'min' => 0)).' '.$form->generate_select_box('ougc_customreptype_r', $options_type, $awards->get_input('ougc_customreptype_r'), array('id' => 'ougc_customreptype_r')).''.$reputation_select_r, 'ougc_customrep_r');
 	}
-	if($reputation_select_g = $awards->generate_ougc_custom_reputation_select('ougc_customrepids_g', $awards->get_input('ougc_customrepids_g', 1))
+	if($reputation_select_g = $awards->generate_ougc_custom_reputation_select('ougc_customrepids_g', $awards->get_input('ougc_customrepids_g', 1)))
 	{
-		$form_container->output_row($lang->ougc_awards_form_requirements_ougc_customrep_g, $lang->ougc_awards_form_requirements_ougc_customrep_g_desc, $form->generate_numeric_field('ougc_customrep_g', $awards->get_input('ougc_customrep_g', 1), array('id' => 'ougc_customrep_g', 'min' => 0)).' '.$form->generate_select_box('ougc_customreptype_g', $options_type, $awards->get_input('ougc_customreptype_g'), array('id' => 'ougc_customreptype_g')).''.$reputation_select_g), 'ougc_customrep_g');
+		$form_container->output_row($lang->ougc_awards_form_requirements_ougc_customrep_g, $lang->ougc_awards_form_requirements_ougc_customrep_g_desc, $form->generate_numeric_field('ougc_customrep_g', $awards->get_input('ougc_customrep_g', 1), array('id' => 'ougc_customrep_g', 'min' => 0)).' '.$form->generate_select_box('ougc_customreptype_g', $options_type, $awards->get_input('ougc_customreptype_g'), array('id' => 'ougc_customreptype_g')).''.$reputation_select_g, 'ougc_customrep_g');
 	}
 	$form_container->end();
 
