@@ -275,7 +275,7 @@ function task_ougc_awards($task)
 					{
 						$gave_list[] = $aid;
 						$award = $awards->get_award($aid);
-						$awards->give_award($award, $user, $award_task['reason']);
+						$awards->give_award($award, $user, $award_task['reason'], $award_task['thread'], $award_task['tid']);
 						$log = true;
 					}
 				}

@@ -30,8 +30,11 @@
 // Boring stuff..
 define('IN_MYBB', 1);
 define('THIS_SCRIPT', substr($_SERVER['SCRIPT_NAME'], -strpos(strrev($_SERVER['SCRIPT_NAME']), '/')));
-$templatelist = 'ougcawards_page_list_award, ougcawards_page_list_award_request, ougcawards_page_list_request, ougcawards_page_list, ougcawards_page, ougcawards_page_list_empty, ougcawards_page_view_row, ougcawards_page_view';
+$templatelist = 'ougcawards_page_list_award, ougcawards_page_list_award_request, ougcawards_page_list_request, ougcawards_page_list, ougcawards_page, ougcawards_page_list_empty, ougcawards_page_view_row, ougcawards_page_view, ougcawards_page_view_empty,ougcawards_page_empty';
 require_once './global.php';
+require_once MYBB_ROOT."inc/class_parser.php";
+
+is_object($parser) or $parser = new postParser;
 
 // Load lang
 $awards->lang_load();
@@ -46,6 +49,8 @@ if(!$mybb->settings['ougc_awards_pagegroups'] || ($mybb->settings['ougc_awards_p
 
 // Set url
 $awards->set_url(null, THIS_SCRIPT);
+
+$_cache = $mybb->cache->read('ougc_awards');
 
 $plugins->run_hooks('ougc_awards_start');
 
@@ -116,7 +121,7 @@ if(!empty($mybb->input['view']))
 
 	// Query our data.
 	$query = $db->query('
-		SELECT g.gid, g.uid, g.aid, g.reason, g.date, u.uid, u.username, u.usergroup, u.displaygroup 
+		SELECT g.*, u.uid, u.username, u.usergroup, u.displaygroup 
 		FROM '.TABLE_PREFIX.'ougc_awards_users g
 		LEFT JOIN '.TABLE_PREFIX.'users u ON (g.uid=u.uid)
 		WHERE g.aid=\''.(int)$award['aid'].'\'
@@ -126,7 +131,25 @@ if(!empty($mybb->input['view']))
 
 	$multipage = (string)multipage($userscount, $awards->query_limit, $awards->get_input('page', 1), $awards->build_url('view='.$aid));
 
+	$gived_list = $thread_cache = $tids = array();
 	while($gived = $db->fetch_array($query))
+	{
+		$gived_list[] = $gived;
+		$tids[] = (int)$gived['thread'];
+	}
+
+	$tids = array_filter($tids);
+
+	if($tids)
+	{
+		$query = $db->simple_select('threads', 'tid, subject, prefix', "visible>0  AND closed NOT LIKE 'moved|%' AND tid IN ('".implode("','", $tids)."')");
+		while($thread = $db->fetch_array($query))
+		{
+			$thread_cache[$thread['tid']] = $thread;
+		}
+	}
+
+	foreach($gived_list as $gived)
 	{
 		$trow = alt_trow();
 
@@ -144,6 +167,28 @@ if(!empty($mybb->input['view']))
 		$gived['username'] = format_name($gived['username'], $gived['usergroup'], $gived['displaygroup']);
 		$gived['username'] = build_profile_link($gived['username'], $gived['uid']);
 		$gived['date'] = $lang->sprintf($lang->ougc_awards_profile_tine, my_date($mybb->settings['dateformat'], $gived['date']), my_date($mybb->settings['timeformat'], $gived['date']));
+
+		$threadlink = '';
+		if($gived['thread'] && $thread_cache[$gived['thread']])
+		{
+			$thread = $thread_cache[$gived['thread']];
+
+			$thread['threadprefix'] = $thread['displayprefix'] = '';
+			if($thread['prefix'])
+			{
+				$threadprefix = build_prefixes($thread['prefix']);
+
+				if(!empty($threadprefix['prefix']))
+				{
+					$thread['threadprefix'] = htmlspecialchars_uni($threadprefix['prefix']).'&nbsp;';
+					$thread['displayprefix'] = $threadprefix['displaystyle'].'&nbsp;';
+				}
+			}
+
+			$thread['subject'] = $parser->parse_badwords($thread['subject']);
+
+			$threadlink = '<a href="'.$settings['bburl'].'/'.get_thread_link($thread['tid']).'">'.$thread['displayprefix'].htmlspecialchars_uni($thread['subject']).'</a>';
+		}
 
 		eval('$users_list .= "'.$templates->get('ougcawards_page_view_row').'";');
 	}
@@ -181,7 +226,7 @@ elseif($awards->get_input('action') == 'viewall')
 	{
 		$title = $lang->sprintf($lang->ougc_awards_viewall_title, htmlspecialchars_uni($user['username']));
 
-		$categories = $cids = array();
+		$categories = $cids = $tids = $thread_cache = array();
 
 		$query = $db->simple_select('ougc_awards_categories', '*', "visible='1'", array('order_by' => 'disporder'));
 		while($category = $db->fetch_array($query))
@@ -190,15 +235,15 @@ elseif($awards->get_input('action') == 'viewall')
 			$categories[] = $category;
 		}
 
-		$whereclause = "u.uid='".(int)$user['uid']."' AND a.visible='1' AND a.cid IN ('".implode("','", array_values($cids))."')";
+		$whereclause = "u.visible=1 AND u.uid='".(int)$user['uid']."' AND a.visible='1' AND a.cid IN ('".implode("','", array_values($cids))."')";
 
 		// First we need to figure out the total amount of awards.
 		$query = $db->query('
-			SELECT COUNT(au.aid) AS awards
-			FROM '.TABLE_PREFIX.'ougc_awards_users au
-			LEFT JOIN '.TABLE_PREFIX.'ougc_awards a ON (au.aid=a.aid)
-			WHERE a'.$whereclause.'
-			ORDER BY au.date desc
+			SELECT COUNT(u.aid) AS awards
+			FROM '.TABLE_PREFIX.'ougc_awards_users u
+			LEFT JOIN '.TABLE_PREFIX.'ougc_awards a ON (u.aid=a.aid)
+			WHERE '.$whereclause.'
+			ORDER BY u.disporder, u.date desc
 		');
 		$awardscount = (int)$db->fetch_field($query, 'awards');
 
@@ -224,11 +269,11 @@ elseif($awards->get_input('action') == 'viewall')
 		eval('$multipage = "'.$templates->get('ougcawards_viewall_multipage').'";');
 
 		$query = $db->query('
-			SELECT au.*, a.*
-			FROM '.TABLE_PREFIX.'ougc_awards_users au
-			LEFT JOIN '.TABLE_PREFIX.'ougc_awards a ON (au.aid=a.aid)
-			WHERE a'.$whereclause.'
-			ORDER BY au.date desc
+			SELECT u.*, a.*
+			FROM '.TABLE_PREFIX.'ougc_awards_users u
+			LEFT JOIN '.TABLE_PREFIX.'ougc_awards a ON (u.aid=a.aid)
+			WHERE '.$whereclause.'
+			ORDER BY u.disporder, u.date desc
 			LIMIT '.$start.', '.$awards->query_limit
 		);
 
@@ -241,7 +286,19 @@ elseif($awards->get_input('action') == 'viewall')
 		{
 			while($award = $db->fetch_array($query))
 			{
+				$tids[] = (int)$award['thread'];
 				$_awards[(int)$award['cid']][] = $award;
+			}
+
+			$tids = array_filter($tids);
+
+			if($tids)
+			{
+				$query = $db->simple_select('threads', 'tid, subject, prefix', "visible>0  AND closed NOT LIKE 'moved|%' AND tid IN ('".implode("','", $tids)."')");
+				while($thread = $db->fetch_array($query))
+				{
+					$thread_cache[$thread['tid']] = $thread;
+				}
 			}
 
 			$content = '';
@@ -277,12 +334,35 @@ elseif($awards->get_input('action') == 'viewall')
 								$award['reason'] = $lang->ougc_awards_pm_noreason;
 							}
 
+							$threadlink = '';
+							if($award['thread'] && $thread_cache[$award['thread']])
+							{
+								$thread = $thread_cache[$award['thread']];
+
+								$thread['threadprefix'] = $thread['displayprefix'] = '';
+								if($thread['prefix'])
+								{
+									$threadprefix = build_prefixes($thread['prefix']);
+
+									if(!empty($threadprefix['prefix']))
+									{
+										$thread['threadprefix'] = htmlspecialchars_uni($threadprefix['prefix']).'&nbsp;';
+										$thread['displayprefix'] = $threadprefix['displaystyle'].'&nbsp;';
+									}
+								}
+
+								$thread['subject'] = $parser->parse_badwords($thread['subject']);
+
+								$threadlink = '<a href="'.$settings['bburl'].'/'.get_thread_link($thread['tid']).'">'.$thread['displayprefix'].htmlspecialchars_uni($thread['subject']).'</a>';
+							}
+
 							$awards->parse_text($award['reason']);
 
 							$award['image'] = $awards->get_award_icon($award['aid']);
 
 							$award['date'] = $lang->sprintf($lang->ougc_awards_profile_tine, my_date($mybb->settings['dateformat'], $award['date']), my_date($mybb->settings['timeformat'], $award['date']));
 
+							$award['fimage'] = eval($templates->render($awards->get_award_info('template', $award['aid'])));
 							eval('$content .= "'.$templates->get('ougcawards_profile_row').'";');
 							$trow = alt_trow();
 						}
@@ -364,6 +444,7 @@ elseif($awards->get_input('action') == 'request')
 			$award['name'] = htmlspecialchars_uni($award['name']);
 
 			$button = eval($templates->render('ougcawards_page_request_form_button'));
+			$award['fimage'] = eval($templates->render($awards->get_award_info('template', $award['aid'])));
 			$content = eval($templates->render('ougcawards_page_request_form'));
 		}
 	}
@@ -373,27 +454,13 @@ elseif($awards->get_input('action') == 'request')
 }
 else
 {
-	$categories = $cids = array();
-
-	$query = $db->simple_select('ougc_awards_categories', '*', "visible='1'", array('order_by' => 'disporder'));
-	while($category = $db->fetch_array($query))
-	{
-		$cids[] = (int)$category['cid'];
-		$categories[] = $category;
-	}
-	
-
-	$cids = "cid IN ('".implode("','", array_values($cids))."')";
-
-	$whereclause = "a.visible='1' AND a.{$cids}";
-
-	$query = $db->simple_select('ougc_awards a', 'COUNT(a.aid) AS awards', $whereclause);
-	$awardscount = $db->fetch_field($query, 'awards');
+	$query = $db->simple_select('ougc_awards_categories', 'COUNT(cid) AS categories', "visible='1'");
+	$catscount = (int)$db->fetch_field($query, 'categories');
 
 	if($awards->get_input('page', 1) > 0)
 	{
 		$start = ($awards->get_input('page', 1)-1)*$awards->query_limit;
-		$pages = ceil($awardscount/$awards->query_limit);
+		$pages = ceil($catscount/$awards->query_limit);
 		if($awards->get_input('page', 1) > $pages)
 		{
 			$start = 0;
@@ -406,135 +473,29 @@ else
 		$mybb->input['page'] = 1;
 	}
 
-	$multipage = (string)multipage($awardscount, $awards->query_limit, $awards->get_input('page', 1), $awards->build_url());
+	$categories = $cids = array();
 
-	/*$query = $db->simple_select('ougc_awards a', 'a.*', $whereclause, array('limit_start' => $start, 'limit' => $awards->query_limit, 'order_by' => 'a.disporder'));
-	$query = $db->query("
-		SELECT c.*, c.cid as category_cid, a.*
-		FROM ".TABLE_PREFIX."ougc_awards_categories c
-		LEFT JOIN (
-			SELECT a.cid, a.aid, a.name as award_name, a.description as award_description, a.disporder as award_disporder, a.allowrequests as award_allowrequests, a.image, a.pm, a.type
-			FROM ".TABLE_PREFIX."ougc_awards a
-			WHERE {$whereclause}
-			GROUP BY a.cid
-			ORDER BY a.disporder DESC
-			LIMIT {$start}, {$awards->query_limit}) a ON (c.cid=a.cid)
-		ORDER BY c.disporder ASC
-	;");
-
-	$query = $db->simple_select('ougc_awards a', 'a.*', $whereclause, array('limit_start' => $start, 'limit' => $awards->query_limit, 'order_by' => 'a.disporder'));
-	$query = $db->query("
-		SELECT c.*, c.cid as category_cid, a.*
-		FROM ".TABLE_PREFIX."ougc_awards_categories c
-		LEFT JOIN (
-			SELECT a.cid, a.aid, a.name as award_name, a.description as award_description, a.disporder as award_disporder, a.allowrequests as award_allowrequests, a.image, a.pm, a.type
-			FROM ".TABLE_PREFIX."ougc_awards a
-			WHERE {$whereclause}
-			GROUP BY a.cid
-			ORDER BY a.disporder DESC
-			LIMIT {$start}, {$awards->query_limit}) a ON (c.cid=a.cid)
-		ORDER BY c.disporder ASC
-	;");
+	$query = $db->simple_select('ougc_awards_categories', '*', "visible='1'", array('limit_start' => $start, 'limit' => $awards->query_limit, 'order_by' => 'disporder'));
 
 	while($category = $db->fetch_array($query))
 	{
-		if(!isset($cached_items[(int)$category['disporder']][(int)$category['category_cid']]))
-		{
-			$cached_items[(int)$category['disporder']][(int)$category['category_cid']] = array(
-				'cid'			=> (int)$category['category_cid'],
-				'name'			=> (string)$category['name'],
-				'description'	=> (string)$category['description'],
-				'disporder'		=> (int)$category['disporder'],
-				'allowrequests'	=> (int)$category['allowrequests'],
-				'visible'		=> (int)$category['visible'],
-				'awards'		=> array()
-			);
-		}
+		$cids[] = (int)$category['cid'];
+		$categories[] = $category;
+	}
 
-		if(isset($category['aid']))
-		{
-			$cached_items[(int)$category['disporder']][(int)$category['category_cid']]['awards'][(int)$category['award_disporder']][(int)$category['aid']] = array(
-				'aid'			=> (int)$category['aid'],
-				'cid'			=> (int)$category['category_cid'],
-				'name'			=> (string)$category['award_name'],
-				'description'	=> (string)$category['award_description'],
-				'disporder'		=> (int)$category['award_disporder'],
-				'allowrequests'	=> (int)$category['award_allowrequests'],
-				'image'			=> (string)$category['image'],
-				'pm'			=> (string)$category['pm'],
-				'type'			=> (int)$category['type'],
-				'visible'		=> (int)$category['visible']
-			);
-		}
-	}*/
+	$multipage = (string)multipage($catscount, $awards->query_limit, $awards->get_input('page', 1), $awards->build_url());
 
 	$cached_items = array();
-	$query = $db->simple_select('ougc_awards a', 'a.*', $whereclause, array('limit_start' => $start, 'limit' => $awards->query_limit, 'order_by' => 'a.disporder'));
-	while($award = $db->fetch_array($query))
+
+	foreach($_cache['awards'] as $aid => $award)
 	{
+		$award['aid'] = (int)$aid;
 		$cached_items[$award['cid']][] = $award;
 	}
 
 	$content = '';
 	if(!empty($categories))
 	{
-		/*foreach($cached_items as $category_disporder)
-		{
-			foreach($category_disporder as $cid => $category)
-			{
-				$request = '';
-				$colspan_thead = 3;
-				if($category['allowrequests'])
-				{
-					$request = eval($templates->render('ougcawards_page_list_request'));
-					++$colspan_thead;
-				}
-
-				$category['name'] = htmlspecialchars_uni($category['name']);
-				$category['description'] = htmlspecialchars_uni($category['description']);
-
-				$award_list = '';
-				foreach($category['awards'] as $disporder)
-				{
-					$trow = alt_trow(1);
-					foreach($disporder as $aid => $award)
-					{
-						$award_request = '';
-						$colspan_trow = 2;
-						if($category['allowrequests'] && $award['allowrequests'])
-						{
-							$award_request = eval($templates->render('ougcawards_page_list_award_request'));
-							--$colspan_trow;
-						}
-
-						$award['aid'] = (int)$award['aid'];
-						$award['image'] = $awards->get_award_icon($award['aid']);
-						if($name = $awards->get_award_info('name', $award['aid']))
-						{
-							$award['name'] = $name;
-						}
-						if($description = $awards->get_award_info('description', $award['aid']))
-						{
-							$award['description'] = $description;
-						}
-
-						eval('$award_list .= "'.$templates->get('ougcawards_page_list_award').'";');
-
-						$trow = alt_trow();
-					}
-				}
-
-				if(!$award_list)
-				{
-					eval('$award_list = "'.$templates->get('ougcawards_page_list_empty').'";');
-				}
-
-				$plugins->run_hooks('ougc_awards_end');
-
-				eval('$content .= "'.$templates->get('ougcawards_page_list').'";');
-			}
-		}*/
-
 		foreach($categories as $disporder => $category)
 		{
 			$request = '';
@@ -573,6 +534,7 @@ else
 						$award['description'] = $description;
 					}
 
+					$award['fimage'] = eval($templates->render($awards->get_award_info('template', $award['aid'])));
 					eval('$award_list .= "'.$templates->get('ougcawards_page_list_award').'";');
 
 					$trow = alt_trow();
@@ -589,9 +551,10 @@ else
 			eval('$content .= "'.$templates->get('ougcawards_page_list').'";');
 		}
 	}
+
+	$content or $content = eval($templates->render('ougcawards_page_empty'));
 }
 
-$jscriptfile = eval($templates->render('ougcawards_js'));
 eval('$page = "'.$templates->get('ougcawards_page').'";');
 output_page($page);
 exit;

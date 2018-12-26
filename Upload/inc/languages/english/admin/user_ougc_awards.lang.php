@@ -38,6 +38,7 @@ $l['ougc_awards_import_desc'] = '<br />&nbsp;&nbsp;&nbsp;<a href="./index.php?mo
 $l['ougc_awards_import_confirm_myawards'] = 'Are you sure you want to import awards from MyAwards?';
 $l['ougc_awards_import_confirm_nickawards'] = 'Are you sure you want to import awards from Nickman\'s award system?';
 $l['ougc_awards_import_end'] = 'Awards Imported Successfully.';
+$l['ougc_awards_import_error'] = 'There was an error trying to import the selected awards. The "{1}" table doesn\'t seems to exists.';
 
 // Settings
 $l['setting_ougc_awards_postbit'] = 'Maximum Awards in Posts';
@@ -53,9 +54,11 @@ $l['setting_ougc_awards_modgroups_desc'] = 'Allowed groups to moderate this feat
 $l['setting_ougc_awards_pagegroups'] = 'Awards Page Allowed Groups';
 $l['setting_ougc_awards_pagegroups_desc'] = 'Allowed groups to view the awards page.';
 $l['setting_ougc_awards_perpage'] = 'Items Per Page';
-$l['setting_ougc_awards_perpage_desc'] = 'Maximum number of items to show per page or list.';
+$l['setting_ougc_awards_perpage_desc'] = 'Maximum number of items to show per page or within listings.';
 $l['setting_ougc_awards_sendpm'] = 'Send PM';
 $l['setting_ougc_awards_sendpm_desc'] = 'Do you want to send an PM to users when receiving an award?';
+$l['setting_ougc_awards_welcomeblock'] = 'Display Welcome Block List';
+$l['setting_ougc_awards_welcomeblock_desc'] = 'Enabling this feature, a full list of earned awards will be displayed inside the header user welcome block.';
 $l['setting_ougc_awards_enablestatspage'] = 'Enable Stats';
 $l['setting_ougc_awards_enablestatspage_desc'] = 'Do you want to enable the top and last awarded users in the stats page?';
 $l['setting_ougc_awards_myalerts'] = 'MyAlerts Integration';
@@ -91,6 +94,9 @@ $l['ougc_awards_tab_revoke'] = 'Revoke';
 $l['ougc_awards_tab_revoke_d'] = 'Revoke award.';
 $l['ougc_awards_tab_users'] = 'View Users';
 $l['ougc_awards_tab_users_d'] = 'View users with this award.';
+$l['ougc_awards_tab_owners'] = 'Manage Owners';
+$l['ougc_awards_tab_owners_d'] = 'Manage the award owners.';
+$l['ougc_awards_tab_owners_form'] = 'Add Owner';
 $l['ougc_awards_tab_edit_user'] = 'Edit User Award';
 $l['ougc_awards_tab_edit_user_d'] = 'Edit this user\'s award data.';
 $l['ougc_awards_tab_delete'] = 'Delete';
@@ -108,8 +114,11 @@ $l['ougc_awards_form_name'] = 'Name';
 $l['ougc_awards_form_name_d'] = 'Insert a short name for this item.';
 $l['ougc_awards_form_username'] = 'Username';
 $l['ougc_awards_form_username_d'] = 'Insert the username of the user to give/revoke the selected award.';
+$l['ougc_awards_form_owner_username_d'] = 'Insert the username of the user upon which you want to grant owner status over this award.';
 $l['ougc_awards_form_reason'] = 'Reason';
 $l['ougc_awards_form_reason_d'] = 'Insert a reason for giving this award';
+$l['ougc_awards_form_thread'] = 'Thread';
+$l['ougc_awards_form_thread_d'] = 'Please enter an thread to assign this granting to.';
 $l['ougc_awards_form_multiple'] = 'Multiple Users';
 $l['ougc_awards_form_multiple_desc'] = 'Select whether or not you are giving this award to multiple users at once.<br />
 You need to separate each username with a comma without spaces inside the field above.<br />
@@ -121,11 +130,18 @@ $l['ougc_awards_form_category'] = 'Category';
 $l['ougc_awards_form_category_desc'] = 'Please select the category this award belongs to.';
 $l['ougc_awards_form_desc'] = 'Description';
 $l['ougc_awards_form_desc_d'] = 'Write a short description for this item.';
-$l['ougc_awards_form_image'] = 'Image';
-$l['ougc_awards_form_image_d'] = 'Image of this award.<br/><span class="smalltext">&nbsp;&nbsp;{bburl} -> Forum URL<br />
+$l['ougc_awards_form_image'] = 'Image / Class';
+$l['ougc_awards_form_image_d'] = 'Enter the image path or class name for this award below. The following variables are available.<br/><span class="smalltext">&nbsp;&nbsp;{bburl} -> Forum URL<br />
 &nbsp;&nbsp;{homeurl} -> Home URL<br />
-&nbsp;&nbsp;{imgdir} -> Theme Directory URL
+&nbsp;&nbsp;{imgdir} -> Theme Directory URL<br />
+&nbsp;&nbsp;{aid} -> Award ID<br />
+&nbsp;&nbsp;{cid} -> Category ID
 </span>';
+$l['ougc_awards_form_template'] = 'Template Type';
+$l['ougc_awards_form_template_d'] = 'Choose if display using an image template, class template, or custom template (advanced).';
+$l['ougc_awards_form_template_0'] = 'Image Template';
+$l['ougc_awards_form_template_1'] = 'Class Template';
+$l['ougc_awards_form_template_2'] = 'Custom Template (Advanced)';
 $l['ougc_awards_form_visible'] = 'Visible';
 $l['ougc_awards_form_allowrequests'] = 'Allow Requests';
 $l['ougc_awards_form_hidden'] = 'Hidden';
@@ -165,11 +181,20 @@ $l['ougc_awards_error_invalidimage'] = 'The inserted image is too long.';
 $l['ougc_awards_error_give'] = 'The selected user already has the selected award.';
 $l['ougc_awards_error_giveperm'] = 'You don\'t have permission to edit the selected user.';
 $l['ougc_awards_success_give'] = 'The selected user was awarded successfully.';
+$l['ougc_awards_success_owner_grant'] = 'The selected user was successfully granted owner status.';
+$l['ougc_awards_success_owner_revoke'] = 'The selected owner status was successfully revoked.';
+$l['ougc_awards_success_owner_duplicated'] = 'The selected user has owner status already granted.';
 $l['ougc_awards_error_revoke'] = 'The selected user doesn\'t has the selected award.';
+$l['ougc_awards_error_invalidthread'] = 'You entered an invalid thread value.';
+$l['ougc_awards_error_invaliddate'] = 'You entered an invalid dateline value.';
 $l['ougc_awards_success_revoke'] = 'The selected award was revoked successfully.';
 $l['ougc_awards_success_delete'] = 'The item was deleted successfully.';
 $l['ougc_awards_success_cache'] = 'The cache was rebuild successfully.';
 $l['ougc_awards_success_prunelogs'] = 'The task logs were successfully pruned.';
+
+// Owner revoke page
+$l['ougc_awards_owner_revoke_title'] = 'Revoke Award Owner';
+$l['ougc_awards_owner_revoke_desc'] = 'Are you sure you want to revoke the selected owner status?';
 
 // Tasks
 $l['ougc_awards_form_requirements'] = 'Requirements';
