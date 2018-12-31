@@ -68,7 +68,7 @@ else
 			$plugins->add_hook('postbit', 'ougc_awards_postbit');
 			$plugins->add_hook('postbit_pm', 'ougc_awards_postbit');
 			$plugins->add_hook('postbit_announcement', 'ougc_awards_postbit');
-			$templatelist .= 'ougcawards_postbit';
+			$templatelist .= 'ougcawards_postbit, ';
 			break;
 		case 'member.php':
 			global $mybb;
@@ -76,20 +76,23 @@ else
 			if($mybb->input['action'] == 'profile')
 			{
 				$plugins->add_hook('member_profile_end', 'ougc_awards_profile');
-				$templatelist .= 'ougcawards_profile_row, ougcawards_profile, ougcawards_profile_multipage, multipage_prevpage, multipage_page, multipage_page_current, multipage_nextpage, multipage';
+				$templatelist .= 'ougcawards_profile_row, ougcawards_profile, ougcawards_profile_multipage, multipage_prevpage, multipage_page, multipage_page_current, multipage_nextpage, multipage, ';
 			}
 			break;
 		case 'modcp.php':
 			global $mybb;
 
 			$plugins->add_hook('modcp_start', 'ougc_awards_modcp');
-			$templatelist .= 'ougcawards_modcp_nav';
+			$templatelist .= 'ougcawards_modcp_nav, ';
 			if($mybb->input['action'] == 'awards')
 			{
-				$templatelist .= ', ougcawards_modcp_list_award, ougcawards_modcp_list, ougcawards_modcp, ougcawards_modcp_manage_reason, ougcawards_modcp_manage';
+				$templatelist .= ', ougcawards_modcp_list_award, ougcawards_modcp_list, ougcawards_modcp, ougcawards_modcp_manage_reason, ougcawards_modcp_manage, ';
 			}
 			break;
 	}
+
+	$plugins->add_hook('global_intermediate', 'ougc_awards_global_intermediate');
+	$templatelist .= 'ougcawards_welcomeblock, ougcawards_welcomeblock_empty, ougcawards_welcomeblock_award';
 }
 
 $plugins->add_hook('datahandler_user_insert', 'ougc_awards_insert_user');
@@ -172,6 +175,12 @@ function ougc_awards_activate()
 		   'optionscode'	=> 'yesno',
 		   'value'			=> 1
 		),
+		'welcomeblock'		=> array(
+		   'title'			=> $lang->setting_ougc_awards_welcomeblock,
+		   'description'	=> $lang->setting_ougc_awards_welcomeblock_desc,
+		   'optionscode'	=> 'yesno',
+		   'value'			=> 1
+		),
 		/*'myalerts'	=> array(
 		   'title'			=> $lang->setting_ougc_awards_myalerts,
 		   'description'	=> $lang->setting_ougc_awards_myalerts_desc,
@@ -182,6 +191,16 @@ function ougc_awards_activate()
 
 	// Add template group
 	$PL->templates('ougcawards', '<lang:setting_group_ougc_awards>', array(
+		'welcomeblock'					=> '<div class="lower">
+	<div class="wrapper">
+		<ul class="menu panel_links">
+			{$lang->ougc_awards_welcomeblock}{$awardlist}
+		</ul>
+	</div>
+	<br class="clear" />
+</div>',
+		'welcomeblock_empty'			=> '{$lang->ougc_awards_welcomeblock_empty}',
+		'welcomeblock_award'			=> '<a href="{$mybb->settings[\'bburl\']}/awards.php?view={$award[\'aid\']}" title="{$award[\'name\']}"><img src="{$award[\'image\']}" alt="{$award[\'name\']}" /></a>',
 		'modcp_manage'					=> '<form action="modcp.php" method="post">
 <input type="hidden" name="action" value="awards" />
 <input type="hidden" name="manage" value="{$mybb->input[\'manage\']}" />
@@ -386,6 +405,7 @@ if(use_xmlhttprequest == "1")
 	find_replace_templatesets('postbit_classic', '#'.preg_quote('{$post[\'user_details\']}').'#', '{$post[\'user_details\']}{$post[\'ougc_awards\']}');
 	find_replace_templatesets('member_profile', '#'.preg_quote('{$signature}').'#', '{$signature}{$memprofile[\'ougc_awards\']}');
 	find_replace_templatesets('modcp_nav', '#'.preg_quote('{$modcp_nav_users}').'#', '{$modcp_nav_users}<!--OUGC_AWARDS-->');
+	find_replace_templatesets('header_welcomeblock_member', '#'.preg_quote('<div class="lower">').'#', '{$ougc_awards_welcomeblock}<div class="lower">');
 
 	// Update administrator permissions
 	change_admin_permission('tools', 'ougc_awards');
@@ -511,6 +531,7 @@ function ougc_awards_deactivate()
 	find_replace_templatesets('postbit_classic', '#'.preg_quote('{$post[\'ougc_awards\']}').'#', '', 0);
 	find_replace_templatesets('member_profile', '#'.preg_quote('{$memprofile[\'ougc_awards\']}').'#', '', 0);
 	find_replace_templatesets('modcp_nav', '#'.preg_quote('<!--OUGC_AWARDS-->').'#', '', 0);
+	find_replace_templatesets('header_welcomeblock_member', '#'.preg_quote('{$ougc_awards_welcomeblock}').'#', '', 0);
 
 	// Update administrator permissions
 	change_admin_permission('tools', 'ougc_awards', 0);
@@ -840,6 +861,79 @@ function ougc_awards_modcp()
 		output_page($page);
 		exit;
 	}
+}
+
+// Display user's awards inside welcome block
+function ougc_awards_global_intermediate()
+{
+	global $templates;
+
+	if(my_strpos($templates->cache['header_welcomeblock_member'], '{$ougc_awards_welcomeblock}') === false)
+	{
+		return;
+	}
+
+	global $mybb, $db, $lang, $theme, $awards, $ougc_awards_welcomeblock;
+	$awards->lang_load();
+
+	$ougc_awards_welcomeblock = '';
+
+	$awards->set_url(null, get_profile_link($mybb->user['uid']));
+
+	$ougc_awards_welcomeblock = 'Woohoo!';
+
+	// Query our data.
+	$query = $db->query('
+		SELECT u.*, a.*
+		FROM '.TABLE_PREFIX.'ougc_awards_users u
+		LEFT JOIN '.TABLE_PREFIX.'ougc_awards a ON (u.aid=a.aid)
+		WHERE u.uid=\''.(int)$mybb->user['uid'].'\' AND a.visible=\'1\'
+		ORDER BY u.date desc'
+	);
+
+	// Output our awards.
+	if(!$db->num_rows($query))
+	{
+		eval('$awardlist = "'.$templates->get('ougcawards_welcomeblock_empty').'";');
+	}
+	else
+	{
+		$awardlist = '';
+		while($award = $db->fetch_array($query))
+		{
+			$trow = alt_trow();
+
+			if($name = $awards->get_award_info('name', $award['aid']))
+			{
+				$award['name'] = $name;
+			}
+			if($description = $awards->get_award_info('description', $award['aid']))
+			{
+				$award['description'] = $description;
+			}
+			if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid']))
+			{
+				$award['reason'] = $reason;
+			}
+
+			if(empty($award['reason']))
+			{
+				$award['reason'] = $lang->ougc_awards_pm_noreason;
+			}
+
+			$awards->parse_text($award['reason']);
+
+			$award['image'] = $awards->get_award_icon($award['aid']);
+
+			$award['date'] = $lang->sprintf($lang->ougc_awards_profile_tine, my_date($mybb->settings['dateformat'], $award['date']), my_date($mybb->settings['timeformat'], $award['date']));
+
+			eval('$awardlist .= "'.$templates->get('ougcawards_welcomeblock_award').'";');
+		}
+	}
+
+	$lang->ougc_awards_profile_title = $lang->sprintf($lang->ougc_awards_profile_title, htmlspecialchars_uni($mybb->user['username']));
+
+	eval('$ougc_awards_welcomeblock = "'.$templates->get('ougcawards_welcomeblock').'";');
 }
 
 // Show awards in profile function.
