@@ -2,11 +2,11 @@
  *
  *	OUGC Awards plugin (/jscripts/ougc_awards.js)
  *	Author: Omar Gonzalez
- *	Copyright: © 2012-2016 Omar Gonzalez
+ *	Copyright: © 2012-2019 Omar Gonzalez
  *
  *	Website: http://omarg.me
  *
- *	Extend your forum with a powerful awards system.
+ *	Adds a powerful awards system to you community.
  *
  ***************************************************************************
  
