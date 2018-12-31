@@ -36,6 +36,8 @@ require_once MYBB_ROOT."inc/class_parser.php";
 
 is_object($parser) or $parser = new postParser;
 
+is_object($awards) or error_no_permission();
+
 // Load lang
 $awards->lang_load();
 
