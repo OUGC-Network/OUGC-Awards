@@ -124,13 +124,15 @@ function ougc_awards_info()
 	return array(
 		'name'			=> 'OUGC Awards',
 		'description'	=> $lang->setting_group_ougc_awards_desc.($awards->allow_imports && ougc_awards_is_installed() ? $lang->ougc_awards_import_desc : ''),
-		'website'		=> 'http://mods.mybb.com/view/ougc-awards',
+		'website'		=> 'https://omarg.me/thread?general/plugins/ougc-awards',
 		'author'		=> 'Omar G.',
 		'authorsite'	=> 'http://omarg.me',
 		'version'		=> '1.8.19',
 		'versioncode'	=> 1819,
 		'compatibility'	=> '16*,18*',
 		'myalerts'		=> '2.0.4',
+		'codename'		=> 'ougc_awards',
+		'newpoints'		=> '2.1.1',
 		'pl'			=> array(
 			'version'	=> 13,
 			'url'		=> 'https://community.mybb.com/mods.php?action=view&pid=573'
@@ -1531,7 +1533,7 @@ function ougc_awards_modcp()
 							{
 								$award['description'] = $description;
 							}
-							if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid']))
+							if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid'], $award['rid'], $award['tid']))
 							{
 								$award['reason'] = $reason;
 							}
@@ -1780,7 +1782,7 @@ function ougc_awards_profile()
 						{
 							$award['description'] = $description;
 						}
-						if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid']))
+						if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid'], $award['rid'], $award['tid']))
 						{
 							$award['reason'] = $reason;
 						}
@@ -1869,7 +1871,7 @@ function ougc_awards_postbit(&$post)
 
 			$pids = array_filter(array_unique(array_map('intval', explode('\'', $GLOBALS['pids']))));
 			$query = $db->query('
-				SELECT a.aid, a.name, a.image, ag.uid, ag.gid, ag.reason
+				SELECT a.aid, a.name, a.image, ag.*
 				FROM '.TABLE_PREFIX.'ougc_awards a
 				JOIN '.TABLE_PREFIX.'ougc_awards_users ag ON (ag.aid=a.aid)
 				JOIN '.TABLE_PREFIX.'posts p ON (p.uid=ag.uid)
@@ -1890,7 +1892,7 @@ function ougc_awards_postbit(&$post)
 			$ougc_awards_cache = array();
 
 			$query = $db->query('
-				SELECT a.aid, a.name, a.image, ag.uid, ag.gid, ag.reason
+				SELECT a.aid, a.name, a.image, ag.*
 				FROM '.TABLE_PREFIX.'ougc_awards a
 				JOIN '.TABLE_PREFIX.'ougc_awards_users ag ON (ag.aid=a.aid)
 				WHERE ag.visible=1 AND ag.uid=\''.(int)$post['uid'].'\' '.$whereclause.'
@@ -1915,7 +1917,7 @@ function ougc_awards_postbit(&$post)
 
 	$awards->lang_load();
 
-	$count = 0;
+	$count = $countbr = 0;
 
 	$viewall = '';
 
@@ -1938,11 +1940,13 @@ function ougc_awards_postbit(&$post)
 
 			if($awards->query_limit_postbit == -1 || $count < $awards->query_limit_postbit)
 			{
-				$count++;
+				++$count;
 				$br = '';
-				if($count == 1 || ($max_per_line && !($count % $max_per_line == 0)))
+
+				if($max_per_line === 1 || $count === 1 || $countbr === $max_per_line)
 				{
-					$br = '<br class="ougc_awards_postbit_maxperline" />'; // We insert a break if it is the first award.
+					$countbr = 0;
+					$br = '<br class="ougc_awards_postbit_maxperline" />';
 				}
 
 				if($awards->query_limit_postbit != -1 && $count == $awards->query_limit_postbit)
@@ -1952,7 +1956,7 @@ function ougc_awards_postbit(&$post)
 					eval('$viewall = "'.$templates->get('ougcawards_stats_user_viewall').'";');
 				}
 
-				if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid']))
+				if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid'], $award['rid'], $award['tid']))
 				{
 					$award['reason'] = $reason;
 				}
@@ -1967,6 +1971,8 @@ function ougc_awards_postbit(&$post)
 				$award['fimage'] = eval($templates->render($awards->get_award_info('template', $award['aid']), 1, 0));
 				eval('$new_award = "'.$templates->get('ougcawards_postbit', 1, 0).'";');
 				$post['ougc_awards'] .= trim($new_award);
+
+				++$countbr;
 			}
 		}
 	}
@@ -2002,7 +2008,7 @@ function ougc_awards_global_intermediate()
 {
 	global $mybb, $awards, $lang, $templates, $ougc_awards_menu, $ougc_awards_requests, $ougc_awards_welcomeblock, $ougc_awards_js;
 	$awards->lang_load();
-
+	
 	$ougc_awards_js = eval($templates->render('ougcawards_js'));
 
 	$ougc_awards_menu = eval($templates->render('ougcawards_global_menu'));
@@ -2324,6 +2330,7 @@ class OUGC_Awards
 				'requirements'			=> "varchar(200) NOT NULL DEFAULT ''",
 				'give'					=> "text NOT NULL",
 				'reason'				=> "text NOT NULL",
+				'thread'				=> "int UNSIGNED NOT NULL DEFAULT '0'",
 				'allowmultiple'			=> "smallint(1) NOT NULL DEFAULT '0'",
 				'revoke'				=> "text NOT NULL",
 				'usergroups'			=> "text NOT NULL",
@@ -2568,6 +2575,7 @@ class OUGC_Awards
 			'awards'		=> array(),
 			'categories'	=> array(),
 			'requests'		=> array(),
+			'tasks'			=> array(),
 			'top'			=> array(),
 			'last'			=> array()
 		);
@@ -2636,6 +2644,15 @@ class OUGC_Awards
 			{
 				$_cache['last'][(int)$user['date']] = (int)$user['uid'];
 			}
+		}
+
+		$query = $db->simple_select('ougc_awards_tasks', 'tid, name, reason', '', array('order_by' => 'disporder'));
+		while($task = $db->fetch_array($query))
+		{
+			$_cache['tasks'][(int)$task['tid']] = array(
+				'name'		=> (string)$task['name'],
+				'reason'	=> (string)$task['reason']
+			);
 		}
 
 		$mybb->cache->update('ougc_awards', $_cache);
@@ -2957,7 +2974,7 @@ class OUGC_Awards
 			!isset($data[$k]) or $cleandata[$k] = $db->escape_string($data[$k]);
 		}
 
-		foreach(array('active', 'logging', 'allowmultiple', 'additionalgroups', 'disporder', 'posts', 'threads', 'fposts', 'fpostsforums', 'fthreads', 'fthreadsforums', 'registered', 'online', 'reputation', 'referrals', 'warnings', 'newpoints', 'mydownloads', 'myarcadechampions', 'myarcadescores', 'ougc_customrep_r', 'ougc_customrep_g', 'ougc_customrepids_r', 'ougc_customrepids_g') as $k)
+		foreach(array('active', 'logging', 'thread', 'allowmultiple', 'additionalgroups', 'disporder', 'posts', 'threads', 'fposts', 'fpostsforums', 'fthreads', 'fthreadsforums', 'registered', 'online', 'reputation', 'referrals', 'warnings', 'newpoints', 'mydownloads', 'myarcadechampions', 'myarcadescores', 'ougc_customrep_r', 'ougc_customrep_g', 'ougc_customrepids_r', 'ougc_customrepids_g') as $k)
 		{
 			!isset($data[$k]) or $cleandata[$k] = (int)$data[$k];
 		}
@@ -3109,7 +3126,7 @@ class OUGC_Awards
 	}
 
 	// Give an award.
-	function give_award($award, $user, $reason, int $thread=0, int $task=0)
+	function give_award($award, $user, $reason, int $thread=0, int $task=0, int $rid=0)
 	{
 		global $db, $plugins, $mybb;
 
@@ -3131,6 +3148,7 @@ class OUGC_Awards
 			'oid'		=> (int)$mybb->user['uid'],
 			'tid'		=> $task,
 			'thread'	=> $thread,
+			'rid'	=> $rid,
 			'reason'	=> $db->escape_string(trim($reason)),
 			'date'		=> isset($award['TIME_NOW']) ? (int)$award['TIME_NOW'] : TIME_NOW
 		);
@@ -3170,17 +3188,19 @@ class OUGC_Awards
 
 		$plugins->run_hooks('ougc_awards_insert_owner', $args);
 
-		$this->aid = $award['aid'];
-		$this->uid = $user['uid'];
+		$this->aid = (int)$award['aid'];
+		$this->uid = (int)$user['uid'];
 
 		// Insert our gived award.
 		$insert_data = array(
-			'aid'		=> (int)$award['aid'],
-			'uid'		=> (int)$user['uid'],
+			'aid'		=> $this->aid,
+			'uid'		=> $this->uid,
 			'date'		=> isset($award['TIME_NOW']) ? (int)$award['TIME_NOW'] : TIME_NOW
 		);
 
 		$db->insert_query('ougc_awards_owners', $insert_data);
+
+		$db->update_query('users', array('ougc_awards_owner' => 1), "uid='{$this->uid}'");
 
 		return true;
 	}
@@ -3194,7 +3214,32 @@ class OUGC_Awards
 
 		$plugins->run_hooks('ougc_awards_revoke_owner', $this);
 
+		$owner = $this->get_owner(null, null, $oid);
+
 		$db->delete_query('ougc_awards_owners', "oid='{$this->oid}'");
+
+		$this->rebuild_owners($owner['uid']);
+	}
+
+	// Rebuild the owner status
+	function rebuild_owners($uid=0)
+	{
+		global $db;
+
+		$uids = array();
+
+		if(!$uids)
+		{
+			$query = $db->simple_select('ougc_awards_owners', 'uid');
+
+			while($uids[] = (int)$db->fetch_field($query, 'uid'));
+
+			$uids = array_filter($uids);
+
+			//$db->update_query('users', array('ougc_awards_owner' => 0));
+		}
+
+		$db->update_query('users', array('ougc_awards_owner' => 1), "uid IN ('".implode("','", $uids)."')");
 	}
 
 	// Grant owner status.
@@ -3230,7 +3275,7 @@ class OUGC_Awards
 		$award = $this->get_award($request['aid']);
 		$user = $this->get_user($request['uid']);
 
-		$this->give_award($award, $user, $lang->ougc_awards_pm_noreason_request_accepted);
+		$this->give_award($award, $user, null, 0, 0, $rid);
 
 		$this->update_request(array('status' => 0, 'muid' => $mybb->user['uid']), $rid);
 	}
@@ -3259,9 +3304,9 @@ class OUGC_Awards
 	}
 
 	// I liked as I did the pm thing, so what about award name, description, and reasons?
-	function get_award_info($type, $aid, $gid=0)
+	function get_award_info($type, $aid, $gid=0, $rid=0, $tid=0)
 	{
-		global $lang;
+		global $lang, $cache;
 		$this->lang_load(true);
 		$aid = (int)$aid;
 
@@ -3309,6 +3354,31 @@ class OUGC_Awards
 
 		if($type == 'reason')
 		{
+			if($rid)
+			{
+				$lang_val = 'ougc_awards_pm_noreason_request_accepted';
+				if(!empty($lang->$lang_val))
+				{
+					return $lang->$lang_val;
+				}
+			}
+
+			if($tid)
+			{
+				$_cache = $cache->read('ougc_awards');
+
+				if(isset($_cache['tasks'][$tid]))
+				{
+					$lang_val = 'ougc_awards_task_reason'.$tid;
+					$lang->$lang_val = (string)$_cache['tasks'][$tid]['reason'];
+
+					if(!empty($lang->$lang_val))
+					{
+						return $lang->$lang_val;
+					}
+				}
+			}
+
 			$lang_val = 'ougc_awards_award_'.$type.'_gived_'.(int)$gid;
 			if(!empty($lang->$lang_val))
 			{
@@ -3971,7 +4041,7 @@ class OUGC_Awards
 				$date = my_date($mybb->settings['dateformat'], $gived['date']).' - '.my_date($mybb->settings['timeformat'], $gived['date']);
 			}
 
-			if($reason = $this->get_award_info('reason', $gived['aid'], $gived['gid']))
+			if($reason = $this->get_award_info('reason', $gived['aid'], $gived['gid'], $gived['rid'], $gived['tid']))
 			{
 				$gived['reason'] = $reason;
 			}
@@ -4100,5 +4170,7 @@ class OUGC_Awards_MyAlerts_Formatter extends MybbStuff_MyAlerts_Formatter_Abstra
 		return $settings['bburl'].'/awards.php?view='.(int)$Details['object_id'];
 	}
 }
+
+// [27-Dec-2018 01:59:56 Europe/Madrid] PHP Fatal error:  Class 'MybbStuff_MyAlerts_Formatter_AbstractFormatter' not found in /home/mybbes/public_html/inc/plugins/ougc_awards.php on line 4048
 
 $GLOBALS['awards'] = new OUGC_Awards;

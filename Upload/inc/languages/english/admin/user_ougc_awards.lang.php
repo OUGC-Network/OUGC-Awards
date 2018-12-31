@@ -29,7 +29,7 @@
 
 // Plugin API
 $l['setting_group_ougc_awards'] = 'OUGC Awards';
-$l['setting_group_ougc_awards_desc'] = 'Extend your forum with a powerful awards system.';
+$l['setting_group_ougc_awards_desc'] = 'Adds a powerful awards system to you community.';
 
 // Importer
 $l['ougc_awards_import_title'] = 'Import Awards';
@@ -42,11 +42,11 @@ $l['ougc_awards_import_error'] = 'There was an error trying to import the select
 
 // Settings
 $l['setting_ougc_awards_postbit'] = 'Maximum Awards in Posts';
-$l['setting_ougc_awards_postbit_desc'] = 'Maximum number of awards to be shown in posts. -1 for unlimited.';
+$l['setting_ougc_awards_postbit_desc'] = 'Maximum number of awards to be shown in posts. -1 for unlimited. 0 to disable.';
 $l['setting_ougc_awards_postbit_maxperline'] = 'Maximum Awards Per Line';
 $l['setting_ougc_awards_postbit_maxperline_desc'] = 'Maximum number of awards to be shown in the same line in posts before adding a break tag. Leave 0 to disable.';
 $l['setting_ougc_awards_profile'] = 'Maximum Awards in Profile';
-$l['setting_ougc_awards_profile_desc'] = 'Maximum number of awards to be shown in profiles. -1 for unlimited.';
+$l['setting_ougc_awards_profile_desc'] = 'Maximum number of awards to be shown in profiles. -1 for unlimited. 0 to disable.';
 $l['setting_ougc_awards_modcp'] = 'Enable ModCP Panel';
 $l['setting_ougc_awards_modcp_desc'] = 'Allows moderators to manage awards from the moderator control panel.';
 $l['setting_ougc_awards_modgroups'] = 'Moderator Groups';

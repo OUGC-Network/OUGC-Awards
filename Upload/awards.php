@@ -153,7 +153,7 @@ if(!empty($mybb->input['view']))
 	{
 		$trow = alt_trow();
 
-		if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid']))
+		if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid'], $gived['rid'], $gived['tid']))
 		{
 			$award['reason'] = $reason;
 		}
@@ -324,7 +324,7 @@ elseif($awards->get_input('action') == 'viewall')
 							{
 								$award['description'] = $description;
 							}
-							if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid']))
+							if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid'], $award['rid'], $award['tid']))
 							{
 								$award['reason'] = $reason;
 							}

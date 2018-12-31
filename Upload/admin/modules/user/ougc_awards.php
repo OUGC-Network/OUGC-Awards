@@ -99,12 +99,11 @@ if($awards->get_input('action') == 'add' || $awards->get_input('action') == 'edi
 	}
 
 	$mergeinput = array();
-	foreach(array('name', 'description', 'disporder', 'active', 'logging', 'requirements', 'usergroups', 'additionalgroups', 'give', 'reason', 'allowmultiple', 'revoke', 'posts', 'poststype', 'threads', 'threadstype', 'fposts', 'fpoststype', 'fpostsforums', 'fthreads', 'fthreadstype', 'fthreadsforums', 'registered', 'registeredtype', 'online', 'onlinetype', 'reputation', 'reputationtype', 'referrals', 'referralstype', 'warnings', 'warningstype', 'newpoints', 'newpointstype', 'previousawards', 'profilefields', 'mydownloads', 'mydownloadstype', 'myarcadechampions', 'myarcadechampionstype', 'myarcadescores', 'myarcadescorestype', 'ougc_customrep_r', 'ougc_customreptype_r', 'ougc_customrepids_r', 'ougc_customrep_g', 'ougc_customreptype_g', 'ougc_customrepids_g') as $key)
+	foreach(array('name', 'description', 'disporder', 'active', 'logging', 'requirements', 'usergroups', 'additionalgroups', 'give', 'reason', 'thread', 'allowmultiple', 'revoke', 'posts', 'poststype', 'threads', 'threadstype', 'fposts', 'fpoststype', 'fpostsforums', 'fthreads', 'fthreadstype', 'fthreadsforums', 'registered', 'registeredtype', 'online', 'onlinetype', 'reputation', 'reputationtype', 'referrals', 'referralstype', 'warnings', 'warningstype', 'newpoints', 'newpointstype', 'previousawards', 'profilefields', 'mydownloads', 'mydownloadstype', 'myarcadechampions', 'myarcadechampionstype', 'myarcadescores', 'myarcadescorestype', 'ougc_customrep_r', 'ougc_customreptype_r', 'ougc_customrepids_r', 'ougc_customrep_g', 'ougc_customreptype_g', 'ougc_customrepids_g') as $key)
 	{
 		$mergeinput[$key] = isset($mybb->input[$key]) ? $mybb->input[$key] : ($add ? '' : $task[$key]);
 	}
 	$mybb->input = array_merge($mybb->input, $mergeinput);
-	//_dump($mybb->input);
 
 	$page->output_header($lang->ougc_awards_acp_nav);
 	$page->output_nav_tabs($sub_tabs, $add ? 'ougc_awards_add' : 'ougc_awards_edit');
@@ -119,6 +118,14 @@ if($awards->get_input('action') == 'add' || $awards->get_input('action') == 'edi
 		}
 		!isset($mybb->input['description']{255}) or $errors[] = $lang->ougc_awards_error_invaliddesscription;
 		!isset($mybb->input['image']{255}) or $errors[] = $lang->ougc_awards_error_invalidimage;
+
+		if($awards->get_input('thread'))
+		{
+			if(!($thread = $awards->get_thread_by_url($awards->get_input('thread'))))
+			{
+				$errors[] = $lang->ougc_awards_error_invalidthread;
+			}
+		}
 
 		if(empty($errors))
 		{
@@ -135,6 +142,7 @@ if($awards->get_input('action') == 'add' || $awards->get_input('action') == 'edi
 				'additionalgroups'		=> $awards->get_input('additionalgroups', 1),
 				'give'					=> $awards->get_input('give', 2),
 				'reason'				=> $awards->get_input('reason'),
+				'thread'				=> !empty($thread['tid']) ? (int)$thread['tid'] : 0,
 				'allowmultiple'			=> $awards->get_input('allowmultiple', 1),
 				'revoke'				=> $awards->get_input('revoke', 2),
 				'disporder'				=> $awards->get_input('disporder', 1),
@@ -215,6 +223,7 @@ if($awards->get_input('action') == 'add' || $awards->get_input('action') == 'edi
 	), $awards->get_input('requirements', 2), array('multiple' => true, 'size' => 5)));
 	$form_container->output_row($lang->ougc_awards_form_give, $lang->ougc_awards_form_give_desc, $awards->generate_awards_select('give[]', $mybb->input['give'], array('multiple' => true)));
 	$form_container->output_row($lang->ougc_awards_form_reason, $lang->ougc_awards_form_reason_d, $form->generate_text_area('reason', (string)$mybb->input['reason'], array('rows' => 8, 'style' => 'width:80%;')));
+	$form_container->output_row($lang->ougc_awards_form_thread, $lang->ougc_awards_form_thread_d, $form->generate_text_box('thread', isset($mybb->input['thread']) ? $awards->get_input('thread') : $task['thread'] ? get_thread_link($task['thread']) : ''));
 	$form_container->output_row($lang->ougc_awards_form_allowmultiple, $lang->ougc_awards_form_allowmultiple_desc, $form->generate_yes_no_radio('allowmultiple', (int)$mybb->input['allowmultiple']));
 	$form_container->output_row($lang->ougc_awards_form_revoke, $lang->ougc_awards_form_revoke_desc, $awards->generate_awards_select('revoke[]', $mybb->input['revoke'], array('multiple' => true)));
 	$form_container->output_row($lang->ougc_awards_form_order, $lang->ougc_awards_form_order_d, $form->generate_text_box('disporder', (int)$mybb->input['disporder'], array('style' => 'text-align: center; width: 30px;" maxlength="5')));
@@ -1061,7 +1070,7 @@ elseif($awards->get_input('action') == 'user')
 	$form_container = new FormContainer($lang->ougc_awards_tab_edit_user_d);
 
 	$form_container->output_row($lang->ougc_awards_form_reason, $lang->ougc_awards_form_reason_d, $form->generate_text_area('reason', isset($mybb->input['reason']) ? $mybb->input['reason'] : $gived['reason'], array('rows' => 8, 'style' => 'width:80%;')));
-	$form_container->output_row($lang->ougc_awards_form_thread, $lang->ougc_awards_form_thread_d, $form->generate_text_box('thread', isset($mybb->input['thread']) ? $awards->get_input('thread') : get_thread_link($gived['thread'])));
+	$form_container->output_row($lang->ougc_awards_form_thread, $lang->ougc_awards_form_thread_d, $form->generate_text_box('thread', isset($mybb->input['thread']) ? $awards->get_input('thread') : $gived['thread'] ? get_thread_link($gived['thread']) : ''));
 	$form_container->output_row($lang->ougc_awards_users_timestamp, $lang->ougc_awards_users_timestamp_d, $form->generate_text_box('date', isset($mybb->input['date']) ? $timestamp : intval($gived['date'])));
 
 	$form_container->end();
