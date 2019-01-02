@@ -94,8 +94,6 @@ else
 		case 'usercp.php':
 		case 'modcp.php':
 			$plugins->add_hook('usercp_start', 'ougc_awards_modcp');
-		case 'modcp.php':
-			$plugins->add_hook('usercp_start', 'ougc_awards_modcp');
 			$plugins->add_hook('modcp_start', 'ougc_awards_modcp');
 			$templatelist .= 'ougcawards_page_empty,ougcawards_usercp_nav, ougcawards_modcp_requests_list_empty, ougcawards_modcp_list_button, ougcawards_modcp_requests_list, ougcawards_modcp, ougcawards_modcp_requests_list_item,ougcawards_modcp_manage_multiple, ougcawards_modcp_manage_username, ougcawards_modcp_manage_thread, ougcawards_modcp_manage_reason, ougcawards_modcp_manage, ougcawards_usercp_sort_award, ougcawards_usercp_sort_empty, ougcawards_usercp_sort, ougcawards_modcp_list_award, ougcawards_modcp_list, ougcawards_page_empty, ougcawards_modcp_requests_buttons, ougcawards_modcp_nav';
 			break;
@@ -1546,6 +1544,10 @@ function ougc_awards_modcp()
 						{
 							$award['reason'] = $reason;
 						}
+						else
+						{
+							$award['reason'] = htmlspecialchars_uni($award['reason']);
+						}
 
 						if(empty($award['reason']))
 						{
@@ -1658,79 +1660,6 @@ function ougc_awards_modcp()
 	eval('$page = "'.$templates->get('ougcawards_modcp').'";');
 	output_page($page);
 	exit;
-}
-
-// Display user's awards inside welcome block
-function ougc_awards_global_intermediate()
-{
-	global $templates;
-
-	if(my_strpos($templates->cache['header_welcomeblock_member'], '{$ougc_awards_welcomeblock}') === false)
-	{
-		return;
-	}
-
-	global $mybb, $db, $lang, $theme, $awards, $ougc_awards_welcomeblock;
-	$awards->lang_load();
-
-	$ougc_awards_welcomeblock = '';
-
-	$awards->set_url(null, get_profile_link($mybb->user['uid']));
-
-	$ougc_awards_welcomeblock = 'Woohoo!';
-
-	// Query our data.
-	$query = $db->query('
-		SELECT u.*, a.*
-		FROM '.TABLE_PREFIX.'ougc_awards_users u
-		LEFT JOIN '.TABLE_PREFIX.'ougc_awards a ON (u.aid=a.aid)
-		WHERE u.uid=\''.(int)$mybb->user['uid'].'\' AND a.visible=\'1\'
-		ORDER BY u.date desc'
-	);
-
-	// Output our awards.
-	if(!$db->num_rows($query))
-	{
-		eval('$awardlist = "'.$templates->get('ougcawards_welcomeblock_empty').'";');
-	}
-	else
-	{
-		$awardlist = '';
-		while($award = $db->fetch_array($query))
-		{
-			$trow = alt_trow();
-
-			if($name = $awards->get_award_info('name', $award['aid']))
-			{
-				$award['name'] = $name;
-			}
-			if($description = $awards->get_award_info('description', $award['aid']))
-			{
-				$award['description'] = $description;
-			}
-			if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid']))
-			{
-				$award['reason'] = $reason;
-			}
-
-			if(empty($award['reason']))
-			{
-				$award['reason'] = $lang->ougc_awards_pm_noreason;
-			}
-
-			$awards->parse_text($award['reason']);
-
-			$award['image'] = $awards->get_award_icon($award['aid']);
-
-			$award['date'] = $lang->sprintf($lang->ougc_awards_profile_tine, my_date($mybb->settings['dateformat'], $award['date']), my_date($mybb->settings['timeformat'], $award['date']));
-
-			eval('$awardlist .= "'.$templates->get('ougcawards_welcomeblock_award').'";');
-		}
-	}
-
-	$lang->ougc_awards_profile_title = $lang->sprintf($lang->ougc_awards_profile_title, htmlspecialchars_uni($mybb->user['username']));
-
-	eval('$ougc_awards_welcomeblock = "'.$templates->get('ougcawards_welcomeblock').'";');
 }
 
 // Show awards in profile function.
@@ -1868,6 +1797,10 @@ function ougc_awards_profile()
 						if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid'], $award['rid'], $award['tid']))
 						{
 							$award['reason'] = $reason;
+						}
+						else
+						{
+							$award['reason'] = htmlspecialchars_uni($award['reason']);
 						}
 
 						if(empty($award['reason']))
@@ -2042,6 +1975,10 @@ function ougc_awards_postbit(&$post)
 				if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid'], $award['rid'], $award['tid']))
 				{
 					$award['reason'] = $reason;
+				}
+				else
+				{
+					$award['reason'] = htmlspecialchars_uni($award['reason']);
 				}
 
 				if(empty($award['reason']))
@@ -3437,6 +3374,15 @@ class OUGC_Awards
 
 		if($type == 'reason')
 		{
+			if($gid)
+			{
+				$lang_val = 'ougc_awards_award_reason_gived_'.(int)$gid;
+				if(!empty($lang->$lang_val))
+				{
+					return $lang->$lang_val;
+				}
+			}
+
 			if($rid)
 			{
 				$lang_val = 'ougc_awards_pm_noreason_request_accepted';
@@ -3453,7 +3399,7 @@ class OUGC_Awards
 				if(isset($_cache['tasks'][$tid]))
 				{
 					$lang_val = 'ougc_awards_task_reason'.$tid;
-					$lang->$lang_val = (string)$_cache['tasks'][$tid]['reason'];
+					isset($lang->$lang_val) or $lang->$lang_val = (string)$_cache['tasks'][$tid]['reason'];
 
 					if(!empty($lang->$lang_val))
 					{
@@ -3462,12 +3408,7 @@ class OUGC_Awards
 				}
 			}
 
-			$lang_val = 'ougc_awards_award_'.$type.'_gived_'.(int)$gid;
-			if(!empty($lang->$lang_val))
-			{
-				return $lang->$lang_val;
-			}
-			$lang_val = 'ougc_awards_award_'.$type.'_'.(int)$aid;
+			$lang_val = 'ougc_awards_award_reason_'.(int)$aid;
 			if(!empty($lang->$lang_val))
 			{
 				return $lang->$lang_val;
