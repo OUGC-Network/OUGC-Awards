@@ -105,10 +105,11 @@ else
 
 	$plugins->add_hook('global_start', 'ougc_awards_global_start');
 	$plugins->add_hook('global_intermediate', 'ougc_awards_global_intermediate');
-	$plugins->add_hook('datahandler_user_insert', 'ougc_awards_datahandler_user_insert');
 	$plugins->add_hook('fetch_wol_activity_end', 'ougc_awards_fetch_wol_activity_end');
 	$plugins->add_hook('build_friendly_wol_location_end', 'ougc_awards_build_friendly_wol_location_end');
 }
+
+$plugins->add_hook('datahandler_user_insert', 'ougc_awards_datahandler_user_insert');
 
 // PLUGINLIBRARY
 defined('PLUGINLIBRARY') or define('PLUGINLIBRARY', MYBB_ROOT.'inc/plugins/pluginlibrary.php');
