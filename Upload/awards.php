@@ -159,6 +159,10 @@ if(!empty($mybb->input['view']))
 		{
 			$award['reason'] = $reason;
 		}
+		else
+		{
+			$award['reason'] = htmlspecialchars_uni($award['reason']);
+		}
 
 		if(empty($award['reason']))
 		{
@@ -329,6 +333,10 @@ elseif($awards->get_input('action') == 'viewall')
 							if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid'], $award['rid'], $award['tid']))
 							{
 								$award['reason'] = $reason;
+							}
+							else
+							{
+								$award['reason'] = htmlspecialchars_uni($award['reason']);
 							}
 
 							if(empty($award['reason']))

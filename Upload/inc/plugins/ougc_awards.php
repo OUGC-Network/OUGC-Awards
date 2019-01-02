@@ -1546,6 +1546,10 @@ function ougc_awards_modcp()
 						{
 							$award['reason'] = $reason;
 						}
+						else
+						{
+							$award['reason'] = htmlspecialchars_uni($award['reason']);
+						}
 
 						if(empty($award['reason']))
 						{
@@ -1712,6 +1716,10 @@ function ougc_awards_global_intermediate()
 			{
 				$award['reason'] = $reason;
 			}
+			else
+			{
+				$award['reason'] = htmlspecialchars_uni($award['reason']);
+			}
 
 			if(empty($award['reason']))
 			{
@@ -1868,6 +1876,10 @@ function ougc_awards_profile()
 						if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid'], $award['rid'], $award['tid']))
 						{
 							$award['reason'] = $reason;
+						}
+						else
+						{
+							$award['reason'] = htmlspecialchars_uni($award['reason']);
 						}
 
 						if(empty($award['reason']))
@@ -2042,6 +2054,10 @@ function ougc_awards_postbit(&$post)
 				if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid'], $award['rid'], $award['tid']))
 				{
 					$award['reason'] = $reason;
+				}
+				else
+				{
+					$award['reason'] = htmlspecialchars_uni($award['reason']);
 				}
 
 				if(empty($award['reason']))
@@ -3437,6 +3453,15 @@ class OUGC_Awards
 
 		if($type == 'reason')
 		{
+			if($gid)
+			{
+				$lang_val = 'ougc_awards_award_reason_gived_'.(int)$gid;
+				if(!empty($lang->$lang_val))
+				{
+					return $lang->$lang_val;
+				}
+			}
+
 			if($rid)
 			{
 				$lang_val = 'ougc_awards_pm_noreason_request_accepted';
@@ -3453,7 +3478,7 @@ class OUGC_Awards
 				if(isset($_cache['tasks'][$tid]))
 				{
 					$lang_val = 'ougc_awards_task_reason'.$tid;
-					$lang->$lang_val = (string)$_cache['tasks'][$tid]['reason'];
+					isset($lang->$lang_val) or $lang->$lang_val = (string)$_cache['tasks'][$tid]['reason'];
 
 					if(!empty($lang->$lang_val))
 					{
@@ -3462,12 +3487,7 @@ class OUGC_Awards
 				}
 			}
 
-			$lang_val = 'ougc_awards_award_'.$type.'_gived_'.(int)$gid;
-			if(!empty($lang->$lang_val))
-			{
-				return $lang->$lang_val;
-			}
-			$lang_val = 'ougc_awards_award_'.$type.'_'.(int)$aid;
+			$lang_val = 'ougc_awards_award_reason_'.(int)$aid;
 			if(!empty($lang->$lang_val))
 			{
 				return $lang->$lang_val;
