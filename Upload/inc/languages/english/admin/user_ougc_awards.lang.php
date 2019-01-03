@@ -105,7 +105,7 @@ $l['ougc_awards_tab_categories'] = 'Categories';
 $l['ougc_awards_tab_categories_desc'] = 'View all current categories to manage.';
 $l['ougc_awards_tab_tasks'] = 'Tasks';
 $l['ougc_awards_tab_tasks_desc'] = 'Create task to automatically give/revoke awards from users.';
-$l['ougc_awards_tab_tasks_logs'] = 'Logs.';
+$l['ougc_awards_tab_tasks_logs'] = 'Logs';
 $l['ougc_awards_tab_tasks_logs_desc'] = 'View the tasks logs.';
 
 // ACP Module: Form
