@@ -197,20 +197,18 @@ $l['ougc_awards_owner_revoke_title'] = 'Revoke Award Owner';
 $l['ougc_awards_owner_revoke_desc'] = 'Are you sure you want to revoke the selected owner status?';
 
 // Tasks
-$l['ougc_awards_form_requirements'] = 'Requirements';
 $l['ougc_awards_form_usergroups'] = 'User Groups';
 $l['ougc_awards_form_usergroups_desc'] = 'Select which user group or user groups the user must be in for the task to run.';
 $l['ougc_awards_form_additionalgroups'] = 'Secondary User Groups';
 $l['ougc_awards_form_additionalgroups_desc'] = 'Select whether the task should check for additional user groups as well.';
 $l['ougc_awards_form_give'] = 'Give Award';
-$l['ougc_awards_form_give_desc'] = 'Seleect the award(s) to give to the user.';
+$l['ougc_awards_form_give_desc'] = 'Select the award(s) to give to the user.';
 $l['ougc_awards_form_allowmultiple'] = 'Allow Multiple Awards';
 $l['ougc_awards_form_allowmultiple_desc'] = 'Select whether the task should give the award even if the user already has it.';
 $l['ougc_awards_form_revoke'] = 'Revoke Award';
-$l['ougc_awards_form_revoke_desc'] = 'Seleect the award(s) to be revoked from the user.';
+$l['ougc_awards_form_revoke_desc'] = 'Select the award(s) to be revoked from the user.';
 $l['ougc_awards_form_requirements'] = 'Requirements';
-$l['ougc_awards_form_requirements_desc'] = 'Seleect the rules to execute this task on users.';
-$l['ougc_awards_form_requirements_post'] = 'Post Count';
+$l['ougc_awards_form_requirements_desc'] = 'Select the rules to execute this task on users.';
 $l['ougc_awards_form_requirements_post'] = 'Post Count';
 $l['ougc_awards_form_requirements_threads'] = 'Thread Count';
 $l['ougc_awards_form_requirements_fposts'] = 'Forum Post Count';
