@@ -3147,9 +3147,13 @@ class OUGC_Awards
 	}
 
 	// Give an award.
-	function give_award($award, $user, $reason, int $thread=0, int $task=0, int $rid=0)
+	function give_award($award, $user, $reason, $thread=0, $task=0, $rid=0)
 	{
 		global $db, $plugins, $mybb;
+
+		$thread = (int)$thread;
+		$task = (int)$task;
+		$rid = (int)$rid;
 
 		$args = array(
 			'award'		=> &$award,
