@@ -1888,7 +1888,7 @@ function ougc_awards_postbit(&$post)
 
 			$pids = array_filter(array_unique(array_map('intval', explode('\'', $GLOBALS['pids']))));
 			$query = $db->query('
-				SELECT a.aid, a.name, a.image, ag.*
+				SELECT ag.*
 				FROM '.TABLE_PREFIX.'ougc_awards a
 				JOIN '.TABLE_PREFIX.'ougc_awards_users ag ON (ag.aid=a.aid)
 				JOIN '.TABLE_PREFIX.'posts p ON (p.uid=ag.uid)
@@ -1909,7 +1909,7 @@ function ougc_awards_postbit(&$post)
 			$ougc_awards_cache = array();
 
 			$query = $db->query('
-				SELECT a.aid, a.name, a.image, ag.*
+				SELECT ag.*
 				FROM '.TABLE_PREFIX.'ougc_awards a
 				JOIN '.TABLE_PREFIX.'ougc_awards_users ag ON (ag.aid=a.aid)
 				WHERE ag.visible=1 AND ag.uid=\''.(int)$post['uid'].'\' '.$whereclause.'
@@ -1945,6 +1945,13 @@ function ougc_awards_postbit(&$post)
 		// Format the awards
 		foreach($awardlist as $award)
 		{
+			$award = array_merge($awards->get_award($award['aid']), $award);
+
+			if($award['cid'] != $cid)
+			{
+				continue;
+			}
+
 			$award['aid'] = (int)$award['aid'];
 			if($name = $awards->get_award_info('name', $award['aid']))
 			{
@@ -1966,7 +1973,7 @@ function ougc_awards_postbit(&$post)
 					$br = '<br class="ougc_awards_postbit_maxperline" />';
 				}
 
-				if($awards->query_limit_postbit != -1 && $count == $awards->query_limit_postbit)
+				if($awards->query_limit_postbit != -1 && $count == $awards->query_limit_postbit && $total != $count)
 				{
 					$uid = $post['uid'];
 					$message = $lang->ougc_awards_stats_viewall;
