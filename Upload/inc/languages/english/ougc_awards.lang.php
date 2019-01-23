@@ -60,6 +60,7 @@ $l['ougc_awards_error_invalidthread'] = 'You entered an invalid thread value.';
 $l['ougc_awards_error_noneselected'] = 'You didn\'t select any award upon which to perform the action.';
 $l['ougc_awards_error_active'] = 'The awards system is currently not active.';
 $l['ougc_awards_error_pendingrequest'] = 'There is a active request pending for this award from you.';
+$l['ougc_awards_error_nopermission'] = 'You are either not logged in or do not have permission to view this page.';
 
 // Words
 $l['ougc_awards_modcp_username'] = 'Username';

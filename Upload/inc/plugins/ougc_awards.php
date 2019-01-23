@@ -865,34 +865,6 @@ function ougc_awards_install()
 	$awards->_db_verify_indexes();
 
 	$awards->update_task_file();
-
-	if($db->table_exists('alert_settings') && $db->table_exists('alert_setting_values'))
-	{
-		$query = $db->simple_select('alert_settings', 'id', 'code=\'ougc_awards\'');
-
-		if(!($id = (int)$db->fetch_field($query, 'id')))
-		{
-			$id = (int)$db->insert_query('alert_settings', array('code' => 'ougc_awards'));
-	
-			// Only update the first time
-			$db->delete_query('alert_setting_values', 'setting_id=\''.$id.'\'');
-
-			$query = $db->simple_select('users', 'uid');
-			while($uid = (int)$db->fetch_field($query, 'uid'))
-			{
-				$settings[] = array(
-					'user_id'		=> $uid,
-					'setting_id'	=> $id,
-					'value'			=> 1
-				);
-			}
-
-			if(!empty($settings))
-			{
-				$db->insert_query_multiple('alert_setting_values', $settings);
-			}
-		}
-	}
 }
 
 // _is_installed() routine
@@ -2567,12 +2539,6 @@ class OUGC_Awards
 		}
 
 		$lang->load((defined('IN_ADMINCP') ? 'user_' : '').'ougc_awards');
-
-		// MyAlerts, ugly bitch
-		if(isset($lang->ougc_awards_myalerts_setting))
-		{
-			$lang->myalerts_setting_ougc_awards = $lang->ougc_awards_myalerts_setting;
-		}
 
 		if($extra)
 		{

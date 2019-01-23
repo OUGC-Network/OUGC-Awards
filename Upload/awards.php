@@ -74,7 +74,7 @@ if(!empty($mybb->input['view']))
 
 	if(!$category['cid'] || !$category['visible'])
 	{
-		$error = $lang->ougc_awards_error_invalidcategory;
+		error($lang->ougc_awards_error_invalidcategory);
 	}
 
 	$mybb->user['uid'] = (int)$mybb->user['uid'];
@@ -394,7 +394,12 @@ elseif($awards->get_input('action') == 'request')
 		$error = $lang->ougc_awards_error_wrongaward;
 	}
 
-	if(!$award['visible'] || !$award['allowrequests'])
+	if(!$mybb->user['uid'])
+	{
+		$error = $lang->ougc_awards_error_nopermission;
+	}
+
+	if(!$award['aid'] || !$award['visible'] || !$award['allowrequests'])
 	{
 		$error = $lang->ougc_awards_error_wrongaward;
 	}
@@ -412,10 +417,14 @@ elseif($awards->get_input('action') == 'request')
 	$award['aid'] = (int)$award['aid'];
 	$mybb->user['uid'] = (int)$mybb->user['uid'];
 
-	$query = $db->simple_select('ougc_awards_requests', '*', "status='1' AND uid='{$mybb->user['uid']}' AND aid='{$award['aid']}'", array('limit' => 1));
-	if($db->fetch_array($query))
+	if(!$error)
 	{
-		$error = $lang->ougc_awards_error_pendingrequest;
+		$query = $db->simple_select('ougc_awards_requests', '*', "status='1' AND uid='{$mybb->user['uid']}' AND aid='{$award['aid']}'", array('limit' => 1));
+
+		if($db->fetch_array($query))
+		{
+			$error = $lang->ougc_awards_error_pendingrequest;
+		}
 	}
 
 	$trow = alt_trow();
