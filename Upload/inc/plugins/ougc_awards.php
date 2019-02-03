@@ -56,14 +56,14 @@ else
 		$templatelist = '';
 	}
 
-	$templatelist .= 'ougcawards_js, ougcawards_global_menu,ougcawards_global_notification,ougcawards_welcomeblock,ougcawards_award_image,';
+	$templatelist .= 'ougcawards_js, ougcawards_global_menu,ougcawards_global_notification,ougcawards_welcomeblock,ougcawards_award_image,ougcawards_award_image_class,';
 
 	$awards = $cache->read('ougc_awards');
 	foreach($awards['awards'] as $aid => $award)
 	{
 		if($award['template'] == 2)
 		{
-			$templatelist .= 'ougcawards_award_image'.$aid.',ougcawards_award_image_cat'.$award['cid'].',';
+			$templatelist .= 'ougcawards_award_image'.$aid.',ougcawards_award_image_cat'.$award['cid'].',ougcawards_award_image_class'.$aid.',ougcawards_award_image_class'.$aid.',';
 		}
 	}
 	unset($awards, $award);
@@ -95,7 +95,7 @@ else
 		case 'modcp.php':
 			$plugins->add_hook('usercp_start', 'ougc_awards_modcp');
 			$plugins->add_hook('modcp_start', 'ougc_awards_modcp');
-			$templatelist .= 'ougcawards_page_empty,ougcawards_usercp_nav, ougcawards_modcp_requests_list_empty, ougcawards_modcp_list_button, ougcawards_modcp_requests_list, ougcawards_modcp, ougcawards_modcp_requests_list_item,ougcawards_modcp_manage_multiple, ougcawards_modcp_manage_username, ougcawards_modcp_manage_thread, ougcawards_modcp_manage_reason, ougcawards_modcp_manage, ougcawards_usercp_sort_award, ougcawards_usercp_sort_empty, ougcawards_usercp_sort, ougcawards_modcp_list_award, ougcawards_modcp_list, ougcawards_page_empty, ougcawards_modcp_requests_buttons, ougcawards_modcp_nav';
+			$templatelist .= 'ougcawards_page_empty,ougcawards_usercp_nav, ougcawards_modcp_requests_list_empty, ougcawards_modcp_list_button, ougcawards_modcp_requests_list, ougcawards_modcp, ougcawards_modcp_requests_list_item,ougcawards_modcp_manage_multiple, ougcawards_modcp_manage_username, ougcawards_modcp_manage_thread, ougcawards_modcp_manage_reason, ougcawards_modcp_manage, ougcawards_usercp_sort_award, ougcawards_usercp_sort_empty, ougcawards_usercp_sort, ougcawards_modcp_list_award, ougcawards_modcp_list, ougcawards_page_empty, ougcawards_modcp_requests_buttons, ougcawards_modcp_nav,ougcawards_modcp_nav';
 			break;
 		case 'stats.php':
 			$plugins->add_hook('stats_end', 'ougc_awards_stats_end');
@@ -425,7 +425,7 @@ if(use_xmlhttprequest == "1")
 		'page_list_request'	=> '<td class="tcat smalltext" align="center" width="15%"><strong>{$lang->ougc_awards_page_list_request}</strong></td>',
 		'page_list_award'	=> '<tr>
 	<td class="{$trow}" align="center">{$award[\'fimage\']}</td>
-	<td class="{$trow}">{$award[\'name\']}</td>
+	<td class="{$trow}"><a href="{$mybb->settings[\'bburl\']}/awards.php?view={$award[\'aid\']}">{$award[\'name\']}</a></td>
 	<td class="{$trow}" colspan="{$colspan_trow}">{$award[\'description\']}</td>
 	{$award_request}
 </tr>',
@@ -1727,7 +1727,7 @@ function ougc_awards_profile()
 		while($award = $db->fetch_array($query))
 		{
 			$tids[] = (int)$award['thread'];
-			$_awards[(int)$award['cid']][] = $award;
+			$_awards[] = $award;
 		}
 
 		$tids = array_filter($tids);
@@ -1745,75 +1745,70 @@ function ougc_awards_profile()
 		is_object($parser) or $parser = new postParser;
 
 		$awardlist = '';
-		if(!empty($categories))
+
+		if(!empty($_awards))
 		{
-			foreach($categories as $disporder => $category)
+			$category['name'] = htmlspecialchars_uni($category['name']);
+			$category['description'] = htmlspecialchars_uni($category['description']);
+
+			//eval('$awardlist .= "'.$templates->get('ougcawards_profile_row_category').'";');
+
+			$trow = alt_trow(1);
+			foreach($_awards as $award)
 			{
-				if(!empty($_awards[(int)$category['cid']]))
+				if($name = $awards->get_award_info('name', $award['aid']))
 				{
-					$category['name'] = htmlspecialchars_uni($category['name']);
-					$category['description'] = htmlspecialchars_uni($category['description']);
-
-					eval('$awardlist .= "'.$templates->get('ougcawards_profile_row_category').'";');
-
-					$trow = alt_trow(1);
-					foreach($_awards[(int)$category['cid']] as $cid => $award)
-					{
-						if($name = $awards->get_award_info('name', $award['aid']))
-						{
-							$award['name'] = $name;
-						}
-						if($description = $awards->get_award_info('description', $award['aid']))
-						{
-							$award['description'] = $description;
-						}
-						if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid'], $award['rid'], $award['tid']))
-						{
-							$award['reason'] = $reason;
-						}
-						else
-						{
-							$award['reason'] = htmlspecialchars_uni($award['reason']);
-						}
-
-						if(empty($award['reason']))
-						{
-							$award['reason'] = $lang->ougc_awards_pm_noreason;
-						}
-
-						$threadlink = '';
-						if($award['thread'] && $thread_cache[$award['thread']])
-						{
-							$thread = $thread_cache[$award['thread']];
-
-							$thread['threadprefix'] = $thread['displayprefix'] = '';
-							if($thread['prefix'])
-							{
-								$threadprefix = build_prefixes($thread['prefix']);
-
-								if(!empty($threadprefix['prefix']))
-								{
-									$thread['threadprefix'] = htmlspecialchars_uni($threadprefix['prefix']).'&nbsp;';
-									$thread['displayprefix'] = $threadprefix['displaystyle'].'&nbsp;';
-								}
-							}
-
-							$thread['subject'] = $parser->parse_badwords($thread['subject']);
-
-							$threadlink = '<a href="'.$settings['bburl'].'/'.get_thread_link($thread['tid']).'">'.$thread['displayprefix'].htmlspecialchars_uni($thread['subject']).'</a>';
-						}
-
-						$awards->parse_text($award['reason']);
-
-						$award['image'] = $awards->get_award_icon($award['aid']);
-
-						$award['date'] = $lang->sprintf($lang->ougc_awards_profile_tine, my_date($mybb->settings['dateformat'], $award['date']), my_date($mybb->settings['timeformat'], $award['date']));
-
-						$award['fimage'] = eval($templates->render($awards->get_award_info('template', $award['aid'])));
-						eval('$awardlist .= "'.$templates->get('ougcawards_profile_row').'";');
-						$trow = alt_trow();
-					}
+					$award['name'] = $name;
 				}
+				if($description = $awards->get_award_info('description', $award['aid']))
+				{
+					$award['description'] = $description;
+				}
+				if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid'], $award['rid'], $award['tid']))
+				{
+					$award['reason'] = $reason;
+				}
+				else
+				{
+					$award['reason'] = htmlspecialchars_uni($award['reason']);
+				}
+
+				if(empty($award['reason']))
+				{
+					$award['reason'] = $lang->ougc_awards_pm_noreason;
+				}
+
+				$threadlink = '';
+				if($award['thread'] && $thread_cache[$award['thread']])
+				{
+					$thread = $thread_cache[$award['thread']];
+
+					$thread['threadprefix'] = $thread['displayprefix'] = '';
+					if($thread['prefix'])
+					{
+						$threadprefix = build_prefixes($thread['prefix']);
+
+						if(!empty($threadprefix['prefix']))
+						{
+							$thread['threadprefix'] = htmlspecialchars_uni($threadprefix['prefix']).'&nbsp;';
+							$thread['displayprefix'] = $threadprefix['displaystyle'].'&nbsp;';
+						}
+					}
+
+					$thread['subject'] = $parser->parse_badwords($thread['subject']);
+
+					$threadlink = '<a href="'.$settings['bburl'].'/'.get_thread_link($thread['tid']).'">'.$thread['displayprefix'].htmlspecialchars_uni($thread['subject']).'</a>';
+				}
+
+				$awards->parse_text($award['reason']);
+
+				$award['image'] = $awards->get_award_icon($award['aid']);
+
+				$award['date'] = $lang->sprintf($lang->ougc_awards_profile_tine, my_date($mybb->settings['dateformat'], $award['date']), my_date($mybb->settings['timeformat'], $award['date']));
+
+				$award['fimage'] = eval($templates->render($awards->get_award_info('template', $award['aid'])));
+				eval('$awardlist .= "'.$templates->get('ougcawards_profile_row').'";');
+				$trow = alt_trow();
 			}
 		}
 	}
@@ -1912,68 +1907,60 @@ function ougc_awards_postbit(&$post)
 
 	$total = count($awardlist);
 
-	foreach($awards_cache['categories'] as $cid => $category)
+	// Format the awards
+	foreach($awardlist as $award)
 	{
-		// Format the awards
-		foreach($awardlist as $award)
+		$award = array_merge($awards->get_award($award['aid']), $award);
+
+		$award['aid'] = (int)$award['aid'];
+		if($name = $awards->get_award_info('name', $award['aid']))
 		{
-			$award = array_merge($awards->get_award($award['aid']), $award);
+			$award['name'] = $name;
+		}
+		$award['name_ori'] = $award['name'];
+		$award['name'] = strip_tags($award['name_ori']);
 
-			if($award['cid'] != $cid)
+		$award['image'] = $awards->get_award_icon($award['aid']);
+
+		if($awards->query_limit_postbit == -1 || $count < $awards->query_limit_postbit)
+		{
+			++$count;
+			$br = '';
+
+			if($max_per_line === 1 || $count === 1 || $countbr === $max_per_line)
 			{
-				continue;
+				$countbr = 0;
+				$br = '<br class="ougc_awards_postbit_maxperline" />';
 			}
 
-			$award['aid'] = (int)$award['aid'];
-			if($name = $awards->get_award_info('name', $award['aid']))
+			if($awards->query_limit_postbit != -1 && $count == $awards->query_limit_postbit && $total != $count)
 			{
-				$award['name'] = $name;
+				$uid = $post['uid'];
+				$message = $lang->ougc_awards_stats_viewall;
+				eval('$viewall = "'.$templates->get('ougcawards_stats_user_viewall').'";');
 			}
-			$award['name_ori'] = $award['name'];
-			$award['name'] = strip_tags($award['name_ori']);
 
-			$award['image'] = $awards->get_award_icon($award['aid']);
-
-			if($awards->query_limit_postbit == -1 || $count < $awards->query_limit_postbit)
+			if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid'], $award['rid'], $award['tid']))
 			{
-				++$count;
-				$br = '';
-
-				if($max_per_line === 1 || $count === 1 || $countbr === $max_per_line)
-				{
-					$countbr = 0;
-					$br = '<br class="ougc_awards_postbit_maxperline" />';
-				}
-
-				if($awards->query_limit_postbit != -1 && $count == $awards->query_limit_postbit && $total != $count)
-				{
-					$uid = $post['uid'];
-					$message = $lang->ougc_awards_stats_viewall;
-					eval('$viewall = "'.$templates->get('ougcawards_stats_user_viewall').'";');
-				}
-
-				if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid'], $award['rid'], $award['tid']))
-				{
-					$award['reason'] = $reason;
-				}
-				else
-				{
-					$award['reason'] = htmlspecialchars_uni($award['reason']);
-				}
-
-				if(empty($award['reason']))
-				{
-					$award['reason'] = $lang->ougc_awards_pm_noreason;
-				}
-
-				$awards->parse_text($award['reason']);
-
-				$award['fimage'] = eval($templates->render($awards->get_award_info('template', $award['aid']), 1, 0));
-				eval('$new_award = "'.$templates->get('ougcawards_postbit', 1, 0).'";');
-				$post['ougc_awards'] .= trim($new_award);
-
-				++$countbr;
+				$award['reason'] = $reason;
 			}
+			else
+			{
+				$award['reason'] = htmlspecialchars_uni($award['reason']);
+			}
+
+			if(empty($award['reason']))
+			{
+				$award['reason'] = $lang->ougc_awards_pm_noreason;
+			}
+
+			$awards->parse_text($award['reason']);
+
+			$award['fimage'] = eval($templates->render($awards->get_award_info('template', $award['aid']), 1, 0));
+			eval('$new_award = "'.$templates->get('ougcawards_postbit', 1, 0).'";');
+			$post['ougc_awards'] .= trim($new_award);
+
+			++$countbr;
 		}
 	}
 

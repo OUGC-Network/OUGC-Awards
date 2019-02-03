@@ -1136,7 +1136,10 @@ else
 
 			$award['visible'] or $award['name'] = '<i>'.$award['name'].'</i>';
 
-			$table->construct_cell('<img src="'.$awards->get_award_icon($award['aid']).'" />', array('class' => 'align_center'));
+			$award['image'] = $awards->get_award_icon($award['aid']);
+			$award['fimage'] = eval($templates->render($awards->get_award_info('template', $award['aid'])));
+
+			$table->construct_cell($award['fimage'], array('class' => 'align_center'));
 			$table->construct_cell('<a href="'.$edit_link.'">'.$award['name'].'</a>');
 			$table->construct_cell($award['description']);
 			$table->construct_cell($form->generate_text_box('disporder['.$award['aid'].']', (int)$award['disporder'], array('style' => 'text-align: center; width: 30px;')), array('class' => 'align_center'));

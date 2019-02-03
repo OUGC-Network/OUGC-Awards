@@ -91,7 +91,7 @@ $l['ougc_awards_redirect_request_rejected'] = 'Award request rejected successful
 // Profile
 $l['ougc_awards_profile_empty'] = 'This user has no awards at this time.';
 $l['ougc_awards_profile_tine'] = '{1} <i>at</i> {2}';
-$l['ougc_awards_profile_title'] = '{1}\' awards.';
+$l['ougc_awards_profile_title'] = '{1}\'s awards.';
 
 // PMs
 $l['ougc_awards_pm_title'] = 'You have been given the {1} award!';

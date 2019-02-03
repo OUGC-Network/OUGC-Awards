@@ -30,7 +30,9 @@
 // Boring stuff..
 define('IN_MYBB', 1);
 define('THIS_SCRIPT', substr($_SERVER['SCRIPT_NAME'], -strpos(strrev($_SERVER['SCRIPT_NAME']), '/')));
-$templatelist = 'ougcawards_page_list_award, ougcawards_page_list_award_request, ougcawards_page_list_request, ougcawards_page_list, ougcawards_page, ougcawards_page_list_empty, ougcawards_page_view_row, ougcawards_page_view, ougcawards_page_view_empty,ougcawards_page_empty';
+
+$templatelist = 'ougcawards_page_list_award, ougcawards_page_list_award_request, ougcawards_page_list_request, ougcawards_page_list, ougcawards_page, ougcawards_page_list_empty, ougcawards_page_view_row, ougcawards_page_view, ougcawards_page_view_empty,ougcawards_page_empty,ougcawards_page_view_request,';
+
 require_once './global.php';
 require_once MYBB_ROOT."inc/class_parser.php";
 
@@ -293,7 +295,7 @@ elseif($awards->get_input('action') == 'viewall')
 			while($award = $db->fetch_array($query))
 			{
 				$tids[] = (int)$award['thread'];
-				$_awards[(int)$award['cid']][] = $award;
+				$_awards[] = $award;
 			}
 
 			$tids = array_filter($tids);
@@ -308,75 +310,70 @@ elseif($awards->get_input('action') == 'viewall')
 			}
 
 			$content = '';
-			if(!empty($categories))
+
+			if(!empty($_awards))
 			{
-				foreach($categories as $disporder => $category)
+				$category['name'] = htmlspecialchars_uni($category['name']);
+				$category['description'] = htmlspecialchars_uni($category['description']);
+
+				//eval('$content .= "'.$templates->get('ougcawards_profile_row_category').'";');
+
+				$trow = alt_trow(1);
+				foreach($_awards as $award)
 				{
-					if(!empty($_awards[(int)$category['cid']]))
+					if($name = $awards->get_award_info('name', $award['aid']))
 					{
-						$category['name'] = htmlspecialchars_uni($category['name']);
-						$category['description'] = htmlspecialchars_uni($category['description']);
-
-						eval('$content .= "'.$templates->get('ougcawards_profile_row_category').'";');
-
-						$trow = alt_trow(1);
-						foreach($_awards[(int)$category['cid']] as $cid => $award)
-						{
-							if($name = $awards->get_award_info('name', $award['aid']))
-							{
-								$award['name'] = $name;
-							}
-							if($description = $awards->get_award_info('description', $award['aid']))
-							{
-								$award['description'] = $description;
-							}
-							if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid'], $award['rid'], $award['tid']))
-							{
-								$award['reason'] = $reason;
-							}
-							else
-							{
-								$award['reason'] = htmlspecialchars_uni($award['reason']);
-							}
-
-							if(empty($award['reason']))
-							{
-								$award['reason'] = $lang->ougc_awards_pm_noreason;
-							}
-
-							$threadlink = '';
-							if($award['thread'] && $thread_cache[$award['thread']])
-							{
-								$thread = $thread_cache[$award['thread']];
-
-								$thread['threadprefix'] = $thread['displayprefix'] = '';
-								if($thread['prefix'])
-								{
-									$threadprefix = build_prefixes($thread['prefix']);
-
-									if(!empty($threadprefix['prefix']))
-									{
-										$thread['threadprefix'] = htmlspecialchars_uni($threadprefix['prefix']).'&nbsp;';
-										$thread['displayprefix'] = $threadprefix['displaystyle'].'&nbsp;';
-									}
-								}
-
-								$thread['subject'] = $parser->parse_badwords($thread['subject']);
-
-								$threadlink = '<a href="'.$settings['bburl'].'/'.get_thread_link($thread['tid']).'">'.$thread['displayprefix'].htmlspecialchars_uni($thread['subject']).'</a>';
-							}
-
-							$awards->parse_text($award['reason']);
-
-							$award['image'] = $awards->get_award_icon($award['aid']);
-
-							$award['date'] = $lang->sprintf($lang->ougc_awards_profile_tine, my_date($mybb->settings['dateformat'], $award['date']), my_date($mybb->settings['timeformat'], $award['date']));
-
-							$award['fimage'] = eval($templates->render($awards->get_award_info('template', $award['aid'])));
-							eval('$content .= "'.$templates->get('ougcawards_profile_row').'";');
-							$trow = alt_trow();
-						}
+						$award['name'] = $name;
 					}
+					if($description = $awards->get_award_info('description', $award['aid']))
+					{
+						$award['description'] = $description;
+					}
+					if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid'], $award['rid'], $award['tid']))
+					{
+						$award['reason'] = $reason;
+					}
+					else
+					{
+						$award['reason'] = htmlspecialchars_uni($award['reason']);
+					}
+
+					if(empty($award['reason']))
+					{
+						$award['reason'] = $lang->ougc_awards_pm_noreason;
+					}
+
+					$threadlink = '';
+					if($award['thread'] && $thread_cache[$award['thread']])
+					{
+						$thread = $thread_cache[$award['thread']];
+
+						$thread['threadprefix'] = $thread['displayprefix'] = '';
+						if($thread['prefix'])
+						{
+							$threadprefix = build_prefixes($thread['prefix']);
+
+							if(!empty($threadprefix['prefix']))
+							{
+								$thread['threadprefix'] = htmlspecialchars_uni($threadprefix['prefix']).'&nbsp;';
+								$thread['displayprefix'] = $threadprefix['displaystyle'].'&nbsp;';
+							}
+						}
+
+						$thread['subject'] = $parser->parse_badwords($thread['subject']);
+
+						$threadlink = '<a href="'.$settings['bburl'].'/'.get_thread_link($thread['tid']).'">'.$thread['displayprefix'].htmlspecialchars_uni($thread['subject']).'</a>';
+					}
+
+					$awards->parse_text($award['reason']);
+
+					$award['image'] = $awards->get_award_icon($award['aid']);
+
+					$award['date'] = $lang->sprintf($lang->ougc_awards_profile_tine, my_date($mybb->settings['dateformat'], $award['date']), my_date($mybb->settings['timeformat'], $award['date']));
+
+					$award['fimage'] = eval($templates->render($awards->get_award_info('template', $award['aid'])));
+					eval('$content .= "'.$templates->get('ougcawards_profile_row').'";');
+					$trow = alt_trow();
 				}
 			}
 		}
