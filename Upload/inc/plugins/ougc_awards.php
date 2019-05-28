@@ -1714,25 +1714,27 @@ function ougc_awards_profile()
 		');
 		$awardscount = (int)$db->fetch_field($query, 'awards');
 
-		$page = $awards->get_input('view') == 'awards' ? $awards->get_input('page', 1) : 0;
-		if($page > 0)
+		$start = 0;
+		if($awardscount > $awards->query_limit_profile)
 		{
-			$start = ($page - 1)*$awards->query_limit_profile;
-			if($page > ceil($awardscount/$awards->query_limit_profile))
+			$page = $awards->get_input('view') == 'awards' ? $awards->get_input('page', 1) : 0;
+			if($page > 0)
 			{
-				$start = 0;
+				$start = ($page - 1)*$awards->query_limit_profile;
+				if($page > ceil($awardscount/$awards->query_limit_profile))
+				{
+					$page = 1;
+				}
+			}
+			else
+			{
 				$page = 1;
 			}
-		}
-		else
-		{
-			$start = 0;
-			$page = 1;
-		}
-		// We want to keep $mybb->input['view'] intact for other plugins, ;)
+			// We want to keep $mybb->input['view'] intact for other plugins, ;)
 
-		$multipage = (string)multipage($awardscount, $awards->query_limit_profile, $page, $awards->build_url('view=awards'));
-		eval('$multipage = "'.$templates->get('ougcawards_profile_multipage').'";');
+			$multipage = (string)multipage($awardscount, $awards->query_limit_profile, $page, $awards->build_url('view=awards'));
+			eval('$multipage = "'.$templates->get('ougcawards_profile_multipage').'";');
+		}
 
 		$query = $db->query('
 			SELECT u.*, a.*
