@@ -1938,12 +1938,19 @@ function ougc_awards_postbit(&$post)
 	$viewall = '';
 
 	$total = count($awardlist);
+	$processed_awards = [];
 
 	foreach($awards_cache['categories'] as $cid => $category)
 	{
 		// Format the awards
 		foreach($awardlist as $award)
 		{
+			if($processed_awards[$award['aid']] == $award['aid']) {
+				continue;
+			}
+
+			$processed_awards[$award['aid']] = $award['aid'];
+
 			$award['aid'] = (int)$award['aid'];
 			if($name = $awards->get_award_info('name', $award['aid']))
 			{
