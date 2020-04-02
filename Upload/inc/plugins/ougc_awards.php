@@ -56,7 +56,7 @@ else
 		$templatelist = '';
 	}
 
-	$templatelist .= 'ougcawards_js, ougcawards_global_menu,ougcawards_global_notification,ougcawards_welcomeblock,ougcawards_award_image,ougcawards_award_image_class,';
+	$templatelist .= 'ougcawards_js,ougcawards_css, ougcawards_global_menu,ougcawards_global_notification,ougcawards_welcomeblock,ougcawards_award_image,ougcawards_award_image_class,';
 
 	$awards = $cache->read('ougc_awards');
 	foreach($awards['awards'] as $aid => $award)
@@ -123,12 +123,12 @@ function ougc_awards_info()
 	return array(
 		'name'			=> 'OUGC Awards',
 		'description'	=> $lang->setting_group_ougc_awards_desc.($awards->allow_imports && ougc_awards_is_installed() ? $lang->ougc_awards_import_desc : ''),
-		'website'		=> 'https://omarg.me/thread?general/plugins/ougc-awards',
+		'website'		=> 'https://ougc.network',
 		'author'		=> 'Omar G.',
-		'authorsite'	=> 'http://omarg.me',
-		'version'		=> '1.8.19',
-		'versioncode'	=> 1819,
-		'compatibility'	=> '16*,18*',
+		'authorsite'	=> 'https://ougc.network',
+		'version'		=> '1.8.23',
+		'versioncode'	=> 1823,
+		'compatibility'	=> '18*',
 		'myalerts'		=> '2.0.4',
 		'codename'		=> 'ougc_awards',
 		'newpoints'		=> '2.1.1',
@@ -223,6 +223,7 @@ function ougc_awards_activate()
 		'award_image_class' => '<a href="{$mybb->settings[\'bburl\']}/awards.php?view={$award[\'aid\']}" title="{$award[\'name\']}"><i class="{$award[\'image\']} huge fitted link icon"></i></a>',
 		'global_menu'			=> '<li><a href="{$mybb->settings[\'bburl\']}/awards.php" class="portal" style="background: url(\'images/modcp/awards.png\') no-repeat left center;">{$lang->ougc_awards_global_menu}</a></li>',
 		'js'				=> '<script type="text/javascript" src="{$mybb->asset_url}/jscripts/ougc_awards.js"></script>',
+		'css'				=> '<link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">',
 		'modcp_manage'					=> '<form action="{$url}" method="post">
 <input type="hidden" name="manage" value="{$mybb->input[\'manage\']}" />
 <input type="hidden" name="aid" value="{$mybb->input[\'aid\']}" />
@@ -575,7 +576,7 @@ if(use_xmlhttprequest == "1")
 	</td>
 </tr>',
 		'modcp_requests_list_item'	=> '<tr>
-	<td class="trow1" align="center" width="1%"><a href="{$mybb->settings[\'bburl\']}/awards.php?view={$aid}" title="{$request[\'name\']}"><img src="{$request[\'image\']}" alt="{$request[\'name\']}" /></a></td>
+	<td class="trow1" align="center" width="1%">{$request[\'fimage\']}</td>
 	<td class="trow1" width="15%">{$profilelink_formatted}</td>
 	<td class="trow1">{$request[\'message\']}</td>
 	<td class="trow1" align="center">{$status}</td>
@@ -684,7 +685,7 @@ if(use_xmlhttprequest == "1")
 	find_replace_templatesets('header', '#'.preg_quote('{$pm_notice}').'#', '{$pm_notice}{$ougc_awards_requests}');
 	find_replace_templatesets('header', '#'.preg_quote('{$menu_portal}').'#', '{$menu_portal}{$ougc_awards_menu}');
 	find_replace_templatesets('stats', '#'.preg_quote('{$footer}').'#', '{$ougc_awards_most}{$ougc_awards_last}{$footer}');
-	find_replace_templatesets('headerinclude', '#'.preg_quote('{$stylesheets}').'#', '{$stylesheets}{$ougc_awards_js}');
+	find_replace_templatesets('headerinclude', '#'.preg_quote('{$stylesheets}').'#', '{$stylesheets}{$ougc_awards_js}{$ougc_awards_css}');
 	find_replace_templatesets('header_welcomeblock_member', '#'.preg_quote('{$searchlink}').'#', '{$ougc_awards_welcomeblock}{$searchlink}');
 
 	// MyAlerts
@@ -836,6 +837,7 @@ function ougc_awards_deactivate()
 	find_replace_templatesets('stats', '#'.preg_quote('{$ougc_awards_most}').'#', '', 0);
 	find_replace_templatesets('stats', '#'.preg_quote('{$ougc_awards_last}').'#', '', 0);
 	find_replace_templatesets('headerinclude', '#'.preg_quote('{$ougc_awards_js}').'#', '', 0);
+	find_replace_templatesets('headerinclude', '#'.preg_quote('{$ougc_awards_css}').'#', '', 0);
 	find_replace_templatesets('header_welcomeblock_member', '#'.preg_quote('{$ougc_awards_welcomeblock}').'#', '', 0);
 
 	// MyAlerts
@@ -1176,11 +1178,15 @@ function ougc_awards_modcp()
 			$trow = alt_trow(true);
 			foreach($requests as $request)
 			{
+				$award = &$request;
+
 				$request['aid'] = (int)$request['aid'];
 				$request['message'] = htmlspecialchars_uni($request['message']);
 				$request['rid'] = (int)$request['rid'];
 
 				$request['image'] = $awards->get_award_icon($request['aid']);
+				$request['fimage'] = eval($templates->render($awards->get_award_info('template', $request['aid'])));
+
 				if($name = $awards->get_award_info('name', $request['aid']))
 				{
 					$request['name'] = $name;
@@ -1220,6 +1226,7 @@ function ougc_awards_modcp()
 
 				eval('$requestslist .= "'.$templates->get('ougcawards_modcp_requests_list_item').'";');
 				$trow = alt_trow();
+				unset($award);
 			}
 
 			$awards->get_input('view') == 'logs' or $buttons = eval($templates->render('ougcawards_modcp_requests_buttons'));
@@ -1993,10 +2000,12 @@ function ougc_awards_global_start()
 // Global requests notification
 function ougc_awards_global_intermediate()
 {
-	global $mybb, $awards, $lang, $templates, $ougc_awards_menu, $ougc_awards_requests, $ougc_awards_welcomeblock, $ougc_awards_js;
+	global $mybb, $awards, $lang, $templates, $ougc_awards_menu, $ougc_awards_requests, $ougc_awards_welcomeblock, $ougc_awards_js, $ougc_awards_css;
 	$awards->lang_load();
 	
 	$ougc_awards_js = eval($templates->render('ougcawards_js'));
+	
+	$ougc_awards_css = eval($templates->render('ougcawards_css'));
 
 	$ougc_awards_menu = eval($templates->render('ougcawards_global_menu'));
 
