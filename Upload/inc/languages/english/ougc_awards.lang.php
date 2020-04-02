@@ -60,6 +60,7 @@ $l['ougc_awards_error_invalidthread'] = 'You entered an invalid thread value.';
 $l['ougc_awards_error_noneselected'] = 'You didn\'t select any award upon which to perform the action.';
 $l['ougc_awards_error_active'] = 'The awards system is currently not active.';
 $l['ougc_awards_error_pendingrequest'] = 'There is a active request pending for this award from you.';
+$l['ougc_awards_error_nopermission'] = 'You are either not logged in or do not have permission to view this page.';
 
 // Words
 $l['ougc_awards_modcp_username'] = 'Username';
@@ -90,7 +91,7 @@ $l['ougc_awards_redirect_request_rejected'] = 'Award request rejected successful
 // Profile
 $l['ougc_awards_profile_empty'] = 'This user has no awards at this time.';
 $l['ougc_awards_profile_tine'] = '{1} <i>at</i> {2}';
-$l['ougc_awards_profile_title'] = '{1}\' awards.';
+$l['ougc_awards_profile_title'] = '{1}\'s awards.';
 
 // PMs
 $l['ougc_awards_pm_title'] = 'You have been given the {1} award!';

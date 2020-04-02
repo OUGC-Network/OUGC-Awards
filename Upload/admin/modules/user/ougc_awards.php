@@ -1136,7 +1136,15 @@ else
 
 			$award['visible'] or $award['name'] = '<i>'.$award['name'].'</i>';
 
-			$table->construct_cell('<img src="'.$awards->get_award_icon($award['aid']).'" />', array('class' => 'align_center'));
+			if((int)$award['template'] === 1)
+			{
+				$load_fa = true;
+			}
+
+			$award['image'] = $awards->get_award_icon($award['aid']);
+			$award['fimage'] = eval($templates->render($awards->get_award_info('template', $award['aid'])));
+
+			$table->construct_cell($award['fimage'], array('class' => 'align_center'));
 			$table->construct_cell('<a href="'.$edit_link.'">'.$award['name'].'</a>');
 			$table->construct_cell($award['description']);
 			$table->construct_cell($form->generate_text_box('disporder['.$award['aid'].']', (int)$award['disporder'], array('style' => 'text-align: center; width: 30px;')), array('class' => 'align_center'));
@@ -1153,6 +1161,12 @@ else
 
 			$table->construct_row();
 		}
+
+		if(!empty($load_fa))
+		{
+			echo '<link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">';
+		}
+
 		$table->output($lang->ougc_awards_tab_view_d);
 
 		$form->output_submit_wrapper(array($form->generate_submit_button($lang->ougc_awards_button_order), $form->generate_reset_button($lang->reset)));

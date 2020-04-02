@@ -1,8 +1,15 @@
 ## OUGC Awards
-Extend your forum with a powerful awards system.
+Adds a powerful awards system to you community.
+
+***
 
 ### Support
 Please visit [Omar G.](https://omarg.me/thread?general/plugins/ougc-awards "Visit Omar.G") for more information about this project.
+
+***
+
+### Support
+Please visit [OUGC Network](https://ougc.network/ "Visit OUGC Network") for more information about this project.
 
 ### Thank You!
 Remember this is a free release developed on free time, either for personal use or as custom requests.
