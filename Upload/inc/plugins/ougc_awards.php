@@ -4,9 +4,9 @@
  *
  *	OUGC Awards plugin (/inc/plugins/ougc_awards.php)
  *	Author: Omar Gonzalez
- *	Copyright: © 2012-2019 Omar Gonzalez
+ *	Copyright: © 2012-2020 Omar Gonzalez
  *
- *	Website: http://omarg.me
+ *	Website: https://ougc.network
  *
  *	Adds a powerful awards system to you community.
  *
@@ -126,8 +126,8 @@ function ougc_awards_info()
 		'website'		=> 'https://ougc.network',
 		'author'		=> 'Omar G.',
 		'authorsite'	=> 'https://ougc.network',
-		'version'		=> '1.8.23',
-		'versioncode'	=> 1823,
+		'version'		=> '1.8.22',
+		'versioncode'	=> 1822,
 		'compatibility'	=> '18*',
 		'myalerts'		=> '2.0.4',
 		'codename'		=> 'ougc_awards',
