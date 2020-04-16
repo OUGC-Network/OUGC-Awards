@@ -2388,7 +2388,7 @@ class OUGC_Awards
 	{
 		$tables = array(
 			'users'			=> array(
-				'ougc_awards' => 'text NOT NULL',
+				'ougc_awards' => "text NOT NULL DEFAULT ''",
 				'ougc_awards_owner' => "tinyint(1) NOT NULL DEFAULT '0'"
 			),
 		);
