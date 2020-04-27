@@ -157,18 +157,18 @@ if(!empty($mybb->input['view']))
 	{
 		$trow = alt_trow();
 
-		if($reason = $awards->get_award_info('reason', $award['aid'], $award['gid'], $gived['rid'], $gived['tid']))
+		if($reason = $awards->get_award_info('reason', $award['aid'], $gived['gid'], $gived['rid'], $gived['tid']))
 		{
-			$award['reason'] = $reason;
+			$gived['reason'] = htmlspecialchars_uni($reason);
 		}
 		else
 		{
-			$award['reason'] = htmlspecialchars_uni($award['reason']);
+			$gived['reason'] = htmlspecialchars_uni($award['reason']);
 		}
 
-		if(empty($award['reason']))
+		if(empty($gived['reason']))
 		{
-			$award['reason'] = $lang->ougc_awards_pm_noreason;
+			$gived['reason'] = $lang->ougc_awards_pm_noreason;
 		}
 
 		$gived['username'] = htmlspecialchars_uni($gived['username']);

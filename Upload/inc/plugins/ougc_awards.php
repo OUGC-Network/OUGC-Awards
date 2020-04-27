@@ -725,6 +725,7 @@ if(use_xmlhttprequest == "1")
 	// TODO here we check that each table exist, if it exists check each field then, if it does not then create it
 	$awards->_db_verify_tables();
 	$awards->_db_verify_columns();
+	$awards->_db_verify_indexes();
 
 	if($plugins['awards'] <= 1807)
 	{
@@ -803,8 +804,6 @@ if(use_xmlhttprequest == "1")
 
 		// Delete old template group
 		$db->delete_query('templategroups', 'prefix=\'ougc_awards\'');
-
-		$awards->_db_verify_indexes();
 	}
 	if($plugins['awards'] <= 1803)
 	{
@@ -876,7 +875,7 @@ function ougc_awards_is_installed()
 
 	foreach($awards->_db_tables() as $name => $table)
 	{
-		$installed = $db->table_exists('ougc_awards');
+		$installed = $db->table_exists($name);
 		break;
 	}
 
@@ -2024,8 +2023,6 @@ function ougc_awards_global_intermediate()
 
 	$ismod = ($mybb->usergroup['canmodcp'] && $mybb->settings['ougc_awards_modcp'] && ($mybb->settings['ougc_awards_modgroups'] == -1 || $awards->is_member($mybb->settings['ougc_awards_modgroups'])));
 	$isuser = ($mybb->usergroup['canusercp'] && $mybb->user['ougc_awards_owner']);
-
-	$isuser = true;
 
 	if(!$ismod && !$isuser)
 	{
