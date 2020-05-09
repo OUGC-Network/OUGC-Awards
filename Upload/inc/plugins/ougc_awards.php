@@ -312,7 +312,7 @@ if(use_xmlhttprequest == "1")
 		
 		
 		
-		'profile_multipage'		=> '<t<tr>
+		'profile_multipage'		=> '<tr>
 	<td class="tfoot">{$multipage}</td>
 </tr>',
 		'modcp_nav'		=> '<tr><td class="trow1 smalltext"><a href="{$url}" class="modcp_nav_item" style="background: url(\'images/modcp/awards.png\') no-repeat left center;">{$lang->ougc_awards_modcp_nav}</a></td></tr>',
@@ -1711,7 +1711,10 @@ function ougc_awards_profile()
 		// We want to keep $mybb->input['view'] intact for other plugins, ;)
 
 		$multipage = (string)multipage($awardscount, $awards->query_limit_profile, $page, $awards->build_url('view=awards'));
-		eval('$multipage = "'.$templates->get('ougcawards_profile_multipage').'";');
+		if($multipage)
+		{
+			$multipage = eval($templates->render('ougcawards_profile_multipage'));
+		}
 
 		$query = $db->query('
 			SELECT u.*, a.*
