@@ -2490,6 +2490,8 @@ class OUGC_Awards
 		if($action == -1)
 		{
 			$db->delete_query('tasks', "file='ougc_awards'");
+
+			return;
 		}
 
 		$query = $db->simple_select('tasks', '*', "file='ougc_awards'", array('limit' => 1));
@@ -2497,7 +2499,7 @@ class OUGC_Awards
 
 		if($task)
 		{
-			$db->update_query('tasks', array('enabled' => $action), $where);
+			$db->update_query('tasks', array('enabled' => $action), "file='ougc_awards'");
 		}
 		else
 		{
@@ -3645,7 +3647,7 @@ class OUGC_Awards
 		global $lang, $mybb, $alertType, $db;
 		$this->lang_load(true);
 
-		if(!$this->myalerts)
+		if(!($this->myalerts && class_exists('MybbStuff_MyAlerts_AlertTypeManager')))
 		{
 			return false;
 		}
