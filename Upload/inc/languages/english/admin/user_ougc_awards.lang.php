@@ -63,6 +63,14 @@ $l['setting_ougc_awards_enablestatspage'] = 'Enable Stats';
 $l['setting_ougc_awards_enablestatspage_desc'] = 'Do you want to enable the top and last awarded users in the stats page?';
 $l['setting_ougc_awards_myalerts'] = 'MyAlerts Integration';
 $l['setting_ougc_awards_myalerts_desc'] = 'Do you want to send an alert to users when receiving an award';
+$l['setting_ougc_awards_presets_groups'] = 'Presets Allowed Groups';
+$l['setting_ougc_awards_presets_groups_desc'] = 'Select which groups are allowed to use and create presets.';
+$l['setting_ougc_awards_presets_maximum'] = 'Maximum Presets';
+$l['setting_ougc_awards_presets_maximum_desc'] = 'Select the maximum amount of presets can create.';
+$l['setting_ougc_awards_presets_post'] = 'Maximum Presets in Posts';
+$l['setting_ougc_awards_presets_post_desc'] = 'Type the maximum preset awards to display in posts.';
+$l['setting_ougc_awards_presets_profile'] = 'Maximum Preset Awards in Profiles';
+$l['setting_ougc_awards_presets_profile_desc'] = 'Type the maximum preset awards to display in profiles.';
 
 // Administrator Permissions
 $l['ougc_awards_acp_permissions'] = 'Can manage awards?';

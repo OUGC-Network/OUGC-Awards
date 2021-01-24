@@ -153,3 +153,18 @@ $l['ougc_awards_wol'] = 'Viewing <a href="{1}/awards.php">Awards Page</a>';
 // MyAlerts
 $l['ougc_awards_myalerts'] = '{1}, you were granted the {3} award by {2}.';// {4} outputs the award formatted image
 $l['myalerts_setting_ougc_awards'] = 'Receive alerts related to awards?';
+
+// Presets
+$l['ougc_awards_presets_title'] = 'Presets';
+$l['ougc_awards_presets_desc'] = 'Manage your award presets, which control how your awards are displayed.';
+$l['ougc_awards_presets_select'] = 'Select preset';
+$l['ougc_awards_presets_setdefault'] = 'Set as default';
+$l['ougc_awards_presets_delete'] = 'Delete';
+$l['ougc_awards_presets_addpreset'] = 'Add preset';
+$l['ougc_awards_presets_hidden'] = 'Hidden';
+$l['ougc_awards_presets_visible'] = 'Visible';
+$l['ougc_awards_presets_button'] = 'View Presets';
+$l['ougc_awards_presets_profile'] = 'awards';
+$l['ougc_awards_presets_postbit'] = 'awards';
+$l['ougc_awards_presets_success_message'] = 'Your preset has been saved.';
+$l['ougc_awards_presets_error_message'] = 'There was an error saving your preset.';
