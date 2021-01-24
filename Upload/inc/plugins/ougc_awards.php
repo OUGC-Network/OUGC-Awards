@@ -2070,7 +2070,7 @@ function ougc_awards_profile()
 	$display_preset = !(
 		($awards->query_limit_preset_profile < 1 && $awards->query_limit_preset_profile != -1) ||
 		my_strpos($templates->cache['member_profile'], '{$memprofile[\'ougc_awards_preset\']}') === false ||
-		!is_member($mybb->settings['ougc_awards_presets_groups'])
+		!is_member($mybb->settings['ougc_awards_presets_groups'], $memprofile)
 	);
 
 	if($display_preset)
@@ -2383,7 +2383,7 @@ function ougc_awards_postbit(&$post)
 
 	$post['uid'] = (int)$post['uid'];
 
-	if($awards->query_limit_preset_postbit)
+	if($awards->query_limit_preset_postbit && is_member($mybb->settings['ougc_awards_presets_groups'], $post))
 	{
 		static $ougc_awards_presets_cache = null;
 
@@ -2452,6 +2452,8 @@ function ougc_awards_postbit(&$post)
 
 				$visible_awards = array_filter((array)my_unserialize($preset['visible']));
 
+				$conunt = 0;
+
 				foreach($visible_awards as $position => $gid)
 				{
 					$award = $ougc_awards_presets_awards_cache[$post['uid']][$gid];
@@ -2461,6 +2463,8 @@ function ougc_awards_postbit(&$post)
 						continue;
 					}
 	
+					++$count;
+
 					if($name = $awards->get_award_info('name', $award['aid']))
 					{
 						$award['name'] = $name;
@@ -2498,6 +2502,11 @@ function ougc_awards_postbit(&$post)
 					$award['fimage'] = eval($templates->render($awards->get_award_info('template', $award['aid'])));
 	
 					$visibleawards .= eval($templates->render('ougcawards_postbit_preset_award'));
+
+					if($awards->query_limit_preset_postbit > 0 && $count == $awards->query_limit_preset_postbit)
+					{
+						break;
+					}
 				}
 
 				if($visibleawards)
