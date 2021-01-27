@@ -3932,6 +3932,8 @@ class OUGC_Awards
 		), -1, true);
 
 		$this->send_alert();
+
+		return $gid;
 	}
 
 	// Grant owner status.

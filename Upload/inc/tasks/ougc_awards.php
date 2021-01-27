@@ -80,8 +80,9 @@ function task_ougc_awards($task)
 					break;
 				default:
 					$regdate = $award_task['registered']*60*60*24;
+					break;
 			}
-			$where_clause[] = "u.regdate<='".(TIME_NOW-$regdate)."'";
+			$where_clause[] = "u.regdate<='".(TIME_NOW - $regdate)."'";
 		}
 
 		if(in_array('online', $requirements) && (int)$award_task['online'] >= 0 && !empty($award_task['onlinetype']))
@@ -105,8 +106,9 @@ function task_ougc_awards($task)
 					break;
 				default:
 					$timeonline = $award_task['online']*60*60*24;
+					break;
 			}
-			$where_clause[] = "u.timeonline<='".(TIME_NOW-$timeonline)."'";
+			$where_clause[] = "u.timeonline>='{$timeonline}'";
 		}
 
 		if(in_array('usergroups', $requirements) && !empty($award_task['usergroups']))
@@ -275,8 +277,8 @@ function task_ougc_awards($task)
 					{
 						$gave_list[] = $aid;
 						$award = $awards->get_award($aid);
-						$awards->give_award($award, $user, null, $award_task['thread'], $award_task['tid']); // reason shouldn't be supplied.
-						$log = true;
+						$result = $awards->give_award($award, $user, null, $award_task['thread'], $award_task['tid']); // reason shouldn't be supplied.
+						$log = $result > 0 ?: false;
 					}
 				}
 			}
