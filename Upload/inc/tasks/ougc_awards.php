@@ -147,7 +147,11 @@ function task_ougc_awards($task)
 
 		if(in_array('fthreads', $requirements) && (int)$award_task['fthreads'] >= 0 && !empty($award_task['fthreads']))
 		{
-			$left_join[] = "LEFT JOIN (SELECT uid, COUNT(tid) AS fthreads FROM ".TABLE_PREFIX."threads WHERE visible > 0 AND closed NOT LIKE 'moved|%' GROUP BY uid) t ON (t.uid=u.uid)";
+			$left_join[] = "LEFT JOIN (
+				SELECT uid, COUNT(tid) AS fthreads FROM ".TABLE_PREFIX."threads
+				WHERE fid='".(int)$award_task['fthreadsforums']."' AND visible > 0 AND closed NOT LIKE 'moved|%'
+				GROUP BY uid
+			) t ON (t.uid=u.uid)";
 			$where_clause[] = "t.fthreads{$award_task['fthreadstype']}'{$award_task['fthreads']}'";
 		}
 
