@@ -1771,7 +1771,7 @@ function ougc_awards_modcp()
 		{
 			if($mybb->get_input('do') == 'add')
 			{
-				if($mybb->settings['ougc_awards_presets_maximum'] >= $total_presets)
+				if($mybb->settings['ougc_awards_presets_maximum'] <= $total_presets)
 				{
 					error_no_permission();
 				}
