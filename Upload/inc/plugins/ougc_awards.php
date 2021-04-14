@@ -68,7 +68,7 @@ else
 	}
 	unset($awards, $award);
 
-	switch(THIS_SCRIPT)
+	switch(constant('THIS_SCRIPT'))
 	{
 		case 'showthread.php':
 		case 'newreply.php':
