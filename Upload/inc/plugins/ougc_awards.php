@@ -1200,6 +1200,8 @@ function ougc_awards_modcp()
 		$mybb->input['page'] = 1;
 	}
 
+	$_awards = [];
+
 	// We can give awards from the ModCP
 	if($awards->get_input('manage') == 'requests')
 	{
@@ -1817,9 +1819,11 @@ function ougc_awards_modcp()
 
 			$setdefault = '';
 
+			$awards->parse_presets($preset_options, $presets_cache, $pid);
+	
 			(function ($presets_cache) use (&$preset_options, $pid, $templates) {
 				$preset_options = '';
-
+	
 				foreach($presets_cache as $preset)
 				{
 					$preset['name'] = htmlspecialchars_uni($preset['name']);
@@ -2146,6 +2150,8 @@ function ougc_awards_profile()
 	}
 
 	$presetlist = '';
+
+	$_awards = [];
 
 	// Output our awards.
 	if(!$db->num_rows($query))
@@ -4960,6 +4966,32 @@ class OUGC_Awards
 		$db->delete_query('ougc_awards_presets', "pid='{$pid}'");
 
 		return true;
+	}
+
+	function parse_presets(&$preset_options, $presets_cache, $pid)
+	{
+		global $templates;
+
+		$preset_options = '';
+
+		if(!empty($presets_cache))
+		{
+			foreach($presets_cache as $preset)
+			{
+				$preset['name'] = htmlspecialchars_uni($preset['name']);
+	
+				$selected = '';
+	
+				if((int)$pid === (int)$preset['pid'])
+				{
+					$selected = ' selected="selected"';	
+				}
+	
+				$preset_options .= eval($templates->render('ougcawards_usercp_presets_select_option'));
+			}
+		}
+
+		return $preset_options;
 	}
 }
 
