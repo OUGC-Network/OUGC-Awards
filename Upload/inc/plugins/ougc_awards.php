@@ -3923,6 +3923,7 @@ class OUGC_Awards
 		{
 			$award['pm'] = $message;
 		}
+
 		if($name = $this->get_award_info('name', $award['aid']))
 		{
 			$award['name'] = $name;
@@ -4731,6 +4732,8 @@ class OUGC_Awards
 		$select = "<select name=\"{$name}\"";
 
 		!isset($options['multiple']) or $select .= " multiple=\"multiple\"";
+
+		!isset($options['id']) or $select .= " id=\"{$options['id']}\"";
 
 		$select .= ">";
 
