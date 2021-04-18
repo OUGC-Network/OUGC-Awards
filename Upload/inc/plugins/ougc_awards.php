@@ -1820,24 +1820,6 @@ function ougc_awards_modcp()
 			$setdefault = '';
 
 			$awards->parse_presets($preset_options, $presets_cache, $pid);
-	
-			(function ($presets_cache) use (&$preset_options, $pid, $templates) {
-				$preset_options = '';
-	
-				foreach($presets_cache as $preset)
-				{
-					$preset['name'] = htmlspecialchars_uni($preset['name']);
-	
-					$selected = '';
-	
-					if($pid == $preset['pid'])
-					{
-						$selected = ' selected="selected"';	
-					}
-	
-					$preset_options .= eval($templates->render('ougcawards_usercp_presets_select_option'));
-				}
-			})($presets_cache);
 
 			if($pid && $pid != $mybb->user['ougc_awards_preset'])
 			{
@@ -2196,36 +2178,9 @@ function ougc_awards_profile()
 
 				$trow = alt_trow(1);
 
-				foreach((function ($_awards) use ($awards, $start) {
-	
-					if($awards->query_limit_profile > 0)
-					{
-						$limit = $awards->query_limit_profile;
+				$awards->parse_postbit_awards($_awards, $start);
 
-						$count = 0;
-
-						foreach($_awards as $key => $award)
-						{
-							if($start > 0)
-							{
-								--$start;
-
-								unset($_awards[$key]);
-
-								continue;
-							}
-
-							++$count;
-
-							if($count > $limit)
-							{
-								unset($_awards[$key]);
-							}
-						}
-					}
-	
-					return $_awards;
-				})($_awards) as $award)
+				foreach($_awards as $award)
 				{
 					++$parsed_awards;
 
@@ -4995,6 +4950,35 @@ class OUGC_Awards
 		}
 
 		return $preset_options;
+	}
+
+	function parse_postbit_awards(&$_awards, $start)
+	{
+		if($this->query_limit_profile > 0)
+		{
+			$limit = $this->query_limit_profile;
+
+			$count = 0;
+
+			foreach($_awards as $key => $award)
+			{
+				if($start > 0)
+				{
+					--$start;
+
+					unset($_awards[$key]);
+
+					continue;
+				}
+
+				++$count;
+
+				if($count > $limit)
+				{
+					unset($_awards[$key]);
+				}
+			}
+		}
 	}
 }
 
