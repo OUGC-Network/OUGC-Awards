@@ -2293,17 +2293,17 @@ function ougc_awards_profile()
 
 		if($display_preset)
 		{
-			(function (&$_awards) {
-				$awards = [];
+			$_awards_c = [];
 
-				foreach($_awards as $award)
-				{
-					$awards[$award['gid']] = $award;
-				}
+			foreach($_awards as $award)
+			{
+				$_awards_c[$award['gid']] = $award;
+			}
 
-				$_awards = $awards;
-			})($_awards);
+			$_awards = $_awards_c;
 	
+			unset($_awards_c);
+
 			$preset_awards = array_filter((array)my_unserialize($preset['visible']));
 
 			$presetlist = '';
