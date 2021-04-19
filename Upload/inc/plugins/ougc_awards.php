@@ -2107,15 +2107,15 @@ function ougc_awards_profile()
 
 	$page = 1;
 
-	if($display_awards)
+	if($display_awards && $awardscount && $awards->query_limit_profile > 0)
 	{
 		$page = $awards->get_input('view') == 'awards' ? $awards->get_input('page', 1) : 0;
 
 		if($page > 0)
 		{
-			$start = ($page - 1)*$awards->query_limit_profile;
+			$start = ($page - 1) * $awards->query_limit_profile;
 
-			if($page > ceil($awardscount/$awards->query_limit_profile))
+			if($page > ceil($awardscount / $awards->query_limit_profile))
 			{
 				$start = 0;
 				$page = 1;
