@@ -95,7 +95,7 @@ else
 		case 'modcp.php':
 			$plugins->add_hook('usercp_start', 'ougc_awards_modcp');
 			$plugins->add_hook('modcp_start', 'ougc_awards_modcp');
-			$templatelist .= 'ougcawards_page_empty,ougcawards_usercp_nav, ougcawards_modcp_requests_list_empty, ougcawards_modcp_list_button, ougcawards_modcp_requests_list, ougcawards_modcp, ougcawards_modcp_requests_list_item,ougcawards_modcp_manage_multiple, ougcawards_modcp_manage_username, ougcawards_modcp_manage_thread, ougcawards_modcp_manage_reason, ougcawards_modcp_manage, ougcawards_usercp_sort_award, ougcawards_usercp_sort_empty, ougcawards_usercp_sort, ougcawards_modcp_list_award, ougcawards_modcp_list, ougcawards_page_empty, ougcawards_modcp_requests_buttons, ougcawards_modcp_nav,ougcawards_modcp_nav, ougctooltip_js, ougcawards_usercp_presets_select_option, ougcawards_usercp_presets_select, ougcawards_usercp_presets_addform, ougcawards_usercp_presets_award, ougcawards_usercp_presets_form, ougcawards_usercp_presets, ougcawards_usercp_presets_form_js';
+			$templatelist .= 'ougcawards_page_empty,ougcawards_usercp_nav, ougcawards_modcp_requests_list_empty, ougcawards_modcp_list_button, ougcawards_modcp_requests_list, ougcawards_modcp, ougcawards_modcp_requests_list_item,ougcawards_modcp_manage_multiple, ougcawards_modcp_manage_username, ougcawards_modcp_manage_thread, ougcawards_modcp_manage_reason, ougcawards_modcp_manage, ougcawards_usercp_sort_award, ougcawards_usercp_sort_empty, ougcawards_usercp_sort, ougcawards_modcp_list_award, ougcawards_modcp_list, ougcawards_page_empty, ougcawards_modcp_requests_buttons, ougcawards_modcp_nav,ougcawards_modcp_nav, ougctooltip_js, ougcawards_usercp_presets_select_option, ougcawards_usercp_presets_select, ougcawards_usercp_presets_addform, ougcawards_usercp_presets_award, ougcawards_usercp_presets_form, ougcawards_usercp_presets, ougcawards_usercp_presets_form_js, ougcawards_modcp_list_empty';
 			break;
 		case 'stats.php':
 			$plugins->add_hook('stats_end', 'ougc_awards_stats_end');
@@ -216,6 +216,12 @@ function ougc_awards_activate()
 			'description'	=> $lang->setting_ougc_awards_myalerts_desc,
 			'optionscode'	=> 'yesno',
 			'value'			=>	0,
+		),
+		'sort_visible_default'	=> array(
+			'title'			=> $lang->setting_ougc_awards_sort_visible_default,
+			'description'	=> $lang->setting_ougc_awards_sort_visible_default_desc,
+			'optionscode'	=> 'yesno',
+			'value'			=>	1,
 		),
 		'presets_groups'	=> array(
 			'title'			=> $lang->setting_ougc_awards_presets_groups,
@@ -704,7 +710,7 @@ if(use_xmlhttprequest == "1")
 	<td class="{$bg_color}">{$presetlist}</td>
 </tr>',
 		'profile_preset_row' => '{$award[\'fimage\']}',
-		'usercp_presets' => '{$preset_content}
+		'usercp_presets' => '
 <input type="hidden" name="manage" value="{$mybb->input[\'manage\']}" />
 	<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
 	<tr>
@@ -2678,7 +2684,7 @@ function ougc_awards_global_intermediate()
 	$PL or require_once PLUGINLIBRARY;
 
 	$_cache = $PL->cache_read('ougc_awards');
-	$pending = (int)$_cache['requests']['pending'];
+	$pending = empty($_cache['requests']['pending']) ? 0 : (int)$_cache['requests']['pending'];
 
 	$script = 'modcp.php';
 
@@ -2971,8 +2977,8 @@ class OUGC_Awards
 		$this->query_limit = (int)$mybb->settings['ougc_awards_perpage'];
 		$this->query_limit_profile = (int)$mybb->settings['ougc_awards_profile'];
 		$this->query_limit_postbit = (int)$mybb->settings['ougc_awards_postbit'];
-		$this->query_limit_preset_profile = (int)$mybb->settings['ougc_awards_presets_profile'];
-		$this->query_limit_preset_postbit = (int)$mybb->settings['ougc_awards_presets_post'];
+		$this->query_limit_preset_profile = empty($mybb->settings['ougc_awards_presets_profile']) ? 0 : (int)$mybb->settings['ougc_awards_presets_profile'];
+		$this->query_limit_preset_postbit = empty($mybb->settings['ougc_awards_presets_post']) ? 0 : (int)$mybb->settings['ougc_awards_presets_post'];
 
 		$this->myalerts = $mybb->settings['ougc_awards_myalerts'] && $mybb->cache->cache['plugins']['active']['myalerts'];
 	}
@@ -3456,15 +3462,14 @@ class OUGC_Awards
 		if(!isset($this->cache['images'][$aid]))
 		{
 			global $cache, $settings, $theme;
-			$awards = (array)$cache->read('ougc_awards');
-			$award = $awards[$aid];
 
-			$award or $award = $this->get_award($aid);
+			$awards = (array)$cache->read('ougc_awards');
+			$award = !empty($awards[$aid]) ? $awards[$aid] : $this->get_award($aid);
 
 			$replaces = array(
 				'{bburl}'	=> $settings['bburl'],
 				'{homeurl}'	=> $settings['homeurl'],
-				'{imgdir}'	=> $theme['imgdir'],
+				'{imgdir}'	=> !empty($theme['imgdir']) ? $theme['imgdir'] : '',
 				'{aid}'	=> $aid,
 				'{cid}'	=> $award['cid']
 			);
@@ -3869,7 +3874,8 @@ class OUGC_Awards
 			'thread'	=> $thread,
 			'rid'	=> $rid,
 			'reason'	=> $db->escape_string(trim($reason)),
-			'date'		=> isset($award['TIME_NOW']) ? (int)$award['TIME_NOW'] : TIME_NOW
+			'date'		=> isset($award['TIME_NOW']) ? (int)$award['TIME_NOW'] : TIME_NOW,
+			'visible'	=> (int)$mybb->settings['ougc_awards_sort_visible_default']
 		);
 
 		$gid = $db->insert_query('ougc_awards_users', $insert_data);
