@@ -33,15 +33,15 @@ defined('IN_MYBB') or die('Direct initialization of this file is not allowed.');
 // Run/Add Hooks
 if(defined('IN_ADMINCP'))
 {
-	$plugins->add_hook('admin_user_menu', create_function('&$args', 'global $lang, $awards;	$awards->lang_load();	$args[] = array(\'id\' => \'ougc_awards\', \'title\' => $lang->ougc_awards_acp_nav, \'link\' => \'index.php?module=user-ougc_awards\');'));
-	$plugins->add_hook('admin_user_action_handler', create_function('&$args', '$args[\'ougc_awards\'] = array(\'active\' => \'ougc_awards\', \'file\' => \'ougc_awards.php\');'));
-	$plugins->add_hook('admin_user_permissions', create_function('&$args', 'global $lang, $awards;	$awards->lang_load();	$args[\'ougc_awards\'] = $lang->ougc_awards_acp_permissions;'));
+	$plugins->add_hook('admin_user_menu', 'ougc_awards_admin_user_menu');
+	$plugins->add_hook('admin_user_action_handler', 'ougc_awards_admin_user_action_handler');
+	$plugins->add_hook('admin_user_permissions', 'ougc_awards_admin_user_permissions');
 
 	// Language support
-	$plugins->add_hook('admin_config_settings_start', create_function('', 'global $awards; $awards->lang_load();'));
-	$plugins->add_hook('admin_style_templates_set', create_function('', 'global $awards; $awards->lang_load();'));
+	$plugins->add_hook('admin_config_settings_start', 'ougc_awards_admin_style_templates_set');
+	$plugins->add_hook('admin_style_templates_set', 'ougc_awards_admin_style_templates_set');
 	$plugins->add_hook('admin_config_settings_change', 'ougc_awards_settings_change');
-	$plugins->add_hook('admin_config_plugins_begin', create_function('', 'global $awards; $awards->run_importer();'));
+	$plugins->add_hook('admin_config_plugins_begin', 'ougc_awards_admin_config_plugins_begin');
 }
 else
 {
@@ -1077,6 +1077,50 @@ function ougc_awards_pl_check()
 		admin_redirect('index.php?module=config-plugins');
 		exit;
 	}
+}
+
+function ougc_awards_admin_user_menu(&$args)
+{
+	global $lang, $awards;
+
+	$awards->lang_load();
+
+	$args[] = array(
+		'id' => 'ougc_awards',
+		'title' => $lang->ougc_awards_acp_nav,
+		'link' => 'index.php?module=user-ougc_awards'
+	);
+}
+
+function ougc_awards_admin_user_action_handler(&$args)
+{
+	$args['ougc_awards'] = array(
+		'active' => 'ougc_awards',
+		'file' => 'ougc_awards.php'
+	);
+}
+
+function ougc_awards_admin_user_permissions(&$args)
+{
+	global $lang, $awards;
+
+	$awards->lang_load();
+
+	$args['ougc_awards'] = $lang->ougc_awards_acp_permissions;
+}
+
+function ougc_awards_admin_style_templates_set(&$args)
+{
+	global $awards;
+
+	$awards->lang_load();
+}
+
+function ougc_awards_admin_config_plugins_begin(&$args)
+{
+	global $awards;
+
+	$awards->run_importer();
 }
 
 // Language support for settings
