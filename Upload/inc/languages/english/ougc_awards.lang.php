@@ -2,30 +2,29 @@
 
 /***************************************************************************
  *
- *	OUGC Awards plugin (/inc/anguages/english/ougc_awards.lang.php)
- *	Author: Omar Gonzalez
- *	Copyright: © 2012-2020 Omar Gonzalez
+ *    OUGC Awards plugin (/inc/anguages/english/ougc_awards.lang.php)
+ *    Author: Omar Gonzalez
+ *    Copyright: © 2012-2020 Omar Gonzalez
  *
- *	Website: https://ougc.network
+ *    Website: https://ougc.network
  *
- *	Adds a powerful awards system to you community.
+ *    Adds a powerful awards system to you community.
  *
  ***************************************************************************
-
-****************************************************************************
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-****************************************************************************/
+ ****************************************************************************
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ ****************************************************************************/
 
 // Plugin information.
 $l['ougc_awards'] = 'OUGC Awards';
@@ -118,7 +117,7 @@ $l['ougc_awards_page_view_empty'] = 'No users were found.';
 
 // Welcomeblock
 $l['ougc_awards_welcomeblock'] = 'View My Awards';
-$l['ougc_awards_welcomeblock_empty'] = 'Your award list is currently empty.'; 
+$l['ougc_awards_welcomeblock_empty'] = 'Your award list is currently empty.';
 
 // Modal
 $l['ougc_awards_request_title'] = 'Request Award';
