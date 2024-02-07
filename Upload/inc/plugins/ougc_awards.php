@@ -106,7 +106,7 @@ $plugins->add_hook('datahandler_user_insert', 'ougc_awards_datahandler_user_inse
 // PLUGINLIBRARY
 defined('PLUGINLIBRARY') or define('PLUGINLIBRARY', MYBB_ROOT . 'inc/plugins/pluginlibrary.php');
 
-define('OUGC_AWARDS_ROOT', MYBB_ROOT . 'inc/plugins/ougc_awards');
+define('OUGC_AWARDS_ROOT', MYBB_ROOT . 'inc/plugins/ougc/Awards');
 
 // Plugin API
 function ougc_awards_info()
