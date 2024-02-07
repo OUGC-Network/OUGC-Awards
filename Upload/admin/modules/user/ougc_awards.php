@@ -26,6 +26,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 
+global $awards, $lang, $mybb, $db, $templates;
+global $run_module, $page, $parser;
+
 $awards->lang_load();
 
 $sub_tabs['ougc_awards_categories'] = array(
@@ -161,11 +164,17 @@ if ($awards->get_input('view') == 'tasks'):
         if ($mybb->request_method == 'post') {
             $errors = array();
 
-            if (!$awards->get_input('name') || isset($mybb->input{100})) {
+            if (!$awards->get_input('name') || my_strlen($awards->get_input('name')) > 100) {
                 $errors[] = $lang->ougc_awards_error_invalidname;
             }
-            !isset($mybb->input['description']{255}) or $errors[] = $lang->ougc_awards_error_invaliddesscription;
-            !isset($mybb->input['image']{255}) or $errors[] = $lang->ougc_awards_error_invalidimage;
+
+            if (my_strlen($mybb->input['description']) > 255) {
+                $errors[] = $lang->ougc_awards_error_invaliddesscription;
+            }
+
+            if (my_strlen($mybb->input['image']) > 255) {
+                $errors[] = $lang->ougc_awards_error_invalidimage;
+            }
 
             if ($awards->get_input('thread')) {
                 if (!($thread = $awards->get_thread_by_url($awards->get_input('thread')))) {
@@ -920,11 +929,18 @@ elseif ($awards->get_input('view') == 'category' && $category):
 
         if ($mybb->request_method == 'post') {
             $errors = array();
-            if (!$awards->get_input('name') || isset($mybb->input{100})) {
+            if (!$awards->get_input('name') || my_strlen($mybb->input['name']) > 100) {
                 $errors[] = $lang->ougc_awards_error_invalidname;
             }
-            !isset($mybb->input['description']{255}) or $errors[] = $lang->ougc_awards_error_invaliddesscription;
-            !isset($mybb->input['image']{255}) or $errors[] = $lang->ougc_awards_error_invalidimage;
+
+            if (my_strlen($mybb->input['description']) > 255) {
+                $errors[] = $lang->ougc_awards_error_invaliddesscription;
+            }
+
+            if (my_strlen($mybb->input['image']) > 255) {
+                $errors[] = $lang->ougc_awards_error_invalidimage;
+            }
+
             $awards->get_category($awards->get_input('cid')) or $errors[] = $lang->ougc_awards_error_invalidcategory;
 
             if (empty($errors)) {
@@ -1219,7 +1235,7 @@ elseif ($awards->get_input('view') == 'category' && $category):
         }
 
         $query = $db->simple_select(
-            'ougc_awards_users au LEFT JOIN ' . TABLE_PREFIX . 'users u ON (u.uid=au.uid)',
+            'ougc_awards_users au LEFT JOIN ' . $db->table_prefix . 'users u ON (u.uid=au.uid)',
             'au.*, u.username, u.usergroup, u.displaygroup',
             'au.aid=\'' . (int)$award['aid'] . '\'',
             array(
@@ -1275,12 +1291,12 @@ elseif ($awards->get_input('view') == 'category' && $category):
                         }
                     }
 
-                    require_once MYBB_ROOT . 'inc/class_parser.php';
+                    require_once \MYBB_ROOT . 'inc/class_parser.php';
                     is_object($parser) or $parser = new postParser();
 
                     $thread['subject'] = $parser->parse_badwords($thread['subject']);
 
-                    $threadlink = '<a href="' . $settings['bburl'] . '/' . get_thread_link(
+                    $threadlink = '<a href="' . $mybb->settings['bburl'] . '/' . get_thread_link(
                             $thread['tid']
                         ) . '">' . $thread['displayprefix'] . htmlspecialchars_uni($thread['subject']) . '</a>';
                 }
@@ -1387,7 +1403,7 @@ elseif ($awards->get_input('view') == 'category' && $category):
         }
 
         $query = $db->simple_select(
-            'ougc_awards_owners au LEFT JOIN ' . TABLE_PREFIX . 'users u ON (u.uid=au.uid)',
+            'ougc_awards_owners au LEFT JOIN ' . $db->table_prefix . 'users u ON (u.uid=au.uid)',
             'au.*, u.username, u.usergroup, u.displaygroup',
             'au.aid=\'' . (int)$award['aid'] . '\'',
             array(
@@ -1724,10 +1740,13 @@ else:
 
         if ($mybb->request_method == 'post') {
             $errors = array();
-            if (!$awards->get_input('name') || isset($mybb->input{100})) {
+            if (!$awards->get_input('name') || my_strlen($mybb->input['name']) > 100) {
                 $errors[] = $lang->ougc_awards_error_invalidname;
             }
-            !isset($mybb->input['description']{255}) or $errors[] = $lang->ougc_awards_error_invaliddesscription;
+
+            if (my_strlen($mybb->input['description']) > 255) {
+                $errors[] = $lang->ougc_awards_error_invaliddesscription;
+            }
 
             if (empty($errors)) {
                 $method = $add ? 'insert_category' : 'update_category';
