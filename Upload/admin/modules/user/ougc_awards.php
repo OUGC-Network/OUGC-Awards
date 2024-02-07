@@ -625,7 +625,7 @@ if ($awards->get_input('view') == 'tasks'):
         $page->output_header($lang->ougc_awards_acp_nav);
         $page->output_nav_tabs($sub_tabs, 'ougc_awards_tasks_logs');
 
-        $table = new Table;
+        $table = new Table();
         $table->construct_header($lang->ougc_awards_logs_task, array('width' => '20%'));
         $table->construct_header($lang->ougc_awards_logs_user, array('width' => '40%'));
         $table->construct_header($lang->ougc_awards_logs_received, array('width' => '15%'));
@@ -720,7 +720,7 @@ if ($awards->get_input('view') == 'tasks'):
         $page->output_header($lang->ougc_awards_acp_nav);
         $page->output_nav_tabs($sub_tabs, 'ougc_awards_tasks');
 
-        $table = new Table;
+        $table = new Table();
         $table->construct_header($lang->ougc_awards_form_name, array('width' => '20%'));
         $table->construct_header($lang->ougc_awards_form_desc, array('width' => '45%'));
         $table->construct_header($lang->ougc_awards_form_order, array('width' => '10%', 'class' => 'align_center'));
@@ -1203,7 +1203,7 @@ elseif ($awards->get_input('view') == 'category' && $category):
         $page->output_header($lang->ougc_awards_acp_nav);
         $page->output_nav_tabs($sub_tabs, 'ougc_awards_users');
 
-        $table = new Table;
+        $table = new Table();
         $table->construct_header($lang->ougc_awards_form_username, array('width' => '10%'));
         $table->construct_header($lang->ougc_awards_form_reason, array('width' => '40%'));
         $table->construct_header($lang->ougc_awards_form_thread, array('width' => '20%'));
@@ -1275,8 +1275,8 @@ elseif ($awards->get_input('view') == 'category' && $category):
                         }
                     }
 
-                    require_once MYBB_ROOT . "inc/class_parser.php";
-                    is_object($parser) or $parser = new postParser;
+                    require_once MYBB_ROOT . 'inc/class_parser.php';
+                    is_object($parser) or $parser = new postParser();
 
                     $thread['subject'] = $parser->parse_badwords($thread['subject']);
 
@@ -1322,7 +1322,7 @@ elseif ($awards->get_input('view') == 'category' && $category):
             if ($revoke) {
                 if (!verify_post_check($awards->get_input('my_post_key'))) {
                     flash_message($lang->invalid_post_verify_key2, 'error');
-                    admin_redirect("index.php?module=config-plugins");
+                    admin_redirect('index.php?module=config-plugins');
                 }
 
                 if (isset($mybb->input['no'])) {
@@ -1373,7 +1373,7 @@ elseif ($awards->get_input('view') == 'category' && $category):
             $page->output_inline_error($errors);
         }
 
-        $table = new Table;
+        $table = new Table();
         $table->construct_header($lang->ougc_awards_form_username, array('width' => '30%'));
         $table->construct_header($lang->ougc_awards_users_date, array('width' => '30%', 'class' => 'align_center'));
         $table->construct_header($lang->ougc_awards_view_actions, array('width' => '40%', 'class' => 'align_center'));
@@ -1555,7 +1555,7 @@ elseif ($awards->get_input('view') == 'category' && $category):
         $page->output_header($lang->ougc_awards_acp_nav);
         $page->output_nav_tabs($sub_tabs, 'ougc_awards_view');
 
-        $table = new Table;
+        $table = new Table();
         $table->construct_header($lang->ougc_awards_view_image, array('width' => '1%'));
         $table->construct_header($lang->ougc_awards_form_name, array('width' => '19%'));
         $table->construct_header($lang->ougc_awards_form_desc, array('width' => '45%'));
@@ -1821,7 +1821,7 @@ else:
         $page->output_header($lang->ougc_awards_acp_nav);
         $page->output_nav_tabs($sub_tabs, 'ougc_awards_categories');
 
-        $table = new Table;
+        $table = new Table();
         $table->construct_header($lang->ougc_awards_form_name, array('width' => '20%'));
         $table->construct_header($lang->ougc_awards_form_desc, array('width' => '45%'));
         $table->construct_header($lang->ougc_awards_form_order, array('width' => '10%', 'class' => 'align_center'));
@@ -1871,7 +1871,7 @@ else:
             );
 
             while ($category = $db->fetch_array($query)) {
-                $view_link = "";
+                $view_link = '';
 
                 $category['visible'] or $category['name'] = '<i>' . $category['name'] . '</i>';
 

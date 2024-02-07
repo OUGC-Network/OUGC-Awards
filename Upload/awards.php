@@ -33,9 +33,11 @@ define('THIS_SCRIPT', substr($_SERVER['SCRIPT_NAME'], -strpos(strrev($_SERVER['S
 $templatelist = 'ougcawards_page_list_award, ougcawards_page_list_award_request, ougcawards_page_list_request, ougcawards_page_list, ougcawards_page, ougcawards_page_list_empty, ougcawards_page_view_row, ougcawards_page_view, ougcawards_page_view_empty,ougcawards_page_empty,ougcawards_page_view_request,';
 
 require_once './global.php';
-require_once MYBB_ROOT . "inc/class_parser.php";
+require_once MYBB_ROOT . 'inc/class_parser.php';
 
-is_object($parser) or $parser = new postParser;
+global $parser, $awards, $lang, $mybb, $plugins, $db, $templates;
+
+is_object($parser) or $parser = new postParser();
 
 is_object($awards) or error_no_permission();
 
@@ -120,8 +122,8 @@ if (!empty($mybb->input['view'])) {
     $query = $db->query(
         '
 		SELECT g.*, u.uid, u.username, u.usergroup, u.displaygroup 
-		FROM ' . TABLE_PREFIX . 'ougc_awards_users g
-		LEFT JOIN ' . TABLE_PREFIX . 'users u ON (g.uid=u.uid)
+		FROM ' . $db->table_prefix . 'ougc_awards_users g
+		LEFT JOIN ' . $db->table_prefix . 'users u ON (g.uid=u.uid)
 		WHERE g.aid=\'' . (int)$award['aid'] . '\'
 		ORDER BY g.date desc
 		LIMIT ' . $start . ', ' . $awards->query_limit . '
@@ -192,16 +194,16 @@ if (!empty($mybb->input['view'])) {
 
             $thread['subject'] = $parser->parse_badwords($thread['subject']);
 
-            $threadlink = '<a href="' . $settings['bburl'] . '/' . get_thread_link(
+            $threadlink = '<a href="' . $mybb->settings['bburl'] . '/' . get_thread_link(
                     $thread['tid']
                 ) . '">' . $thread['displayprefix'] . htmlspecialchars_uni($thread['subject']) . '</a>';
         }
 
-        eval('$users_list .= "' . $templates->get('ougcawards_page_view_row') . '";');
+        $users_list .= eval($templates->render('ougcawards_page_view_row'));
     }
 
     if (!$users_list) {
-        eval('$users_list = "' . $templates->get('ougcawards_page_view_empty') . '";');
+        $users_list = eval($templates->render('ougcawards_page_view_empty'));
     }
 
     $request_button = '';
@@ -212,7 +214,7 @@ if (!empty($mybb->input['view'])) {
 
     $plugins->run_hooks('ougc_awards_view_end');
 
-    eval('$content = "' . $templates->get('ougcawards_page_view') . '";');
+    $content = eval($templates->render('ougcawards_page_view'));
 } elseif ($awards->get_input('action') == 'viewall') {
     if (!($user = $awards->get_user($awards->get_input('uid', 1)))) {
         $error = $lang->ougc_awards_error_invaliduser;
@@ -242,8 +244,8 @@ if (!empty($mybb->input['view'])) {
         $query = $db->query(
             '
 			SELECT COUNT(u.aid) AS awards
-			FROM ' . TABLE_PREFIX . 'ougc_awards_users u
-			LEFT JOIN ' . TABLE_PREFIX . 'ougc_awards a ON (u.aid=a.aid)
+			FROM ' . $db->table_prefix . 'ougc_awards_users u
+			LEFT JOIN ' . $db->table_prefix . 'ougc_awards a ON (u.aid=a.aid)
 			WHERE ' . $whereclause . '
 			ORDER BY u.disporder, u.date desc
 		'
@@ -270,13 +272,14 @@ if (!empty($mybb->input['view'])) {
             $page,
             "javascript:OUGC_Plugins.ViewAll('{$user['uid']}', '{page}');"
         );
-        eval('$multipage = "' . $templates->get('ougcawards_viewall_multipage') . '";');
+
+        $multipage = eval($templates->render('ougcawards_viewall_multipage'));
 
         $query = $db->query(
             '
 			SELECT u.*, a.*
-			FROM ' . TABLE_PREFIX . 'ougc_awards_users u
-			LEFT JOIN ' . TABLE_PREFIX . 'ougc_awards a ON (u.aid=a.aid)
+			FROM ' . $db->table_prefix . 'ougc_awards_users u
+			LEFT JOIN ' . $db->table_prefix . 'ougc_awards a ON (u.aid=a.aid)
 			WHERE ' . $whereclause . '
 			ORDER BY u.disporder, u.date desc
 			LIMIT ' . $start . ', ' . $awards->query_limit
@@ -284,7 +287,7 @@ if (!empty($mybb->input['view'])) {
 
         // Output our awards.
         if (!$db->num_rows($query)) {
-            eval('$content = "' . $templates->get('ougcawards_viewall_row_empty') . '";');
+            $content = eval($templates->render('ougcawards_viewall_row_empty'));
         } else {
             while ($award = $db->fetch_array($query)) {
                 $tids[] = (int)$award['thread'];
@@ -310,7 +313,7 @@ if (!empty($mybb->input['view'])) {
                 $category['name'] = htmlspecialchars_uni($category['name']);
                 $category['description'] = htmlspecialchars_uni($category['description']);
 
-                //eval('$content .= "'.$templates->get('ougcawards_profile_row_category').'";');
+                //$content .= eval($templates->render('ougcawards_profile_row_category'));
 
                 $trow = alt_trow(1);
                 foreach ($_awards as $award) {
@@ -352,7 +355,7 @@ if (!empty($mybb->input['view'])) {
 
                         $thread['subject'] = $parser->parse_badwords($thread['subject']);
 
-                        $threadlink = '<a href="' . $settings['bburl'] . '/' . get_thread_link(
+                        $threadlink = '<a href="' . $mybb->settings['bburl'] . '/' . get_thread_link(
                                 $thread['tid']
                             ) . '">' . $thread['displayprefix'] . htmlspecialchars_uni($thread['subject']) . '</a>';
                     }
@@ -368,7 +371,7 @@ if (!empty($mybb->input['view'])) {
                     );
 
                     $award['fimage'] = eval($templates->render($awards->get_award_info('template', $award['aid'])));
-                    eval('$content .= "' . $templates->get('ougcawards_profile_row') . '";');
+                    $content .= eval($templates->render('ougcawards_profile_row'));
                     $trow = alt_trow();
                 }
             }
@@ -531,25 +534,25 @@ if (!empty($mybb->input['view'])) {
                     }
 
                     $award['fimage'] = eval($templates->render($awards->get_award_info('template', $award['aid'])));
-                    eval('$award_list .= "' . $templates->get('ougcawards_page_list_award') . '";');
+                    $award_list .= eval($templates->render('ougcawards_page_list_award'));
 
                     $trow = alt_trow();
                 }
             }
 
             if (!$award_list) {
-                eval('$award_list = "' . $templates->get('ougcawards_page_list_empty') . '";');
+                $award_list = eval($templates->render('ougcawards_page_list_empty'));
             }
 
             $plugins->run_hooks('ougc_awards_end');
 
-            eval('$content .= "' . $templates->get('ougcawards_page_list') . '";');
+            $content .= eval($templates->render('ougcawards_page_list'));
         }
     }
 
     $content or $content = eval($templates->render('ougcawards_page_empty'));
 }
 
-eval('$page = "' . $templates->get('ougcawards_page') . '";');
+$page = eval($templates->render('ougcawards_page'));
 output_page($page);
 exit;

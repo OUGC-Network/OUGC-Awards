@@ -132,9 +132,9 @@ function task_ougc_awards($task)
         }
 
         if (in_array('fposts', $requirements) && (int)$award_task['fposts'] >= 0 && !empty($award_task['fposts'])) {
-            $left_join[] = "LEFT JOIN (
-				SELECT p.uid, COUNT(p.pid) AS fposts FROM " . TABLE_PREFIX . "posts p
-				LEFT JOIN " . TABLE_PREFIX . "threads t ON (t.tid=p.tid)
+            $left_join[] = 'LEFT JOIN (
+				SELECT p.uid, COUNT(p.pid) AS fposts FROM ' . $db->table_prefix . 'posts p
+				LEFT JOIN ' . $db->table_prefix . "threads t ON (t.tid=p.tid)
 				WHERE p.fid='" . (int)$award_task['fpostsforums'] . "' AND t.visible > 0 AND p.visible > 0
 				GROUP BY p.uid
 			) p ON (p.uid=u.uid)";
@@ -145,8 +145,8 @@ function task_ougc_awards($task)
                 'fthreads',
                 $requirements
             ) && (int)$award_task['fthreads'] >= 0 && !empty($award_task['fthreads'])) {
-            $left_join[] = "LEFT JOIN (
-				SELECT uid, COUNT(tid) AS fthreads FROM " . TABLE_PREFIX . "threads
+            $left_join[] = 'LEFT JOIN (
+				SELECT uid, COUNT(tid) AS fthreads FROM ' . $db->table_prefix . "threads
 				WHERE fid='" . (int)$award_task['fthreadsforums'] . "' AND visible > 0 AND closed NOT LIKE 'moved|%'
 				GROUP BY uid
 			) t ON (t.uid=u.uid)";
@@ -158,7 +158,7 @@ function task_ougc_awards($task)
             $aids = implode("','", array_keys($awards_cache['awards']));
             foreach (array_map('intval', explode(',', $award_task['previousawards'])) as $aid) {
                 $left_join[] = "LEFT JOIN (
-					SELECT ua.uid, ua.aid, COUNT(ua.gid) AS previous_awards_{$aid} FROM " . TABLE_PREFIX . "ougc_awards_users ua
+					SELECT ua.uid, ua.aid, COUNT(ua.gid) AS previous_awards_{$aid} FROM " . $db->table_prefix . "ougc_awards_users ua
 					WHERE ua.aid='{$aid}' AND ua.aid IN ('{$aids}')
 					GROUP BY ua.uid
 				) a_{$aid} ON (a_{$aid}.uid=u.uid)";
@@ -167,9 +167,9 @@ function task_ougc_awards($task)
         }
 
         if (in_array('profilefields', $requirements) && !empty($award_task['profilefields'])) {
-            $left_join[] = "LEFT JOIN " . TABLE_PREFIX . "userfields uf ON (uf.ufid=u.uid)";
+            $left_join[] = 'LEFT JOIN ' . $db->table_prefix . 'userfields uf ON (uf.ufid=u.uid)';
             foreach (array_map('intval', explode(',', $award_task['profilefields'])) as $fid) {
-                $where_clause[] = "uf.fid" . (int)$fid . "!=''";
+                $where_clause[] = 'uf.fid' . (int)$fid . "!=''";
             }
         }
 
@@ -177,7 +177,7 @@ function task_ougc_awards($task)
                 'mydownloads',
                 $requirements
             ) && (int)$award_task['mydownloads'] >= 0 && !empty($award_task['mydownloads'])) {
-            $left_join[] = "LEFT JOIN (SELECT submitter_uid, COUNT(did) AS downloads FROM " . TABLE_PREFIX . "mydownloads_downloads WHERE hidden='0' GROUP BY submitter_uid) myd ON (myd.submitter_uid=u.uid)";
+            $left_join[] = 'LEFT JOIN (SELECT submitter_uid, COUNT(did) AS downloads FROM ' . $db->table_prefix . "mydownloads_downloads WHERE hidden='0' GROUP BY submitter_uid) myd ON (myd.submitter_uid=u.uid)";
             $where_clause[] = "myd.downloads{$award_task['mydownloadstype']}'{$award_task['mydownloads']}'";
         }
 
@@ -187,9 +187,9 @@ function task_ougc_awards($task)
                 'myarcadescores',
                 $requirements
             ) && (int)$award_task['myarcadescores'] >= 0 && !empty($award_task['myarcadescores'])) {
-            $left_join[] = "LEFT JOIN (
-				SELECT s.uid, s.gid, COUNT(s.sid) AS scores FROM " . TABLE_PREFIX . "arcadescores s
-				LEFT JOIN " . TABLE_PREFIX . "arcadegames g ON (g.gid=s.gid)
+            $left_join[] = 'LEFT JOIN (
+				SELECT s.uid, s.gid, COUNT(s.sid) AS scores FROM ' . $db->table_prefix . 'arcadescores s
+				LEFT JOIN ' . $db->table_prefix . "arcadegames g ON (g.gid=s.gid)
 				WHERE g.active='1'
 				GROUP BY s.uid
 			) mya ON (mya.uid=u.uid)";
@@ -202,11 +202,11 @@ function task_ougc_awards($task)
             ) && (int)$award_task['ougc_customrep_r'] >= 0 && !empty($award_task['ougc_customrep_r']) && $db->table_exists(
                 'ougc_customrep'
             )) {
-            $left_join[] = "LEFT JOIN (
-				SELECT p.uid, l.rid, COUNT(l.lid) AS ougc_custom_reputation_receieved FROM " . TABLE_PREFIX . "ougc_customrep_log l
-				LEFT JOIN " . TABLE_PREFIX . "ougc_customrep r ON (r.rid=l.rid)
-				LEFT JOIN " . TABLE_PREFIX . "posts p ON (p.pid=l.pid)
-				LEFT JOIN " . TABLE_PREFIX . "threads t ON (t.tid=p.tid)
+            $left_join[] = 'LEFT JOIN (
+				SELECT p.uid, l.rid, COUNT(l.lid) AS ougc_custom_reputation_receieved FROM ' . $db->table_prefix . 'ougc_customrep_log l
+				LEFT JOIN ' . $db->table_prefix . 'ougc_customrep r ON (r.rid=l.rid)
+				LEFT JOIN ' . $db->table_prefix . 'posts p ON (p.pid=l.pid)
+				LEFT JOIN ' . $db->table_prefix . "threads t ON (t.tid=p.tid)
 				WHERE r.visible='1' AND t.visible > 0 AND p.visible > 0 AND r.rid IN ('" . implode(
                     "','",
                     array_map('intval', explode(',', $award_task['ougc_customrepids_r']))
@@ -222,11 +222,11 @@ function task_ougc_awards($task)
             ) && (int)$award_task['ougc_customrep_g'] >= 0 && !empty($award_task['ougc_customrep_g']) && $db->table_exists(
                 'ougc_customrep'
             )) {
-            $left_join[] = "LEFT JOIN (
-				SELECT l.uid, l.rid, COUNT(l.lid) AS ougc_custom_reputation_gived FROM " . TABLE_PREFIX . "ougc_customrep_log l
-				LEFT JOIN " . TABLE_PREFIX . "ougc_customrep r ON (r.rid=l.rid)
-				LEFT JOIN " . TABLE_PREFIX . "posts p ON (p.pid=l.pid)
-				LEFT JOIN " . TABLE_PREFIX . "threads t ON (t.tid=p.tid)
+            $left_join[] = 'LEFT JOIN (
+				SELECT l.uid, l.rid, COUNT(l.lid) AS ougc_custom_reputation_gived FROM ' . $db->table_prefix . 'ougc_customrep_log l
+				LEFT JOIN ' . $db->table_prefix . 'ougc_customrep r ON (r.rid=l.rid)
+				LEFT JOIN ' . $db->table_prefix . 'posts p ON (p.pid=l.pid)
+				LEFT JOIN ' . $db->table_prefix . "threads t ON (t.tid=p.tid)
 				WHERE r.visible='1' AND t.visible > 0 AND p.visible > 0 AND r.rid IN ('" . implode(
                     "','",
                     array_map('intval', explode(',', $award_task['ougc_customrepids_g']))
