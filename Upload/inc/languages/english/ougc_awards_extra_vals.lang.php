@@ -26,23 +26,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 
-/*~*~* Language Support For Awards *~*~*/
-
 /*
-$l['ougc_awards_award_pm_1'] = 'Hi {1}. You have been given the [b]{2}[/b] award.
+$l['ougcAwardsPrivateMessagesOverwrite'] = 'Hi {1}. You have been given the [b]{2}[/b] award.
 
 Reason:
 [quote]{3}[/quote]
 
 [i]The {5} community.[/i]';
-
-// Using "ougc_awards_award_pm_all" lang variable will overwrite all PM's to use the same lang val.
-$l['ougc_awards_award_pm_all'] = 'Something, no empty.';
-
-
-$l['ougc_awards_award_name_1']= 'Name of AID 1'; // Outside ACP only.
-$l['ougc_awards_award_desc_1'] = 'Description of AID 1.'; // Outside ACP only.
-
-$l['ougc_awards_award_reason_1'] = 'Reason from AID 1 will show this.'; // Outside ACP only.
-$l['ougc_awards_award_reason_gived_177'] = 'Reason from GID 1 will show this.'; // Outside ACP only and overwrites above one.
 */
+
+//$l['ougcAwardsNameAward1']= 'Name of AID 1';
+
+//$l['ougcAwardsDescriptionAward1'] = 'Description of AID 1.';
+
+//$l['ougcAwardsReasonAward1'] = 'Reason from AID 1 will show this.';
