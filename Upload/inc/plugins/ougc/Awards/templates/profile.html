@@ -1,7 +1,9 @@
-<table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder tfixed">
-	<tr>
-		<td class="thead"><strong>{$lang->ougc_awards_profile_title}</strong></td>
-	</tr>
-	{$awardlist}
-	{$multipage}
-</table><br />
+<table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder tfixed"
+       id="ougcAwardsProfileTable{$userID}">
+    <tr>
+        <td class="thead"><strong>{$lang->ougcAwardsProfileTitle}</strong></td>
+    </tr>
+    {$grantedList}
+    {$paginationMenu}
+</table>
+<br class="ougcAwardsProfileTableBreak"/>

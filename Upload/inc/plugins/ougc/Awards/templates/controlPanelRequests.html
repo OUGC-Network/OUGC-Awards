@@ -1,0 +1,31 @@
+<form action="{$mybb->settings['bburl']}/{$url}&amp;manage=requests" method="post">
+    <input type="hidden" name="my_post_key" value="{$mybb->post_code}"/>
+    <table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
+        <tr>
+            <td class="thead" colspan="5">
+                <strong>{$lang->ougcAwardsControlPanelRequestsTableTitle}</strong>
+            </td>
+        </tr>
+        <tr>
+            <td class="tcat smalltext">
+                <strong>{$lang->ougcAwardsControlPanelRequestsTableAward}</strong>
+            </td>
+            <td class="tcat smalltext">
+                <strong>{$lang->ougcAwardsControlPanelRequestsTableUsername}</strong>
+            </td>
+            <td class="tcat smalltext">
+                <strong>{$lang->ougcAwardsControlPanelRequestsTableMessage}</strong>
+            </td>
+            <td class="tcat smalltext">
+                <strong>{$lang->ougcAwardsControlPanelRequestsTableStatus}</strong>
+            </td>
+            <td class="tcat smalltext">
+                <strong>{$lang->ougcAwardsControlPanelRequestsTableOptions}</strong>
+            </td>
+        </tr>
+        {$requestsList}
+    </table>
+    {$buttons}
+</form>
+<br class="clear"/>
+{$paginationMenu}

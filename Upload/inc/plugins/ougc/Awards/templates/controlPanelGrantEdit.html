@@ -1,0 +1,57 @@
+<form action="{$pageUrl}" method="post">
+    <input type="hidden" name="my_post_key" value="{$mybb->post_code}"/>
+    <input type="hidden" name="action" value="editGrant"/>
+    <input type="hidden" name="grantID" value="{$grantID}"/>
+    <table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
+        <tr>
+            <td class="thead" colspan="2">
+                <strong>{$lang->ougcAwardsControlPanelEditGrantTableTitle}</strong>
+            </td>
+        </tr>
+        <tr>
+            <td class="tcat smalltext" colspan="2">
+                <strong>{$lang->ougcAwardsControlPanelEditGrantTableDescription}</strong>
+            </td>
+        </tr>
+        <tr>
+            <td class="trow1" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelEditGrantTableReason}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelEditGrantTableReasonDescription}
+                </div>
+            </td>
+            <td class="trow1" style="vertical-align: middle;">
+                <textarea id="pm" name="reason" rows="5" cols="70" tabindex="2">{$inputData['reason']}</textarea>
+            </td>
+        </tr>
+        <tr>
+            <td class="trow2" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelEditGrantTableThread}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelEditGrantTableThreadDescription}
+                </div>
+            </td>
+            <td class="trow2" style="vertical-align: middle;">
+                <input type="text" class="textbox" name="thread" size="40" maxlength="100"
+                       value="{$inputData['thread']}"/>
+            </td>
+        </tr>
+        <tr>
+            <td class="trow1" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelEditGrantTableDate}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelEditGrantTableDateDescription}
+                </div>
+            </td>
+            <td class="trow1" style="vertical-align: middle;">
+                <input type="number" class="textbox" name="date" size="40" maxlength="10"
+                       value="{$inputData['date']}"/>
+            </td>
+        </tr>
+    </table>
+    <br/>
+    <div align="center">
+        <input type="submit" class="button" value="{$lang->ougcAwardsControlPanelEditGrantButton}">
+    </div>
+</form>
+<br/>

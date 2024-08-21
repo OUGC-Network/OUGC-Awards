@@ -70,11 +70,23 @@ const AWARD_TEMPLATE_TYPE_CLASS = 1;
 
 const AWARD_TEMPLATE_TYPE_CUSTOM = 2;
 
+const AWARD_ALLOW_REQUESTS = 1;
+
+const AWARD_STATUS_DISABLED = 0;
+
+const AWARD_STATUS_ENABLED = 1;
+
+const TASK_STATUS_DISABLED = 0;
+
+const TASK_STATUS_ENABLED = 1;
+
+const TASK_ALLOW_MULTIPLE = 1;
+
 const REQUEST_STATUS_PENDING = 1;
 
 const GRANT_STATUS_EVERYWHERE = 0;
 
-const GRANT_STATUS_PROFILE = 0;
+const GRANT_STATUS_PROFILE = 1;
 
 const GRANT_STATUS_POSTS = 2;
 
@@ -86,11 +98,40 @@ const REQUEST_STATUS_ACCEPTED = 0;
 
 const REQUEST_STATUS_OPEN = 1;
 
-const AWARD_STATUS_DISABLED = 0;
-
-const AWARD_STATUS_ENABLED = 1;
-
 const TABLES_DATA = [
+    'ougc_awards_categories' => [
+        'cid' => [
+            'type' => 'INT',
+            'unsigned' => true,
+            'auto_increment' => true,
+            'primary_key' => true
+        ],
+        'name' => [
+            'type' => 'VARCHAR',
+            'size' => 100,
+            'default' => ''
+        ],
+        'description' => [
+            'type' => 'VARCHAR',
+            'size' => 255,
+            'default' => ''
+        ],
+        'disporder' => [
+            'type' => 'SMALLINT',
+            'unsigned' => true,
+            'default' => 0
+        ],
+        'allowrequests' => [
+            'type' => 'TINYINT',
+            'unsigned' => true,
+            'default' => 1
+        ],
+        'visible' => [
+            'type' => 'TINYINT',
+            'unsigned' => true,
+            'default' => 1
+        ],
+    ],
     'ougc_awards' => [
         'aid' => [
             'type' => 'INT',
@@ -184,6 +225,10 @@ const TABLES_DATA = [
             'unsigned' => true,
             'default' => 0
         ],
+        'reason' => [
+            'type' => 'TEXT',
+            'null' => true,
+        ],
         'pm' => [
             'type' => 'TEXT',
             'null' => true,
@@ -226,39 +271,6 @@ const TABLES_DATA = [
             'type' => 'INT',
             'unsigned' => true,
             'default' => 0
-        ],
-    ],
-    'ougc_awards_categories' => [
-        'cid' => [
-            'type' => 'INT',
-            'unsigned' => true,
-            'auto_increment' => true,
-            'primary_key' => true
-        ],
-        'name' => [
-            'type' => 'VARCHAR',
-            'size' => 100,
-            'default' => ''
-        ],
-        'description' => [
-            'type' => 'VARCHAR',
-            'size' => 255,
-            'default' => ''
-        ],
-        'disporder' => [
-            'type' => 'SMALLINT',
-            'unsigned' => true,
-            'default' => 0
-        ],
-        'allowrequests' => [
-            'type' => 'TINYINT',
-            'unsigned' => true,
-            'default' => 1
-        ],
-        'visible' => [
-            'type' => 'TINYINT',
-            'unsigned' => true,
-            'default' => 1
         ],
     ],
     'ougc_awards_requests' => [
@@ -343,14 +355,14 @@ const TABLES_DATA = [
             'unsigned' => true,
             'default' => 0
         ],
+        'revoke' => [
+            'type' => 'TEXT',
+            'null' => true,
+        ],
         'disporder' => [
             'type' => 'SMALLINT',
             'unsigned' => true,
             'default' => 0
-        ],
-        'revoke' => [
-            'type' => 'TEXT',
-            'null' => true,
         ],
         'usergroups' => [
             'type' => 'TEXT',
@@ -416,7 +428,7 @@ const TABLES_DATA = [
         ],
         'registeredtype' => [
             'type' => 'VARCHAR',
-            'size' => 2,
+            'size' => 5,
             'default' => ''
         ],
         'online' => [
@@ -426,7 +438,7 @@ const TABLES_DATA = [
         ],
         'onlinetype' => [
             'type' => 'VARCHAR',
-            'size' => 2,
+            'size' => 5,
             'default' => ''
         ],
         'reputation' => [
@@ -762,7 +774,7 @@ function getSetting(string $settingKey = '')
 function executeTask(): bool
 {
     global $mybb, $db, $lang, $plugins;
-    
+
     loadLanguage();
 
     $query = $db->simple_select('ougc_awards_tasks', '*', 'active=1');
@@ -1028,9 +1040,9 @@ function executeTask(): bool
                         $gave_list[] = $aid;
                         $award = awardGet($aid);
                         $result = grantInsert(
-                            $award,
+                            $aid,
                             $user,
-                            null,
+                            '',
                             $award_task['thread'],
                             $award_task['tid']
                         ); // reason shouldn't be supplied.
@@ -1131,10 +1143,10 @@ function presetInsert(array $presetData, int $presetID = 0, bool $updatePreset =
     }
 
     if ($updatePreset) {
-        return $db->update_query('ougc_awards_presets', $insertData, "pid='{$presetID}'");
+        return (int)$db->update_query('ougc_awards_presets', $insertData, "pid='{$presetID}'");
     }
 
-    return $db->insert_query('ougc_awards_presets', $insertData);
+    return (int)$db->insert_query('ougc_awards_presets', $insertData);
 }
 
 function presetUpdate(array $presetData, int $presetID): int
@@ -1142,19 +1154,25 @@ function presetUpdate(array $presetData, int $presetID): int
     return presetInsert($presetData, $presetID, true);
 }
 
-function presetGet(int $presetID): array
+function presetGet(array $whereClauses = [], string $queryFields = '*', array $queryOptions = []): array
 {
     global $db;
 
-    $presetData = [];
+    $cacheObjects = [];
 
-    $dbQuery = $db->simple_select('ougc_awards_presets', '*', "pid='{$presetID}'");
+    $dbQuery = $db->simple_select('ougc_awards_presets', $queryFields, implode(' AND ', $whereClauses), $queryOptions);
 
     if ($db->num_rows($dbQuery)) {
-        return $db->fetch_array($dbQuery);
+        if (isset($queryOptions['limit']) && $queryOptions['limit'] === 1) {
+            $cacheObjects = $db->fetch_array($dbQuery);
+        } else {
+            while ($userData = $db->fetch_array($dbQuery)) {
+                $cacheObjects[] = $userData;
+            }
+        }
     }
 
-    return $presetData;
+    return $cacheObjects;
 }
 
 function presetDelete(int $presetID): bool
@@ -1190,7 +1208,7 @@ function ownerInsert(int $awardID, int $userID): bool
     return true;
 }
 
-function ownerRevoke(int $ownerID): bool
+function ownerDelete(int $ownerID): bool
 {
     global $db, $plugins;
 
@@ -1199,8 +1217,6 @@ function ownerRevoke(int $ownerID): bool
     ];
 
     $plugins->run_hooks('ougc_awards_revoke_owner', $hookArguments);
-
-    $ownerData = ownerGet($ownerID);
 
     $db->delete_query('ougc_awards_owners', "oid='{$ownerID}'");
 
@@ -1229,11 +1245,11 @@ function rebuildOwners(): bool
     return true;
 }
 
-function ownerGet(int $ownerID = 0): array
+function ownerGetSingle(array $whereClauses = [], string $queryFields = '*'): array
 {
     global $db;
 
-    $dbQuery = $db->simple_select('ougc_awards_owners', '*', "oid='{$ownerID}'");
+    $dbQuery = $db->simple_select('ougc_awards_owners', $queryFields, implode(' AND ', $whereClauses));
 
     if ($db->num_rows($dbQuery)) {
         return $db->fetch_array($dbQuery);
@@ -1241,6 +1257,7 @@ function ownerGet(int $ownerID = 0): array
 
     return [];
 }
+
 
 function ownerGetUser(
     array $whereClauses = [],
@@ -1343,17 +1360,30 @@ function categoryGet(int $categoryID): array
     return $categoryCache[$categoryID];
 }
 
-function categoryGetCache(): array
+function categoryGetCache(array $whereClauses = [], string $queryFields = '*', array $queryOptions = []): array
 {
     global $db;
 
     $cacheObjects = [];
 
-    $dbQuery = $db->simple_select('ougc_awards_categories');
+    if (isset($queryOptions['limit'])) {
+        $queryOptions['limit'] = (int)$queryOptions['limit'];
+    }
+
+    $dbQuery = $db->simple_select(
+        'ougc_awards_categories',
+        $queryFields,
+        implode(' AND ', $whereClauses),
+        $queryOptions
+    );
 
     if ($db->num_rows($dbQuery)) {
-        while ($rowData = $db->fetch_array($dbQuery)) {
-            $cacheObjects[(int)$rowData['cid']] = $rowData;
+        if (isset($queryOptions['limit']) && $queryOptions['limit'] === 1) {
+            $cacheObjects = $db->fetch_array($dbQuery);
+        } else {
+            while ($userData = $db->fetch_array($dbQuery)) {
+                $cacheObjects[] = $userData;
+            }
         }
     }
 
@@ -1397,6 +1427,12 @@ function awardDelete(int $awardID): bool
 
     while ($grantID = (int)$db->fetch_field($dbQuery, 'gid')) {
         grantDelete($grantID);
+    }
+
+    $dbQuery = $db->simple_select('ougc_awards_owners', 'oid', "aid='{$awardID}'");
+
+    while ($ownerID = (int)$db->fetch_field($dbQuery, 'oid')) {
+        ownerDelete($ownerID);
     }
 
     $db->delete_query('ougc_awards', "aid='{$awardID}'");
@@ -1456,8 +1492,6 @@ function awardGetInfo(
     switch ($informationType) {
         case INFORMATION_TYPE_TEMPLATE:
 
-            $returnString = 'awardImage';
-
             $awardData = awardGet($awardID);
 
             switch ((int)$awardData['template']) {
@@ -1465,19 +1499,18 @@ function awardGetInfo(
                     global $templates;
 
                     if (isset($templates->cache["ougcawards_award_image_cat{$awardData['cid']}"])) {
-                        $returnString = "award_image_cat{$awardData['cid']}";
+                        return "award_image_cat{$awardData['cid']}";
                     }
 
                     if (isset($templates->cache["ougcawards_award_image{$awardID}"])) {
-                        $returnString = "award_image{$awardID}";
+                        return "award_image{$awardID}";
                     }
                     break;
                 case AWARD_TEMPLATE_TYPE_CLASS;
-                    $returnString = 'awardImageClass';
-                    break;
+                    return 'awardImageClass';
             }
 
-            break;
+            return 'awardImage';
         case INFORMATION_TYPE_PRIVATE_MESSAGE:
             if (!empty($lang->ougcAwardsPrivateMessagesOverwrite)) {
                 $returnString = $lang->ougcAwardsPrivateMessagesOverwrite;
@@ -1485,40 +1518,24 @@ function awardGetInfo(
 
             break;
         case INFORMATION_TYPE_REASON:
-            if ($taskID) {
-                $taskData = taskGet($taskID);
-
-                if (!empty($taskData)) {
-                    $lang_val = "ougcAwardsReasonTask{$taskID}";
-
-                    isset($lang->{$lang_val}) || $lang->{$lang_val} = $taskData['reason'];
-
-                    if (!empty($lang->{$lang_val})) {
-                        $returnString = $lang->{$lang_val};
-                    }
+            if (!empty($lang->{"ougcAwardsAwardReason{$awardID}"})) {
+                return $lang->{"ougcAwardsAwardReason{$awardID}"};
+            } elseif ($taskData = taskGet(["tid='{$taskID}'"])) {
+                if (!empty($lang->{"ougcAwardsTaskReason{$taskID}"})) {
+                    return $lang->{"ougcAwardsTaskReason{$taskID}"};
+                } else {
+                    return $taskData['reason'];
                 }
-            }
-
-            $lang_val = "ougcAwardsReasonAward{$awardID}";
-
-            if (!empty($lang->{$lang_val})) {
-                $returnString = $lang->{$lang_val};
+            } elseif ($grantData = awardGetUser(["gid='{$grantID}'"], '*', ['limit' => 1])) {
+                return $grantData['reason'];
             }
 
             break;
         case INFORMATION_TYPE_NAME:
-            $lang_val = "ougcAwardsNameAward{$awardID}";
-
-            if (!empty($lang->{$lang_val})) {
-                $returnString = $lang->{$lang_val};
-            }
-
-            global $cache;
-
-            $awardData = awardGet($awardID);
-
-            if (!empty($awardData['name'])) {
-                $returnString = $awardData['name'];
+            if (!empty($lang->{"ougcAwardsAwardName{$awardID}"})) {
+                return $lang->{"ougcAwardsAwardName{$awardID}"};
+            } elseif ($awardData = awardGet($awardID)) {
+                return $awardData['name'];
             }
 
             break;
@@ -1540,7 +1557,7 @@ function awardGetInfo(
             break;
     }
 
-    return $returnString;
+    return '';
 }
 
 function awardGetUser(
@@ -1571,13 +1588,13 @@ function awardGetUser(
     return $usersData;
 }
 
-function awardsGetCache(array $whereClauses = []): array
+function awardsGetCache(array $whereClauses = [], string $queryFields = '*', array $queryOptions = []): array
 {
     global $db;
 
     $cacheObjects = [];
 
-    $dbQuery = $db->simple_select('ougc_awards', '*', implode(' AND ', $whereClauses));
+    $dbQuery = $db->simple_select('ougc_awards', $queryFields, implode(' AND ', $whereClauses), $queryOptions);
 
     if ($db->num_rows($dbQuery)) {
         while ($rowData = $db->fetch_array($dbQuery)) {
@@ -1654,7 +1671,7 @@ function grantInsert(
     return $grantID;
 }
 
-function grantUpdate(int $grantID, array $grantData): bool
+function grantUpdate(array $grantData, int $grantID): bool
 {
     global $db, $plugins;
 
@@ -1663,8 +1680,8 @@ function grantUpdate(int $grantID, array $grantData): bool
     !isset($grantData['date']) || $updateData['date'] = (int)$grantData['date'];
     !isset($grantData['reason']) || $updateData['reason'] = $db->escape_string($grantData['reason']);
     !isset($grantData['thread']) || $updateData['thread'] = (int)$grantData['thread'];
-    !isset($grantData['visible']) || $updateData['visible'] = (int)$grantData['visible'];
-    !isset($grantData['disporder']) || $updateData['disporder'] = (int)$grantData['disporder'];
+    //!isset($grantData['visible']) || $updateData['visible'] = (int)$grantData['visible'];
+    //!isset($grantData['disporder']) || $updateData['disporder'] = (int)$grantData['disporder'];
 
     $hookArguments = [
         'gid' => &$grantID,
@@ -1694,11 +1711,11 @@ function grantDelete(int $grantID): bool
     return true;
 }
 
-function grantGet(int $grantID = 0): array
+function grantGetSingle(array $whereClauses = [], string $queryFields = '*'): array
 {
     global $db;
 
-    $dbQuery = $db->simple_select('ougc_awards_users', '*', "gid='{$grantID}'");
+    $dbQuery = $db->simple_select('ougc_awards_users', $queryFields, implode(' AND ', $whereClauses));
 
     if ($db->num_rows($dbQuery)) {
         return $db->fetch_array($dbQuery);
@@ -1843,7 +1860,7 @@ function requestApprove(int $requestID): bool
     return true;
 }
 
-function taskInsert(array $taskData, int $taskID, bool $updateTask = false): int
+function taskInsert(array $taskData, int $taskID = 0, bool $updateTask = false): int
 {
     global $db;
 
@@ -1948,19 +1965,25 @@ function taskDelete(int $taskID): bool
     return true;
 }
 
-function taskGet(int $taskID): array
+function taskGet(array $whereClauses = [], string $queryFields = '*', array $queryOptions = []): array
 {
     global $db;
 
-    $taskData = [];
+    $cacheObjects = [];
 
-    $dbQuery = $db->simple_select('ougc_awards_tasks', '*', "tid='{$taskID}'");
+    $dbQuery = $db->simple_select('ougc_awards_tasks', $queryFields, implode(' AND ', $whereClauses), $queryOptions);
 
     if ($db->num_rows($dbQuery)) {
-        return $db->fetch_array($dbQuery);
+        if (isset($queryOptions['limit']) && $queryOptions['limit'] === 1) {
+            $cacheObjects = $db->fetch_array($dbQuery);
+        } else {
+            while ($userData = $db->fetch_array($dbQuery)) {
+                $cacheObjects[] = $userData;
+            }
+        }
     }
 
-    return $taskData;
+    return $cacheObjects;
 }
 
 function sendPrivateMessage(array $privateMessage, int $fromUserID = 0, bool $adminOverride = false): bool
@@ -2111,11 +2134,11 @@ function cacheUpdate(): bool
 
     $limit = (int)$mybb->settings['statslimit'];
 
-    $_cache = [
+    $cacheData = [
         'time' => TIME_NOW,
         'awards' => [],
         'categories' => [],
-        'requests' => [],
+        'requests' => ['pending' => 0],
         'tasks' => [],
         'top' => [],
         'last' => [],
@@ -2129,14 +2152,14 @@ function cacheUpdate(): bool
     );
 
     while ($category = $db->fetch_array($query)) {
-        $_cache['categories'][(int)$category['cid']] = [
+        $cacheData['categories'][(int)$category['cid']] = [
             'name' => (string)$category['name'],
             'description' => (string)$category['description'],
             'allowrequests' => (int)$category['allowrequests']
         ];
     }
 
-    if ($cids = array_keys($_cache['categories'])) {
+    if ($cids = array_keys($cacheData['categories'])) {
         $wherecids = "cid IN ('" . implode("','", $cids) . "')";
         $query = $db->simple_select(
             'ougc_awards',
@@ -2146,7 +2169,7 @@ function cacheUpdate(): bool
         );
 
         while ($award = $db->fetch_array($query)) {
-            $_cache['awards'][(int)$award['aid']] = [
+            $cacheData['awards'][(int)$award['aid']] = [
                 'cid' => (int)$award['cid'],
                 'name' => (string)$award['name'],
                 'template' => (int)$award['template'],
@@ -2160,15 +2183,27 @@ function cacheUpdate(): bool
         }
     }
 
-    if ($aids = array_keys($_cache['awards'])) {
+    $awardIDs = implode("','", array_keys($cacheData['awards']));
+
+    $requestStatusOpen = \ougc\Awards\Core\REQUEST_STATUS_OPEN;
+
+    $whereClauses = ["aid IN ('{$awardIDs}')", 'status' => "status='{$requestStatusOpen}'"];
+
+    $totalRequestsCount = \ougc\Awards\Core\requestGetPending(
+        $whereClauses,
+        'COUNT(rid) AS totalRequests',
+        ['limit' => 1]
+    );
+
+    if (!empty($totalRequestsCount['totalRequests'])) {
+        $cacheData['requests'] = ['pending' => (int)$totalRequestsCount['totalRequests']];
+    }
+
+    if ($aids = array_keys($cacheData['awards'])) {
         $where = "aid IN ('" . implode("','", $aids) . "')";
 
         $query = $db->simple_select('ougc_awards_requests', 'COUNT(rid) AS pending', "status='1' AND {$where}");
         $pending = $db->fetch_field($query, 'pending');
-
-        $_cache['requests'] = [
-            'pending' => (int)$pending
-        ];
 
         $query = $db->query(
             '
@@ -2187,7 +2222,7 @@ function cacheUpdate(): bool
 			;"
         );
         while ($user = $db->fetch_array($query)) {
-            $_cache['top'][(int)$user['uid']] = (int)$user['awards'];
+            $cacheData['top'][(int)$user['uid']] = (int)$user['awards'];
         }
 
         $query = $db->simple_select(
@@ -2198,20 +2233,20 @@ function cacheUpdate(): bool
         );
 
         while ($user = $db->fetch_array($query)) {
-            $_cache['last'][(int)$user['date']] = (int)$user['uid'];
+            $cacheData['last'][(int)$user['date']] = (int)$user['uid'];
         }
     }
 
     $query = $db->simple_select('ougc_awards_tasks', 'tid, name, reason', '', ['order_by' => 'disporder']);
 
     while ($task = $db->fetch_array($query)) {
-        $_cache['tasks'][(int)$task['tid']] = [
+        $cacheData['tasks'][(int)$task['tid']] = [
             'name' => (string)$task['name'],
             'reason' => (string)$task['reason']
         ];
     }
 
-    $mybb->cache->update('ougc_awards', $_cache);
+    $mybb->cache->update('ougc_awards', $cacheData);
 
     return true;
 }
@@ -2324,23 +2359,29 @@ function generateSelectCategory(int $selectedID): string
 {
     global $db, $mybb;
 
-    $selectCode = "<select name=\"cid\">\n";
+    $selectName = 'cid';
 
     $dbQuery = $db->simple_select('ougc_awards_categories', '*', '', ['order_by' => 'disporder']);
+
+    $selectOptions = '';
 
     while ($categoryData = $db->fetch_array($dbQuery)) {
         $selectedElement = '';
 
-        if ($categoryData['cid'] == $selectedID) {
+        if ((int)$categoryData['cid'] === $selectedID) {
             $selectedElement = 'selected="selected"';
         }
 
-        $selectCode .= "<option value=\"{$categoryData['cid']}\"{$selectedElement}>{$categoryData['name']}</option>";
+        $optionValue = (int)$categoryData['cid'];
+
+        $optionName = $categoryData['name'];
+
+        $onChange = '';
+
+        $selectOptions .= eval(getTemplate('selectFieldOption'));
     }
 
-    $selectCode .= '</select>';
-
-    return $selectCode;
+    return eval(getTemplate('selectField'));
 }
 
 function generateSelectCustomReputation(string $inputName, int $selectedID = 0): string
@@ -2409,7 +2450,7 @@ function canManageUsers(int $userID): bool
     return false;
 }
 
-function canRequestAwards(int $awardID = 0): bool
+function canRequestAwards(int $awardID = 0, int $categoryID = 0): bool
 {
     global $mybb;
 
@@ -2422,9 +2463,17 @@ function canRequestAwards(int $awardID = 0): bool
 
         $categoryID = (int)$awardData['cid'];
 
+        if (empty($awardData['visible']) || empty($awardData['allowrequests'])) {
+            return false;
+        }
+    }
+
+    if (!empty($categoryID)) {
         $categoryData = categoryGet($categoryID);
 
-        return !empty($categoryData['allowrequests']) && !empty($awardData['allowrequests']);
+        if (empty($categoryData['visible']) || empty($categoryData['allowrequests'])) {
+            return false;
+        }
     }
 
     return true;
@@ -2458,7 +2507,7 @@ function parsePresets(string &$preset_options, array $presetsCache, int $selecte
                 $selected = ' selected="selected"';
             }
 
-            $presetOptions .= eval($templates->render('ougcawards_usercp_presets_select_option'));
+            $presetOptions .= eval(getTemplate('usercp_presets_select_option'));
         }
     }
 
@@ -2670,4 +2719,26 @@ function getThreadByUrl(string $threadUrl)
     }
 
     return get_thread($threadID);
+}
+
+function isModerator(): bool
+{
+    global $mybb;
+
+    return (int)$mybb->user['uid'] === 1;
+    is_member(getSetting('groupsModerators'));
+}
+
+function isVisibleCategory(int $categoryID): bool
+{
+    $categoryData = awardGet($categoryID);
+
+    return !empty($categoryData['visible']) || isModerator();
+}
+
+function isVisibleAward(int $awardID): bool
+{
+    $awardData = awardGet($awardID);
+
+    return !empty($awardData['visible']) || isModerator();
 }

@@ -1,0 +1,157 @@
+<form action="{$pageUrl}" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="my_post_key" value="{$mybb->post_code}"/>
+    <input type="hidden" name="action" value="{$mybb->get_input('action')}"/>
+    <input type="hidden" name="taskID" value="{$taskID}"/>
+    <table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
+        <tr>
+            <td class="thead" colspan="2">
+                <strong>{$tableTitle}</strong>
+            </td>
+        </tr>
+        <tr>
+            <td class="tcat smalltext" colspan="2">
+                <strong>{$tableDescription}</strong>
+            </td>
+        </tr>
+        <tr>
+            <td class="trow1" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewTaskName}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewTaskNameDescription}
+                </div>
+            </td>
+            <td class="trow1" style="vertical-align: middle;">
+                <input type="text" class="textbox" name="name" size="40" maxlength="100" value="{$inputData['name']}"/>
+            </td>
+        </tr>
+        <tr>
+            <td class="trow2" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewTaskDescription}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewTaskDescriptionDescription}
+                </div>
+            </td>
+            <td class="trow2" style="vertical-align: middle;">
+                <input type="text" class="textbox" name="description" size="40" maxlength="255"
+                       value="{$inputData['description']}"/></td>
+        </tr>
+        <tr>
+            <td class="trow2" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewTaskEnabled}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewTaskEnabledDescription}
+                </div>
+            </td>
+            <td class="trow2" style="vertical-align: middle;">
+                <input type="radio" class="radio" name="active" value="1" {$selectedElementEnabledYes}>
+                {$lang->yes}
+                <input type="radio" class="radio" name="active" value="0" {$selectedElementEnabledNo}>
+                {$lang->no}
+            </td>
+        </tr>
+        <tr>
+            <td class="trow1" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewTaskRequirements}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewTaskRequirementsDescription}
+                </div>
+            </td>
+            <td class="trow1" style="vertical-align: middle;">
+                {$requirementOptions}
+            </td>
+        </tr>
+        <tr>
+            <td class="trow2" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewTaskGrant}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewTaskGrantDescription}
+                </div>
+            </td>
+            <td class="trow2" style="vertical-align: middle;">
+                {$awardsGrantSelect}
+            </td>
+        </tr>
+        <tr>
+            <td class="trow1" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewTaskReason}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewTaskReasonDescription}
+                </div>
+            </td>
+            <td class="trow1" style="vertical-align: middle;">
+                <textarea name="reason" rows="5" cols="40">{$inputData['reason']}</textarea>
+            </td>
+        </tr>
+        <tr>
+            <td class="trow2" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewTaskThread}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewTaskThreadDescription}
+                </div>
+            </td>
+            <td class="trow2" style="vertical-align: middle;">
+                <input type="text" class="textbox" name="thread" size="40" value="{$inputData['thread']}"/>
+            </td>
+        </tr>
+        <tr>
+            <td class="trow1" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewTaskMultiple}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewTaskMultipleDescription}
+                </div>
+            </td>
+            <td class="trow1" style="vertical-align: middle;">
+                <input type="radio" class="radio" name="allowmultiple" value="1" {$selectedElementMultipleYes}>
+                {$lang->yes}
+                <input type="radio" class="radio" name="allowmultiple" value="0" {$selectedElementMultipleNo}>
+                {$lang->no}
+            </td>
+        </tr>
+        <tr>
+            <td class="trow2" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewTaskRevoke}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewTaskRevokeDescription}
+                </div>
+            </td>
+            <td class="trow2" style="vertical-align: middle;">
+                {$awardsRevokeSelect}
+            </td>
+        </tr>
+        <tr>
+            <td class="trow1" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewTaskDisplayOrder}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewTaskDisplayOrderDescription}
+                </div>
+            </td>
+            <td class="trow1" style="vertical-align: middle;">
+                <input type="number" name="disporder" value="{$inputData['disporder']}" class="textbox" size="5"
+                       maxlength="4" style="text-align: center;"/>
+            </td>
+        </tr>
+    </table>
+    <br/>
+    <table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
+        <tr>
+            <td class="thead" colspan="2">
+                <strong>{$lang->ougcAwardsControlPanelNewTaskRequirements}</strong>
+            </td>
+        </tr>
+        <tr>
+            <td class="trow1" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewTaskName}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewTaskNameDescription}
+                </div>
+            </td>
+            <td class="trow1" style="vertical-align: middle;">
+                <input type="text" class="textbox" name="name" size="40" maxlength="100" value="{$inputData['name']}"/>
+            </td>
+        </tr>
+    </table>
+    <br/>
+    <div align="center">
+        <input type="submit" class="button" value="{$buttonText}">
+    </div>
+</form>

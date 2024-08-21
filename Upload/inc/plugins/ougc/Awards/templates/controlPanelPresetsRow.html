@@ -1,0 +1,131 @@
+<tr>
+    <td class="trow2">
+        <strong>{$lang->ougcAwardsControlPanelPresetsTableHidden}</strong>
+        <span id="hiddenAwards">{$hiddenAwards}</span></td>
+</tr>
+<tr>
+    <td class="trow1">
+        <strong>{$lang->ougcAwardsControlPanelPresetsTableVisible}</strong>
+        <span id="visibleAwards">{$visibleAwards}</span>
+        <!-- jsDelivr :: Sortable :: Latest (https://www.jsdelivr.com/package/npm/sortablejs) -->
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+        <script type="text/javascript">
+            var hiddenAwards = new Sortable(document.getElementById('hiddenAwards'), {
+                group: 'shared',
+                sort: false,
+                animation: 150,
+                ghostClass: 'blue-background-class',
+                onSort: function (evt) {
+                    //ougcAwardsUpdatePresets(evt);
+                },
+                draggable: ".item",
+                dataIdAttr: 'award-id',
+                store: {
+                    /**
+                     * Get the order of elements. Called once during initialization.
+                     * @param   {Sortable}  sortable
+                     * @returns {Array}
+                     */
+                    get: function (sortable) {
+                        var order = localStorage.getItem(sortable.options.group.name);
+                        return order ? order.split('|') : [];
+                    },
+
+                    /**
+                     * Save the order of elements. Called onEnd (when the item is dropped).
+                     * @param {Sortable}  sortable
+                     */
+                    set: function (sortable) {
+                        var order = sortable.toArray();
+                        localStorage.setItem(sortable.options.group.name, order.join('|'));
+                    }
+                }
+            });
+
+            var visibleAwards = new Sortable(document.getElementById('visibleAwards'), {
+                group: 'shared',
+                animation: 150,
+                ghostClass: 'blue-background-class',
+                onSort: function (evt) {
+                    ougcAwardsUpdatePresets(evt);
+                },
+                draggable: ".item",
+                dataIdAttr: 'award-id',
+                store: {
+                    /**
+                     * Get the order of elements. Called once during initialization.
+                     * @param   {Sortable}  sortable
+                     * @returns {Array}
+                     */
+                    get: function (sortable) {
+                        var order = localStorage.getItem(sortable.options.group.name);
+                        return order ? order.split('|') : [];
+                    },
+
+                    /**
+                     * Save the order of elements. Called onEnd (when the item is dropped).
+                     * @param {Sortable}  sortable
+                     */
+                    set: function (sortable) {
+                        var order = sortable.toArray();
+                        localStorage.setItem(sortable.options.group.name, order.join('|'));
+                    }
+                }
+            });
+
+            function ougcAwardsUpdatePresets(event)
+            {
+                var type = event;
+
+                $.ajax(
+                {
+                    type: 'post',
+                    dataType: 'json',
+                    url: "{$mybb->settings['bburl']}/xmlhttp.php?action=awardPresets",
+                    data: {
+                        'hiddenAwards': JSON.stringify( hiddenAwards.toArray() ),
+                        'visibleAwards': JSON.stringify( visibleAwards.toArray() ),
+                        'presetID': '{$presetID}'
+                    },
+                    success: function (request)
+                    {
+                        if(request.error)
+                        {
+                            $.jGrowl(request.error, {theme:'jgrowl_error'});
+                        }
+                        else
+                        {
+                            $.jGrowl(request.success, {theme:'jgrowl_success'});
+                        }
+                    },
+                    error: function (xhr)
+                    {
+                        //console.log([xhr]);
+                    }
+                });
+            }
+        </script>
+        <style>
+            .blue-background-class img {
+                filter: drop-shadow(0px 0px 1px rgba(0, 0, 0, 0.5));
+            }
+
+            #hiddenAwards span {
+                opacity: 0.7;
+            }
+
+            #hiddenAwards, #visibleAwards {
+                border: gray solid 1px;
+                background-color: rgba(200, 200, 200, 0.5);
+                padding: 1em;
+                display: block;
+                min-height: 5em;
+                text-align: center;
+            }
+
+            #hiddenAwards span, #visibleAwards span {
+                display: inline-block;
+            }
+        </style>
+    </td>
+</tr>

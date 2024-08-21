@@ -1,0 +1,78 @@
+{
+  "postbit": {
+    "optionscode": "numeric",
+    "value": 4
+  },
+  "postbit_maxperline": {
+    "optionscode": "numeric",
+    "value": 0
+  },
+  "profile": {
+    "optionscode": "numeric",
+    "value": 4
+  },
+  "perpage": {
+    "optionscode": "numeric",
+    "value": 10
+  },
+  "modcp": {
+    "optionscode": "yesno",
+    "value": 1
+  },
+  "modgroups": {
+    "optionscode": "groupselect",
+    "value": "3,4,6"
+  },
+  "pagegroups": {
+    "optionscode": "groupselect",
+    "value": -1
+  },
+  "enablestatspage": {
+    "optionscode": "yesno",
+    "value": 1
+  },
+  "welcomeblock": {
+    "optionscode": "yesno",
+    "value": 1
+  },
+  "sendpm": {
+    "optionscode": "yesno",
+    "value": 1
+  },
+  "myalerts": {
+    "optionscode": "yesno",
+    "value": 0
+  },
+  "sort_visible_default": {
+    "optionscode": "yesno",
+    "value": 1
+  },
+  "presets_groups": {
+    "optionscode": "groupselect",
+    "value": -1
+  },
+  "presets_maximum": {
+    "optionscode": "numeric",
+    "value": 5
+  },
+  "presets_post": {
+    "optionscode": "numeric",
+    "value": 10
+  },
+  "presets_profile": {
+    "optionscode": "numeric",
+    "value": 10
+  },
+  "ignorePresetsFromAwardsList": {
+    "optionscode": "yesno",
+    "value": 1
+  },
+  "groupsModerators": {
+    "optionscode": "groupselect",
+    "value": 4
+  },
+  "pageAction": {
+    "optionscode": "text",
+    "value": "awards"
+  }
+}

@@ -1,0 +1,22 @@
+<table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
+    <tr>
+        <td class="thead" colspan="{$columSpan}">
+            {$editCategoryUrl}
+            <strong>{$categoryName}</strong>
+            <div class="smalltext">{$categoryDescription}</div>
+        </td>
+    </tr>
+    <tr>
+        <td class="tcat smalltext" colspan="2">
+            <strong>{$lang->ougcAwardsControlPanelAward}</strong>
+        </td>
+        <td class="tcat smalltext"><strong>{$lang->ougcAwardsControlPanelDescription}</strong></td>
+        {$moderationColumnRequest}
+        {$moderationColumnEnabled}
+        {$moderationColumnDisplayOrder}
+        {$moderationColumnOptions}
+    </tr>
+    {$awardsList}
+</table>
+<br class="clear"/>
+{$updateButton}

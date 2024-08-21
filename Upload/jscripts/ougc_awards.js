@@ -28,17 +28,42 @@
 var OUGC_Plugins = OUGC_Plugins || {};
 
 $.extend(true, OUGC_Plugins, {
-	RequestAward: function(aid)
+	RequestAward: function(awardID)
 	{
-		var postData = 'action=request&modal=1&aid=' + parseInt(aid);
+		var postData = 'action=requestAward&modal=1&awardID=' + parseInt(awardID);
 
 		MyBB.popupWindow('/awards.php?' + postData);
 	},
-	
-	DoRequestAward: function(aid)
+
+	ViewAwards: function(userID, currentPage)
 	{
-		// Get form, serialize it and send it
-		var postData = $('.request_form_' + parseInt(aid)).serialize();
+		var postData = 'action=profile&view=awards&ajax=1&uid=' + parseInt(userID) + '&page=' + parseInt(currentPage);
+
+		$.ajax(
+		{
+			type: 'post',
+			dataType: 'json',
+			url: 'member.php',
+			data: postData,
+			success: function (request)
+			{
+				if(typeof request.content === 'string')
+				{
+				    $('.ougcAwardsProfileTableBreak').replaceWith('');
+
+				    $('#ougcAwardsProfileTable' + parseInt(userID)).replaceWith(request.content);
+				}
+			},
+			error: function (xhr)
+			{
+				location.reload(true);
+			}
+		});
+	},
+	
+	DoRequestAward: function(awardID)
+	{
+		var postData = $('.requestForm' + parseInt(awardID)).serialize();
 
 		$.ajax(
 		{
@@ -69,7 +94,7 @@ $.extend(true, OUGC_Plugins, {
 
 	ViewAll: function(uid, page)
 	{
-		var postData = 'action=viewall&modal=1&uid=' + parseInt(uid) + '&page=' + parseInt(page);
+		var postData = 'action=viewUser&modal=1&userID=' + parseInt(uid) + '&page=' + parseInt(page);
 
 		MyBB.popupWindow('/awards.php?' + postData);
 	}

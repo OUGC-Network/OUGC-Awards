@@ -1,0 +1,70 @@
+<br class="clear"/>
+<form action="{$formUrl}" method="post">
+    <input type="hidden" name="action" value="revoke"/>
+    <input type="hidden" name="awardID" value="{$awardID}"/>
+    <table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
+        <tr>
+            <td class="thead" colspan="2">
+                <strong>{$lang->ougcAwardsControlPanelRevokeTable}</strong>
+            </td>
+        </tr>
+        <tr>
+            <td class="tcat" colspan="2">
+                <strong>{$lang->ougcAwardsControlPanelRevokeTableDescription}</strong>
+            </td>
+        </tr>
+        <tr>
+            <td class="trow1" width="25%"><strong>{$lang->ougcAwardsControlPanelRevokeTableUsernames}:</strong></td>
+            <td class="trow1" width="75%"><input type="text" class="textbox" name="username" id="userNameRevoke"
+                                                 value="{$mybb->input['username']}" size="25"/></td>
+        </tr>
+    </table>
+    <br/>
+    <div align="center">
+        <input type="submit" class="button" value="{$lang->ougcAwardsControlPanelRevokeButton}"/>
+    </div>
+</form>
+<script type="text/javascript">
+    <!--
+    if(use_xmlhttprequest == "1")
+    {
+        MyBB.select2();
+        $("#userNameRevoke").select2({
+            placeholder: "{$lang->search_user}",
+            minimumInputLength: 3,
+            maximumSelectionSize: 3,
+            multiple: false,
+            ajax: {
+                url: "xmlhttp.php?action=get_users",
+                dataType: 'json',
+                data: function (term, page) {
+                    return {
+                        query: term, // search term
+                    };
+                },
+                results: function (data, page) { // parse the results into the format expected by Select2.
+                    // since we are using custom formatting functions we do not need to alter remote JSON data
+                    return {results: data};
+                }
+            },
+            initSelection: function(element, callback) {
+                var value = $(element).val();
+                if (value !== "") {
+                    callback({
+                        id: value,
+                        text: value
+                    });
+                }
+            },
+           // Allow the user entered text to be selected as well
+           createSearchChoice:function(term, data) {
+                if ( $(data).filter( function() {
+                    return this.text.localeCompare(term)===0;
+                }).length===0) {
+                    return {id:term, text:term};
+                }
+            },
+        });
+    }
+    // -->
+</script>
