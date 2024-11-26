@@ -16,7 +16,7 @@
         <tr>
             <td class="trow1" width="25%"><strong>{$lang->ougcAwardsControlPanelRevokeTableUsernames}:</strong></td>
             <td class="trow1" width="75%"><input type="text" class="textbox" name="username" id="userNameRevoke"
-                                                 value="{$mybb->input['username']}" size="25"/></td>
+                                                 value="{$inputUserName}" size="25"/></td>
         </tr>
     </table>
     <br/>
@@ -26,8 +26,7 @@
 </form>
 <script type="text/javascript">
     <!--
-    if(use_xmlhttprequest == "1")
-    {
+    if (use_xmlhttprequest == "1") {
         MyBB.select2();
         $("#userNameRevoke").select2({
             placeholder: "{$lang->search_user}",
@@ -47,7 +46,7 @@
                     return {results: data};
                 }
             },
-            initSelection: function(element, callback) {
+            initSelection: function (element, callback) {
                 var value = $(element).val();
                 if (value !== "") {
                     callback({
@@ -56,12 +55,12 @@
                     });
                 }
             },
-           // Allow the user entered text to be selected as well
-           createSearchChoice:function(term, data) {
-                if ( $(data).filter( function() {
-                    return this.text.localeCompare(term)===0;
-                }).length===0) {
-                    return {id:term, text:term};
+            // Allow the user entered text to be selected as well
+            createSearchChoice: function (term, data) {
+                if ($(data).filter(function () {
+                    return this.text.localeCompare(term) === 0;
+                }).length === 0) {
+                    return {id: term, text: term};
                 }
             },
         });

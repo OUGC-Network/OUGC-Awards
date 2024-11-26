@@ -1,5 +1,7 @@
-<form action="{$mybb->settings['bburl']}/{$url}&amp;manage=requests" method="post">
+<form action="{$pageUrl}" method="post">
     <input type="hidden" name="my_post_key" value="{$mybb->post_code}"/>
+    <input type="hidden" name="action" value="viewRequests"/>
+    <input type="hidden" name="awardID" value="{$awardID}"/>
     <table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
         <tr>
             <td class="thead" colspan="5">
@@ -29,3 +31,31 @@
 </form>
 <br class="clear"/>
 {$paginationMenu}
+
+<form action="{$pageUrl}" method="get">
+    <input type="hidden" name="action" value="viewRequests"/>
+    <input type="hidden" name="awardID" value="{$awardID}"/>
+    <table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
+        <tr>
+            <td class="thead" colspan="2">
+                <strong>{$lang->ougcAwardsControlPanelRequestsFilterTitle}:</strong>
+            </td>
+        </tr>
+        <tr>
+            <td class="trow1" width="20%">
+                <strong>{$lang->ougcAwardsControlPanelRequestsFilterStatus}</strong>
+            </td>
+            <td class="trow1">
+                <select name="filterOptions[status]">
+                    <option value="1">{$lang->ougcAwardsControlPanelRequestsFilterStatusOpen}</option>
+                    <option value="0"{$filterOptionsSelected['statusAccepted']}>{$lang->ougcAwardsControlPanelRequestsFilterStatusAccepted}</option>
+                    <option value="-1"{$filterOptionsSelected['statusRejected']}>{$lang->ougcAwardsControlPanelRequestsFilterStatusRejected}</option>
+                </select>
+            </td>
+        </tr>
+    </table>
+    <br/>
+    <div align="center">
+        <input type="submit" class="button" name="accept" value="{$lang->go}"/>
+    </div>
+</form>

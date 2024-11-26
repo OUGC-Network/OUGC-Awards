@@ -138,17 +138,7 @@
                 <strong>{$lang->ougcAwardsControlPanelNewTaskRequirements}</strong>
             </td>
         </tr>
-        <tr>
-            <td class="trow1" width="20%" style="vertical-align: top;">
-                <strong>{$lang->ougcAwardsControlPanelNewTaskName}</strong>
-                <div class="smalltext">
-                    {$lang->ougcAwardsControlPanelNewTaskNameDescription}
-                </div>
-            </td>
-            <td class="trow1" style="vertical-align: middle;">
-                <input type="text" class="textbox" name="name" size="40" maxlength="100" value="{$inputData['name']}"/>
-            </td>
-        </tr>
+        {$requirementRows}
     </table>
     <br/>
     <div align="center">

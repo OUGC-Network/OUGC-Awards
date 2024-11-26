@@ -29,7 +29,6 @@
 declare(strict_types=1);
 
 use function ougc\Awards\Core\loadLanguage;
-
 use function ougc\Awards\Core\executeTask;
 
 function task_ougc_awards(array $task)

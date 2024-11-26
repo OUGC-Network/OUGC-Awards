@@ -32,30 +32,39 @@ $l = [
     'ougcAwardsPageNavigation' => 'Awards',
     'ougcAwardsNoReason' => 'No reason specified.',
     'ougcAwardsDate' => '{1} <i>at</i> {2}',
-    //$l['ougc_awards_pm_noreason_request_accepted' => 'Your request for this award was accepted.';
+    'ougcAwardsGlobalMenu' => 'Awards',
+    'ougcAwardsWelcomeLinkText' => 'View My Awards',
 
     /*
-    'ougcAwardsEmpty' => 'There are currently no awards to display.',
     'ougcAwardsAward' => 'Award',
     'ougcAwardsName' => 'Name',
     'ougcAwardsDescription' => 'Description',
     'ougcAwardsRequest' => 'Request',
 
-
     'ougcAwardsViewUsername' => 'Username',
     'ougcAwardsViewReason' => 'Reason',
     'ougcAwardsViewThread' => 'Thread',
     'ougcAwardsViewDate' => 'Date',
-    'ougcAwardsViewButtonRequest' => 'Request',
-
-
-    'ougcAwardsControlPanelGrant' => 'Grant Award',
-    'ougcAwardsControlPanelGrantTitle' => 'Grant Award',
-
-    'ougcAwardsControlPanelRevoke' => 'Revoke Award',
-    'ougcAwardsControlPanelRevokeTitle' => 'Revoke Award',
-
     */
+
+    'ougcAwardsButtonRequest' => 'Request',
+
+    'ougcAwardsGlobalNotificationsRequests' => 'There are {1} award requests waiting for approval.',
+
+    'ougcAwardsRedirectRequestAccepted' => 'Award request accepted successfully.<br />You will now be redirected back.',
+    'ougcAwardsRedirectRequestRejected' => 'Award request rejected successfully.<br />You will now be redirected back.',
+
+    'ougcAwardsControlPanelRequestsButtonAccept' => 'Accept',
+    'ougcAwardsControlPanelRequestsButtonReject' => 'Reject',
+
+    'ougcAwardsControlPanelRequestsFilterTitle' => 'Filter',
+    'ougcAwardsControlPanelRequestsFilterStatus' => 'Status',
+    'ougcAwardsControlPanelRequestsFilterStatusOpen' => 'Open',
+    'ougcAwardsControlPanelRequestsFilterStatusAccepted' => 'Accepted',
+    'ougcAwardsControlPanelRequestsFilterStatusRejected' => 'Rejected',
+
+    'ougcAwardsErrorRequestsNoneSelected' => 'No awards were selected.',
+
     'ougcAwardsControlPanelNavigation' => 'Awards',
     'ougcAwardsControlPanelButtonNewCategory' => 'New Category',
 
@@ -208,7 +217,6 @@ Custom Template (Advanced): A custom template for this award.
     'ougcAwardsControlPanelRequests' => 'Award Requests',
     'ougcAwardsControlPanelRequestsTableTitle' => 'Award Requests',
 
-
     'ougcAwardsControlPanelRequestsEmpty' => 'There are currently no requests to display.',
     'ougcAwardsControlPanelRequestsTableAward' => 'Award',
     'ougcAwardsControlPanelRequestsTableUsername' => 'Username',
@@ -243,10 +251,20 @@ Custom Template (Advanced): A custom template for this award.
     'ougcAwardsControlPanelTasksTableName' => 'Name',
     'ougcAwardsControlPanelTasksTableDescription' => 'Description',
     'ougcAwardsControlPanelTasksTableRequirements' => 'Requirements',
+    'ougcAwardsControlPanelTasksTableGrant' => 'Grant',
+    'ougcAwardsControlPanelTasksTableRevoke' => 'Revoke',
     'ougcAwardsControlPanelTasksTableEnabled' => 'Enabled',
     'ougcAwardsControlPanelTasksTableOptions' => 'Options',
+    'ougcAwardsControlPanelTasksTableOptionsViewLogs' => 'View Logs',
     'ougcAwardsControlPanelTasksTableOptionsEdit' => 'Edit Task',
     'ougcAwardsControlPanelTasksTableOptionsDelete' => 'Delete Task',
+
+    'ougcAwardsControlPanelLogsTitle' => 'Award Logs',
+    'ougcAwardsControlPanelLogsTableTitle' => 'Award Logs',
+    'ougcAwardsControlPanelLogsTableUser' => 'User',
+    'ougcAwardsControlPanelLogsTableGave' => 'Gave',
+    'ougcAwardsControlPanelLogsTableRevoked' => 'Revoked',
+    'ougcAwardsControlPanelLogsTableDate' => 'Date',
 
     'ougcAwardsControlPanelButtonManageTasks' => 'Manage Tasks',
     'ougcAwardsControlPanelButtonNewTask' => 'New Task',
@@ -263,23 +281,89 @@ Custom Template (Advanced): A custom template for this award.
     'ougcAwardsControlPanelNewTaskRequirements' => 'Criteria Requirements',
     'ougcAwardsControlPanelNewTaskRequirementsDescription' => 'Select the rules to execute this task on users.',
     'ougcAwardsControlPanelNewTaskRequirementsGroups' => 'User Groups',
+    'ougcAwardsControlPanelNewTaskRequirementsGroupsDescription' => 'Select which user group or user groups the user must be in for the task to run.',
+    'ougcAwardsControlPanelNewTaskRequirementsAdditionalGroups' => 'Secondary User Groups',
+    'ougcAwardsControlPanelNewTaskRequirementsAdditionalGroupsDescription' => 'Select whether the task should check for additional user groups as well.',
     'ougcAwardsControlPanelNewTaskRequirementsPostCount' => 'Post Count',
+    'ougcAwardsControlPanelNewTaskRequirementsPostCountDescription' => 'Enter the number of posts required. Post count must be selected as a required value for this to be included. Select the type of comparison for posts.',
     'ougcAwardsControlPanelNewTaskRequirementsThreadCount' => 'Thread Count',
+    'ougcAwardsControlPanelNewTaskRequirementsThreadCountDescription' => 'Enter the number of threads required. Thread count must be selected as a required value for this to be included. Select the type of comparison for threads.',
     'ougcAwardsControlPanelNewTaskRequirementsForumPostCount' => 'Forum Post Count',
+    'ougcAwardsControlPanelNewTaskRequirementsForumPostCountDescription' => 'Enter the number of posts required in the selected forum. Forum post count must be selected as a required value for this to be included. Select the type of comparison for posts.',
     'ougcAwardsControlPanelNewTaskRequirementsForumThreadCount' => 'Forum Thread Count',
+    'ougcAwardsControlPanelNewTaskRequirementsForumThreadCountDescription' => 'Enter the number of threads required in the selected forum. Forum thread count must be selected as a required value for this to be included. Select the type of comparison for threads.',
     'ougcAwardsControlPanelNewTaskRequirementsTimeRegistered' => 'Time Registered',
-    'ougcAwardsControlPanelNewTaskRequirementsTimeOnline' => 'Time Registered',
-    'ougcAwardsControlPanelNewTaskRequirementsReputation' => 'Reputation',
-    'ougcAwardsControlPanelNewTaskRequirementsReferrals' => 'Referrals',
+    'ougcAwardsControlPanelNewTaskRequirementsTimeRegisteredDescription' => 'Enter the number of hours, days, weeks, months, or years that this user must have been registered for. Time registered must be selected as a required value for this to be included. Select whether the time registered should be counted in hours, days, weeks, months, or years.',
+    'ougcAwardsControlPanelNewTaskRequirementsTimeOnline' => 'Time Online',
+    'ougcAwardsControlPanelNewTaskRequirementsTimeOnlineDescription' => 'Enter the number of hours, days, weeks, months, or years that this user must have been online for. Time online must be selected as a required value for this to be included. Select whether the time spend online should be counted in hours, days, weeks, months, or years.',
+    'ougcAwardsControlPanelNewTaskRequirementsReputation' => 'Reputation Count ',
+    'ougcAwardsControlPanelNewTaskRequirementsReputationDescription' => 'Enter the amount of reputation to be required. Reputation must be selected as a required value for this to be included. Select the type of comparison for reputation.',
+    'ougcAwardsControlPanelNewTaskRequirementsReferrals' => 'Referral Count',
+    'ougcAwardsControlPanelNewTaskRequirementsReferralsDescription' => 'Enter the number of referrals required. Referral count must be selected as a required value for this to be included. Select the type of comparison for referrals.',
     'ougcAwardsControlPanelNewTaskRequirementsWarningPoints' => 'Warning Points',
+    'ougcAwardsControlPanelNewTaskRequirementsWarningPointsDescription' => 'Enter the number of warning points required. Warning Points must be selected as a required value for this to be included. Select the type of comparison for warning points.',
     //'ougcAwardsControlPanelNewTaskRequirementsNewpoints' => 'Newpoints Points',
+    //'ougcAwardsControlPanelNewTaskRequirementsNewpointsDescription' => 'Enter the number of Newpoints points required. Newpoints points must be selected as a required value for this to be included. Select the type of comparison for Newpoints points.',
     'ougcAwardsControlPanelNewTaskRequirementsPreviousAwards' => 'Previous Awards',
+    'ougcAwardsControlPanelNewTaskRequirementsPreviousAwardsDescription' => 'Enter the awards required. Previous awards must be selected as a required value for this to be included.',
     'ougcAwardsControlPanelNewTaskRequirementsFilledProfileFields' => 'Filled Profile Fields',
-    //'ougcAwardsControlPanelNewTaskRequirementsMyDownloads' => 'MyDownloads Files Count',
-    //'ougcAwardsControlPanelNewTaskRequirementsMyArcadeChampions' => 'MyArcade Champions',
-    //'ougcAwardsControlPanelNewTaskRequirementsMyArcadeScores' => 'MyArcade Scores',
+    'ougcAwardsControlPanelNewTaskRequirementsFilledProfileFieldsDescription' => 'Enter the filled profile fields required. Filled profile fields must be selected as a required value for this to be included.',
+    //'ougcAwardsControlPanelNewTaskRequirementsMyArcadeChampions' => 'MyDownloads Files Count',
+    //'ougcAwardsControlPanelNewTaskRequirementsMyArcadeChampionsDescription' => 'Enter the number of MyDownloads files required. MyDownloads files count must be selected as a required value for this to be included. Select the type of comparison for MyDownloads files.',
+    //'ougcAwardsControlPanelNewTaskRequirementsMyArcadeChampions' => 'MyDownloads Files Count',
+    //'ougcAwardsControlPanelNewTaskRequirementsMyArcadeScores' => 'MyArcade Score Count',
+    //'ougcAwardsControlPanelNewTaskRequirementsMyArcadeScoresDescription' => 'Enter the number of MyArcade Score required. MyArcade score count must be selected as a required value for this to be included. Select the type of comparison for MyArcade score.',
     'ougcAwardsControlPanelNewTaskRequirementsCustomReputationReceived' => 'Custom Reputation Received',
     'ougcAwardsControlPanelNewTaskRequirementsCustomReputationGiven' => 'Custom Reputation Received',
+    'ougcAwardsControlPanelNewTaskRequirementsRuleScripts' => 'Custom Field: JSON Script',
+    'ougcAwardsControlPanelNewTaskRequirementsRuleScriptsDescription' => 'JSON compatible script to set complex promotion verifications. <a href="https://github.com/OUGC-Network/OUGC-Awards" target="_blank">Read the documentation</a> for more on this.',
+    'ougcAwardsControlPanelNewTaskRequirementsRuleScriptsDescriptionPlaceHolder' => '{
+	"whereClauses":[
+		{
+			"tableName":"threads",
+			"columnName":"tid",
+			"columnValue":3,
+			"columnOperator":">=",
+			"aggregateFunction":"COUNT",
+			"aggregateAlias":"totalThreads"
+		},
+		{
+			"tableName":"threads",
+			"columnName":"visible",
+			"columnValue":1,
+			"columnOperator":"="
+		},
+		{
+			"tableName":"forums",
+			"columnName":"fid",
+			"columnValue":[
+				2,
+				30
+			],
+			"columnOperator":"IN",
+			"relationMainField":"ougcCustomPromotionFieldTable_threads.fid",
+			"relationSecondaryField":"fid"
+		}
+	],
+	"logicalOperator":"AND"
+}',
+
+    'ougcAwardsControlPanelDeleteTaskTableTitle' => 'Delete Task',
+    'ougcAwardsControlPanelDeleteTaskTableButton' => 'Delete Task',
+    'ougcAwardsControlPanelDeleteTaskTableDescription' => 'Are you sure you want to delete the selected task?',
+
+    'ougcAwardsControlPanelGreaterThan' => 'Greater than',
+    'ougcAwardsControlPanelGreaterThanOrEqualTo' => 'Greater than or equal to',
+    'ougcAwardsControlPanelEqualTo' => 'Equal to',
+    'ougcAwardsControlPanelLessThanOrEqualTo' => 'Less than or equal to',
+    'ougcAwardsControlPanelLessThan' => 'Less than',
+
+    'ougcAwardsControlPanelHours' => 'Hours',
+    'ougcAwardsControlPanelDays' => 'Days',
+    'ougcAwardsControlPanelWeeks' => 'Weeks',
+    'ougcAwardsControlPanelMonths' => 'Months',
+    'ougcAwardsControlPanelYears' => 'Years',
+
     'ougcAwardsControlPanelNewTaskGrant' => 'Grant Award',
     'ougcAwardsControlPanelNewTaskGrantDescription' => 'Select the award(s) to grant to users.',
     'ougcAwardsControlPanelNewTaskReason' => 'Grant Reason',
@@ -301,6 +385,7 @@ Custom Template (Advanced): A custom template for this award.
 
     'ougcAwardsErrorInvalidCategory' => 'The selected category is invalid.',
     'ougcAwardsErrorInvalidAward' => 'The selected award does not exist.',
+    'ougcAwardsErrorInvalidTask' => 'The selected task does not exist.',
     'ougcAwardsErrorInvalidOwner' => 'The selected award owner does not exist.',
     'ougcAwardsErrorInvalidUsers' => 'Some selected users do not exist.',
     'ougcAwardsErrorDuplicatedOwner' => 'Some selected users are already assigned as owners for this award.',
@@ -317,6 +402,7 @@ Custom Template (Advanced): A custom template for this award.
 
     'ougcAwardsErrorInvalidTaskName' => 'The selected task name is invalid.',
     'ougcAwardsErrorInvalidTaskDescription' => 'The selected task description is invalid.',
+    'ougcAwardsErrorInvalidTaskScript' => 'The selected JSON Script is invalid.',
 
     'ougcAwardsErrorNoUsersPermission' => 'You have no permission to edit the selected user.',
 
@@ -338,6 +424,15 @@ Custom Template (Advanced): A custom template for this award.
 
     'ougcAwardsRedirectTaskCreated' => 'The task was created successfully.<br />You will now be redirected back.',
     'ougcAwardsRedirectTaskUpdated' => 'The task was updated successfully.<br />You will now be redirected back.',
+    'ougcAwardsRedirectTaskDeleted' => 'The task was deleted successfully.<br />You will now be redirected back.',
+
+    'ougcAwardsPrivateMessageTitle' => 'You have been granted the {1} award!',
+    'ougcAwardsPrivateMessageRequestRejectedTitle' => 'Your request for the {1} award was rejected.',
+    'ougcAwardsPrivateMessageRequestRejectedBody' => 'Hi {1}. This is an automatic message to inform you that your request for the {2} award was rejected.
+
+Greetings.',
+
+    'ougcAwardsTaskRan' => 'The awards task ran successfully.',
 ];
 
 /*
@@ -348,44 +443,13 @@ $l['ougc_awards' => 'OUGC Awards';
 $l['ougc_awards_usercp_nav' => 'Awards';
 $l['ougc_awards_modcp_list_desc' => 'Grant or revoke awards from this quick access panel.';
 
-// Requests
-$l['ougc_awards_modcp_requests_logs_nav' => 'Requests';
-$l['ougc_awards_modcp_requests_list_accept' => 'Accept';
-$l['ougc_awards_modcp_requests_list_reject' => 'Reject';
-
-$l['ougc_awards_error_give' => 'The selected user already has this award.';
-$l['ougcAwardsErrorRequestsNoneSelected' => 'No awards were selected.';
-$l['ougc_awards_error_active' => 'The awards system is currently not active.';
-
-$l['ougc_awards_modcp_list_empty' => 'Currently there are not awards to manage.';
-$l['ougc_awards_modcp_cache' => 'Update Cache';
-
-// Redirects
-$l['ougc_awards_redirect_cache' => 'Cache updated successfully.';
-$l['ougcAwardsRedirectRequestAccepted' => 'Award request accepted successfully.<br />You will now be redirected back.';
-$l['ougcAwardsRedirectRequestRejected' => 'Award request rejected successfully.<br />You will now be redirected back.';
-
 // Profile
-$l['ougcAwardsProfileEmpty' => 'There are currently no awards to display.';
 $l['ougcAwardsProfileTitle' => '{1}'s awards.";
 $l['ougcAwardsProfilePresetsAwards' => 'awards";
-
-// PMs
-$l['ougcAwardsPrivateMessageTitle' => 'You have been granted the {1} award!';
-$l['ougcAwardsPrivateMessageRequestRejectedTitle' => 'Your request for the {1} award was rejected.';
-$l['ougcAwardsPrivateMessageRequestRejectedBody' => 'Hi {1}. This is an automatic message to inform you that your request for the {2} award was rejected.
-
-Greetings.';
 
 // View all
 $l['ougcAwardsViewUser' => 'View User Awards';
 $l['ougcAwardsViewUserTitle' => '{1}'s Awards";
-
-$l['ougcAwardsWelcomeLinkText' => 'View My Awards';
-$l['ougc_awards_welcomeblock_empty' => 'Your award list is currently empty.';
-
-// Modal
-$l['ougc_awards_request_name' => 'Award';
 
 // Stats
 $l['ougc_awards_stats_most' => 'Most Granted Users';
@@ -402,8 +466,6 @@ $l['ougc_awards_usercp_list_reason' => 'Reason';
 $l['ougc_awards_usercp_list_from' => 'From User';
 
 // Global
-$l['ougc_awards_global_menu' => 'Awards';
-$l['ougcAwardsPendingRequests' => 'You have {1} pending request(s) for this award.';
 $l['ougc_awards_page_pending_requests_moderator' => '<a href="{1}/{2}?action=awards&amp;manage=requests"><strong>Moderator Notice:</strong> There is one award request pending for review.</a>';
 $l['ougc_awards_page_pending_requests_moderator_plural' => '<a href="{1}/{2}?action=awards&amp;manage=requests"><strong>Moderator Notice:</strong> There are {3} award requests pending for review.</a>';
 
@@ -416,10 +478,8 @@ $l['myalerts_setting_ougc_awards' => 'Receive alerts related to awards?';
 
 // Presets
 $l['ougc_awards_presets_title' => 'Presets';
-$l['ougc_awards_presets_desc' => 'Manage your award presets, which control how your awards are displayed.';
-$l['ougc_awards_presets_setdefault' => 'Set as default';
-$l['ougc_awards_presets_delete' => 'Delete';
 $l['ougc_awards_presets_button' => 'View Presets';
 $l['ougc_awards_presets_postbit' => 'awards';
 
-$l['ougcAwardsTaskRan' => 'The awards task ran successfully.';*/
+
+*/

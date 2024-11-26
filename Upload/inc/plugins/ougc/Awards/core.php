@@ -322,11 +322,6 @@ const TABLES_DATA = [
             'size' => 255,
             'default' => ''
         ],
-        'disporder' => [
-            'type' => 'SMALLINT',
-            'unsigned' => true,
-            'default' => 0
-        ],
         'active' => [
             'type' => 'TINYINT',
             'unsigned' => true,
@@ -355,6 +350,11 @@ const TABLES_DATA = [
             'unsigned' => true,
             'default' => 0
         ],
+        'allowmultiple' => [
+            'type' => 'SMALLINT',
+            'unsigned' => true,
+            'default' => 0
+        ],
         'revoke' => [
             'type' => 'TEXT',
             'null' => true,
@@ -373,16 +373,6 @@ const TABLES_DATA = [
             'unsigned' => true,
             'default' => 1
         ],
-        'posts' => [
-            'type' => 'INT',
-            'unsigned' => true,
-            'default' => 0
-        ],
-        'poststype' => [
-            'type' => 'VARCHAR',
-            'size' => 2,
-            'default' => ''
-        ],
         'threads' => [
             'type' => 'INT',
             'unsigned' => true,
@@ -393,19 +383,15 @@ const TABLES_DATA = [
             'size' => 2,
             'default' => ''
         ],
-        'fposts' => [
+        'posts' => [
             'type' => 'INT',
             'unsigned' => true,
             'default' => 0
         ],
-        'fpoststype' => [
+        'poststype' => [
             'type' => 'VARCHAR',
             'size' => 2,
             'default' => ''
-        ],
-        'fpostsforums' => [
-            'type' => 'TEXT',
-            'null' => true,
         ],
         'fthreads' => [
             'type' => 'INT',
@@ -418,6 +404,20 @@ const TABLES_DATA = [
             'default' => ''
         ],
         'fthreadsforums' => [
+            'type' => 'TEXT',
+            'null' => true,
+        ],
+        'fposts' => [
+            'type' => 'INT',
+            'unsigned' => true,
+            'default' => 0
+        ],
+        'fpoststype' => [
+            'type' => 'VARCHAR',
+            'size' => 2,
+            'default' => ''
+        ],
+        'fpostsforums' => [
             'type' => 'TEXT',
             'null' => true,
         ],
@@ -471,7 +471,7 @@ const TABLES_DATA = [
             'size' => 2,
             'default' => ''
         ],
-        'newpoints' => [
+        /*'newpoints' => [
             'type' => 'FLOAT',
             'unsigned' => true,
             'default' => 0
@@ -480,7 +480,7 @@ const TABLES_DATA = [
             'type' => 'VARCHAR',
             'size' => 2,
             'default' => ''
-        ],
+        ],*/
         'previousawards' => [
             'type' => 'TEXT',
             'null' => true,
@@ -489,7 +489,7 @@ const TABLES_DATA = [
             'type' => 'TEXT',
             'null' => true,
         ],
-        'mydownloads' => [
+        /*'mydownloads' => [
             'type' => 'INT',
             'unsigned' => true,
             'default' => 0
@@ -546,7 +546,7 @@ const TABLES_DATA = [
         'ougc_customrepids_g' => [
             'type' => 'TEXT',
             'null' => true,
-        ],
+        ],*/
         'ruleScripts' => [
             'type' => 'TEXT',
             'null' => true,
@@ -1654,7 +1654,10 @@ function grantInsert(
     loadLanguage(true);
 
     sendPrivateMessage([
-        'subject' => $lang->sprintf($lang->ougcAwardsPrivateMessageTitle, strip_tags($awardData['name'])),
+        'subject' => $lang->sprintf(
+            $lang->ougcAwardsPrivateMessageTitle,
+            strip_tags($awardData['name'])
+        ),
         'message' => $lang->sprintf(
             $awardData['pm'],
             $userData['username'],
@@ -1823,9 +1826,13 @@ function requestReject(int $requestID)
 
     $requestData = requestGet(["rid='{$requestID}'"]);
 
-    $awardData = awardGet($requestData['aid']);
+    $awardID = (int)($requestData['aid'] ?? 0);
 
-    $userData = getUser($requestData['uid']);
+    $userID = (int)($requestData['uid'] ?? 0);
+
+    $awardData = awardGet($awardID);
+
+    $userData = getUser($userID);
 
     sendPrivateMessage([
         'subject' => $lang->sprintf(
@@ -1840,22 +1847,30 @@ function requestReject(int $requestID)
         'touid' => $userData['uid']
     ], -1, true);
 
-    sendAlert($requestData['aid'], $requestData['uid'], 'reject_request');
+    sendAlert($awardID, $userID, 'reject_request');
 
     requestUpdate(['status' => 1, 'muid' => $mybb->user['uid']], $requestID);
 }
 
 function requestApprove(int $requestID): bool
 {
-    global $lang, $mybb;
-
-    loadLanguage();
+    global $mybb;
 
     $requestData = requestGet(["rid='{$requestID}'"]);
 
-    grantInsert((int)$requestData['aid'], (int)$requestData['uid'], '', 0, 0, $requestID);
+    grantInsert(
+        (int)$requestData['aid'],
+        (int)$requestData['uid'],
+        '',
+        0,
+        0,
+        $requestID
+    );
 
-    requestUpdate(['status' => 0, 'muid' => $mybb->user['uid']], $requestID);
+    requestUpdate([
+        'status' => 0,
+        'muid' => $mybb->user['uid']
+    ], $requestID);
 
     return true;
 }
@@ -1866,37 +1881,67 @@ function taskInsert(array $taskData, int $taskID = 0, bool $updateTask = false):
 
     $insertData = array();
 
-    foreach (['name', 'description', 'reason'] as $k) {
+    foreach (
+        [
+            'name',
+            'description',
+            'reason',
+            'threadstype',
+            'poststype',
+            'fthreadstype',
+            'fthreadsforums',
+            'fpoststype',
+            'fpostsforums',
+            'registeredtype',
+            'onlinetype',
+            'reputationtype',
+            'referralstype',
+            'warningstype',
+            //'newpointstype',
+            //'mydownloadstype',
+            //'myarcadechampionstype',
+            //'myarcadescorestype',
+            //'ougc_customreptype_r',
+            //'ougc_customrepids_r',
+            //'ougc_customreptype_g',
+            //'ougc_customrepids_g',
+            'ruleScripts',
+        ] as $k
+    ) {
         !isset($taskData[$k]) || $insertData[$k] = $db->escape_string($taskData[$k]);
     }
 
     foreach (
         [
+            //'newpoints',
+        ] as $k
+    ) {
+        !isset($taskData[$k]) || $insertData[$k] = (float)$taskData[$k];
+    }
+
+    foreach (
+        [
+            'tid',
             'active',
             'logging',
             'thread',
             'allowmultiple',
-            'additionalgroups',
             'disporder',
-            'posts',
+            'additionalgroups',
             'threads',
-            'fposts',
-            'fpostsforums',
+            'posts',
             'fthreads',
-            'fthreadsforums',
+            'fposts',
             'registered',
             'online',
             'reputation',
             'referrals',
             'warnings',
-            'newpoints',
-            'mydownloads',
-            'myarcadechampions',
-            'myarcadescores',
-            'ougc_customrep_r',
-            'ougc_customrep_g',
-            'ougc_customrepids_r',
-            'ougc_customrepids_g'
+            //'mydownloads',
+            //'myarcadechampions',
+            //'myarcadescores',
+            //'ougc_customrep_r',
+            //'ougc_customrep_g',
         ] as $k
     ) {
         !isset($taskData[$k]) || $insertData[$k] = (int)$taskData[$k];
@@ -1911,12 +1956,12 @@ function taskInsert(array $taskData, int $taskID = 0, bool $updateTask = false):
             'reputationtype',
             'referralstype',
             'warningstype',
-            'newpointstype',
-            'mydownloadstype',
-            'myarcadechampionstype',
-            'myarcadescorestype',
-            'ougc_customreptype_r',
-            'ougc_customreptype_g'
+            //'newpointstype',
+            //'mydownloadstype',
+            //'myarcadechampionstype',
+            //'myarcadescorestype',
+            //'ougc_customreptype_r',
+            //'ougc_customreptype_g'
         ] as $k
     ) {
         in_array($taskData[$k], ['>', '>=', '=', '<=', '<']) || $taskData[$k] = '=';
@@ -1930,7 +1975,7 @@ function taskInsert(array $taskData, int $taskID = 0, bool $updateTask = false):
         !isset($taskData[$k]) || $insertData[$k] = $db->escape_string($taskData[$k]);
     }
 
-    foreach (['usergroups', 'give', 'revoke', 'previousawards', 'profilefields'] as $k) {
+    foreach (['give', 'revoke', 'usergroups', 'previousawards', 'profilefields'] as $k) {
         is_array($taskData[$k]) || $taskData[$k] = [$taskData[$k]];
 
         $taskData[$k] = implode(',', array_filter(array_unique(array_map('intval', $taskData[$k]))));
@@ -1986,62 +2031,39 @@ function taskGet(array $whereClauses = [], string $queryFields = '*', array $que
     return $cacheObjects;
 }
 
+function logGet(array $whereClauses = [], string $queryFields = '*', array $queryOptions = []): array
+{
+    global $db;
+
+    $cacheObjects = [];
+
+    $dbQuery = $db->simple_select(
+        'ougc_awards_tasks_logs',
+        $queryFields,
+        implode(' AND ', $whereClauses),
+        $queryOptions
+    );
+
+    if ($db->num_rows($dbQuery)) {
+        if (isset($queryOptions['limit']) && $queryOptions['limit'] === 1) {
+            $cacheObjects = $db->fetch_array($dbQuery);
+        } else {
+            while ($logData = $db->fetch_array($dbQuery)) {
+                $cacheObjects[] = $logData;
+            }
+        }
+    }
+
+    return $cacheObjects;
+}
+
 function sendPrivateMessage(array $privateMessage, int $fromUserID = 0, bool $adminOverride = false): bool
 {
-    global $mybb;
-
-    if (!getSetting('sendpm') || !$mybb->settings['enablepms']) {
-        return false;
+    if (getSetting('sendpm')) {
+        send_pm($privateMessage, $fromUserID, $adminOverride);
     }
 
-    if (!$privateMessage['subject'] || !$privateMessage['message'] || (!$privateMessage['receivepms'] && !$adminOverride)) {
-        return false;
-    }
-
-    global $lang, $db, $session;
-
-    if (defined('IN_ADMINCP')) {
-        $lang->load('../messages');
-    } else {
-        $lang->load('messages');
-    }
-
-    require_once MYBB_ROOT . 'inc/datahandlers/pm.php';
-
-    $PMDataHandler = new PMDataHandler();
-
-    $privateMessage = [
-        'subject' => $privateMessage['subject'],
-        'message' => $privateMessage['message'],
-        'icon' => -1,
-        'fromid' => ($fromUserID === 0 ? (int)$mybb->user['uid'] : ($fromUserID < 0 ? 0 : $fromUserID)),
-        'toid' => [$privateMessage['touid']],
-        'bccid' => [],
-        'do' => '',
-        'pmid' => '',
-        'saveasdraft' => 0,
-        'options' => [
-            'signature' => 0,
-            'disablesmilies' => 0,
-            'savecopy' => 0,
-            'readreceipt' => 0
-        ]
-    ];
-
-    if (isset($mybb->session)) {
-        $privateMessage['ipaddress'] = $mybb->session->packedip;
-    }
-
-    $PMDataHandler->admin_override = (int)$adminOverride;
-
-    $PMDataHandler->set_data($privateMessage);
-
-    if ($PMDataHandler->validate_pm()) {
-        $PMDataHandler->insert_pm();
-        return true;
-    }
-
-    return false;
+    return true;
 }
 
 function sendAlert(int $awardID, int $userID, string $alertTypeKey = 'give_award'): bool
@@ -2185,11 +2207,11 @@ function cacheUpdate(): bool
 
     $awardIDs = implode("','", array_keys($cacheData['awards']));
 
-    $requestStatusOpen = \ougc\Awards\Core\REQUEST_STATUS_OPEN;
+    $requestStatusOpen = REQUEST_STATUS_OPEN;
 
     $whereClauses = ["aid IN ('{$awardIDs}')", 'status' => "status='{$requestStatusOpen}'"];
 
-    $totalRequestsCount = \ougc\Awards\Core\requestGetPending(
+    $totalRequestsCount = requestGetPending(
         $whereClauses,
         'COUNT(rid) AS totalRequests',
         ['limit' => 1]
@@ -2363,7 +2385,7 @@ function generateSelectCategory(int $selectedID): string
 
     $dbQuery = $db->simple_select('ougc_awards_categories', '*', '', ['order_by' => 'disporder']);
 
-    $selectOptions = '';
+    $selectOptions = $multipleOption = '';
 
     while ($categoryData = $db->fetch_array($dbQuery)) {
         $selectedElement = '';
@@ -2741,4 +2763,13 @@ function isVisibleAward(int $awardID): bool
     $awardData = awardGet($awardID);
 
     return !empty($awardData['visible']) || isModerator();
+}
+
+function myAlertsInitiate()
+{
+    if (function_exists('myalerts_info')) {
+        if (version_compare(myalerts_info()['version'], '2.0.4') <= 0) {
+            yourcoolplugin_register_myalerts_formatter();
+        }
+    }
 }

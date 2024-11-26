@@ -31,15 +31,12 @@ declare(strict_types=1);
 namespace ougc\Awards\Hooks\Admin;
 
 use MyBB;
-
 use UserDataHandler;
 
+use function ougc\Awards\Core\allowImports;
 use function ougc\Awards\Core\grantInsert;
-
 use function ougc\Awards\Core\awardInsert;
-
 use function ougc\Awards\Core\categoryInsert;
-
 use function ougc\Awards\Core\loadLanguage;
 
 use const ougc\Awards\ROOT;
@@ -132,7 +129,7 @@ function admin_config_plugins_begin()
 {
     global $mybb, $plugins;
 
-    if (!\ougc\Awards\Core\allowImports() || !($type = $mybb->get_input('ougc_awards_import'))) {
+    if (!allowImports() || !($type = $mybb->get_input('ougc_awards_import'))) {
         return false;
     }
 
@@ -264,11 +261,4 @@ function admin_config_plugins_begin()
     );
 
     return true;
-}
-
-function datahandler_user_insert(UserDataHandler &$dataHandler): UserDataHandler
-{
-    $dataHandler->user_insert_data['ougc_awards'] = '';
-
-    return $dataHandler;
 }

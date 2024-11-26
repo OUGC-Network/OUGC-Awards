@@ -27,134 +27,78 @@
  ****************************************************************************/
 
 use function ougc\Awards\Core\awardDelete;
-
 use function ougc\Awards\Core\awardGet;
-
 use function ougc\Awards\Core\awardGetIcon;
-
 use function ougc\Awards\Core\awardGetInfo;
-
 use function ougc\Awards\Core\awardGetUser;
-
 use function ougc\Awards\Core\awardInsert;
-
 use function ougc\Awards\Core\awardsGetCache;
-
 use function ougc\Awards\Core\awardUpdate;
-
 use function ougc\Awards\Core\cacheUpdate;
-
 use function ougc\Awards\Core\canManageUsers;
-
 use function ougc\Awards\Core\canRequestAwards;
-
 use function ougc\Awards\Core\canViewMainPage;
-
 use function ougc\Awards\Core\categoryGet;
-
 use function ougc\Awards\Core\categoryGetCache;
-
+use function ougc\Awards\Core\categoryInsert;
+use function ougc\Awards\Core\categoryUpdate;
+use function ougc\Awards\Core\generateSelectAwards;
 use function ougc\Awards\Core\generateSelectCategory;
-
+use function ougc\Awards\Core\generateSelectProfileFields;
 use function ougc\Awards\Core\getThreadByUrl;
-
 use function ougc\Awards\Core\getUserByUserName;
-
 use function ougc\Awards\Core\grantDelete;
-
 use function ougc\Awards\Core\grantFind;
-
 use function ougc\Awards\Core\grantGetSingle;
-
 use function ougc\Awards\Core\grantInsert;
-
 use function ougc\Awards\Core\grantUpdate;
-
 use function ougc\Awards\Core\isModerator;
-
 use function ougc\Awards\Core\isVisibleAward;
-
 use function ougc\Awards\Core\isVisibleCategory;
-
 use function ougc\Awards\Core\ownerDelete;
-
 use function ougc\Awards\Core\ownerFind;
-
 use function ougc\Awards\Core\ownerGetSingle;
-
 use function ougc\Awards\Core\ownerGetUser;
-
 use function ougc\Awards\Core\ownerInsert;
-
 use function ougc\Awards\Core\parseUserAwards;
-
 use function ougc\Awards\Core\getUser;
-
 use function ougc\Awards\Core\logAction;
-
-use function ougc\Awards\Core\parseMessage;
-
 use function ougc\Awards\Core\pluginIsInstalled;
-
 use function ougc\Awards\Core\presetDelete;
-
 use function ougc\Awards\Core\presetGet;
-
 use function ougc\Awards\Core\presetInsert;
-
-use function ougc\Awards\Core\presetUpdate;
-
 use function ougc\Awards\Core\requestApprove;
-
 use function ougc\Awards\Core\requestGetPending;
-
 use function ougc\Awards\Core\requestGetPendingTotal;
-
 use function ougc\Awards\Core\requestInsert;
-
 use function ougc\Awards\Core\requestReject;
-
+use function ougc\Awards\Core\taskGet;
+use function ougc\Awards\Core\taskInsert;
+use function ougc\Awards\Core\taskUpdate;
 use function ougc\Awards\Core\urlHandlerBuild;
-
 use function ougc\Awards\Core\loadLanguage;
-
 use function ougc\Awards\Core\urlHandlerSet;
-
 use function ougc\Awards\Core\getTemplate;
-
 use function ougc\Awards\Core\getSetting;
 
 use const ougc\Awards\Core\AWARD_ALLOW_REQUESTS;
-
 use const ougc\Awards\Core\AWARD_STATUS_DISABLED;
-
 use const ougc\Awards\Core\AWARD_STATUS_ENABLED;
-
 use const ougc\Awards\Core\AWARD_TEMPLATE_TYPE_CLASS;
-
 use const ougc\Awards\Core\AWARD_TEMPLATE_TYPE_CUSTOM;
-
 use const ougc\Awards\Core\GRANT_STATUS_POSTS;
-
 use const ougc\Awards\Core\GRANT_STATUS_PROFILE;
-
 use const ougc\Awards\Core\GRANT_STATUS_VISIBLE;
-
 use const ougc\Awards\Core\INFORMATION_TYPE_DESCRIPTION;
-
 use const ougc\Awards\Core\INFORMATION_TYPE_NAME;
-
 use const ougc\Awards\Core\INFORMATION_TYPE_REASON;
-
 use const ougc\Awards\Core\INFORMATION_TYPE_TEMPLATE;
-
 use const ougc\Awards\Core\REQUEST_STATUS_ACCEPTED;
-
 use const ougc\Awards\Core\REQUEST_STATUS_OPEN;
-
 use const ougc\Awards\Core\REQUEST_STATUS_PENDING;
-
 use const ougc\Awards\Core\REQUEST_STATUS_REJECTED;
+use const ougc\Awards\Core\TASK_ALLOW_MULTIPLE;
+use const ougc\Awards\Core\TASK_STATUS_ENABLED;
 
 const IN_MYBB = true;
 
@@ -319,7 +263,620 @@ switch ($mybb->get_input('action')) {
         break;
 }
 
-$pageUrl = urlHandlerBuild();
+$pageUrl = $formUrl = urlHandlerBuild();
+
+$actionButtons = '';
+
+$requirementCriteria = [
+    'usergroups' => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsGroups',
+        'rowFunction' => function (
+            string $selectName,
+            array $selectedIDs
+        ): string {
+            global $cache;
+
+            $selectName = 'usergroups[]';
+
+            $selectOptions = '';
+
+            foreach ($cache->read('usergroups') as $groupData) {
+                $optionValue = (int)$groupData['gid'];
+
+                $optionName = htmlspecialchars_uni($groupData['title']);
+
+                $selectedElement = '';
+
+                if (in_array($optionValue, $selectedIDs)) {
+                    $selectedElement = ' selected="selected"';
+                }
+
+                $selectOptions .= eval(getTemplate('selectFieldOption'));
+            }
+
+            $multipleOption = 'multiple="multiple"';
+
+            $onChange = '';
+
+            $inputField = eval(getTemplate('selectField'));
+
+            global $lang;
+
+            $inputName = 'additionalgroups';
+
+            $inputLabel = $lang->ougcAwardsControlPanelNewTaskRequirementsAdditionalGroups;
+
+            $inputTitle = $lang->ougcAwardsControlPanelNewTaskRequirementsAdditionalGroupsDescription;
+
+            $typeSelect = eval(getTemplate('radioField'));
+
+            return $inputField . $typeSelect;
+        }
+    ],
+    'threads' => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsThreadCount',
+        'rowFunction' => function (
+            string $inputName,
+            array $inputValue
+        ): string {
+            $inputType = 'number';
+
+            $inputValue = (int)$inputValue[0];
+
+            $inputField = eval(getTemplate('inputField'));
+
+            global $lang;
+            global $inputData;
+
+            $selectName = 'threadstype';
+
+            $selectOptions = '';
+
+            foreach (
+                [
+                    '>' => $lang->ougcAwardsControlPanelGreaterThan,
+                    '>=' => $lang->ougcAwardsControlPanelGreaterThanOrEqualTo,
+                    '=' => $lang->ougcAwardsControlPanelEqualTo,
+                    '<=' => $lang->ougcAwardsControlPanelLessThanOrEqualTo,
+                    '<' => $lang->ougcAwardsControlPanelLessThan,
+                ] as $optionValue => $optionName
+            ) {
+                $selectedElement = '';
+
+                if ($optionValue === $inputData[$selectName]) {
+                    $selectedElement = ' selected="selected"';
+                }
+
+                $selectOptions .= eval(getTemplate('selectFieldOption'));
+            }
+
+            $onChange = $multipleOption = '';
+
+            $typeSelect = eval(getTemplate('selectField'));
+
+            return $inputField . $typeSelect;
+        }
+    ],
+    'posts' => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsPostCount',
+        'rowFunction' => function (
+            string $inputName,
+            array $selectedIDs
+        ): string {
+            $inputType = 'number';
+
+            $inputValue = (int)$selectedIDs[0];
+
+            $inputField = eval(getTemplate('inputField'));
+
+            global $lang;
+            global $inputData;
+
+            $selectName = "{$inputName}type";
+
+            $selectOptions = '';
+
+            foreach (
+                [
+                    '>' => $lang->ougcAwardsControlPanelGreaterThan,
+                    '>=' => $lang->ougcAwardsControlPanelGreaterThanOrEqualTo,
+                    '=' => $lang->ougcAwardsControlPanelEqualTo,
+                    '<=' => $lang->ougcAwardsControlPanelLessThanOrEqualTo,
+                    '<' => $lang->ougcAwardsControlPanelLessThan,
+                ] as $optionValue => $optionName
+            ) {
+                $selectedElement = '';
+
+                if ($optionValue === $inputData[$selectName]) {
+                    $selectedElement = ' selected="selected"';
+                }
+
+                $selectOptions .= eval(getTemplate('selectFieldOption'));
+            }
+
+            $onChange = $multipleOption = '';
+
+            $typeSelect = eval(getTemplate('selectField'));
+
+            return $inputField . $typeSelect;
+        }
+    ],
+    'fthreads' => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsForumThreadCount',
+        'rowFunction' => function (
+            string $inputName,
+            array $inputValue
+        ): string {
+            $inputType = 'number';
+
+            $inputValue = (int)$inputValue[0];
+
+            $inputField = eval(getTemplate('inputField'));
+
+            global $lang;
+            global $inputData;
+
+            $selectName = "{$inputName}type";
+
+            $selectOptions = '';
+
+            foreach (
+                [
+                    '>' => $lang->ougcAwardsControlPanelGreaterThan,
+                    '>=' => $lang->ougcAwardsControlPanelGreaterThanOrEqualTo,
+                    '=' => $lang->ougcAwardsControlPanelEqualTo,
+                    '<=' => $lang->ougcAwardsControlPanelLessThanOrEqualTo,
+                    '<' => $lang->ougcAwardsControlPanelLessThan,
+                ] as $optionValue => $optionName
+            ) {
+                $selectedElement = '';
+
+                if ($optionValue === $inputData[$selectName]) {
+                    $selectedElement = ' selected="selected"';
+                }
+
+                $selectOptions .= eval(getTemplate('selectFieldOption'));
+            }
+
+            $onChange = $multipleOption = '';
+
+            $typeSelect = eval(getTemplate('selectField'));
+
+            $selectName = "{$inputName}forums";
+
+            $selectOptions = '';
+
+            foreach (
+                cache_forums() as $forumData
+            ) {
+                $optionValue = (int)$forumData['fid'];
+
+                $optionName = htmlspecialchars_uni($forumData['name']);
+
+                $selectedElement = '';
+
+                if ($optionValue === $inputData[$selectName]) {
+                    $selectedElement = ' selected="selected"';
+                }
+
+                $selectOptions .= eval(getTemplate('selectFieldOption'));
+            }
+
+            $onChange = $multipleOption = '';
+
+            $forumSelect = eval(getTemplate('selectField'));
+
+            return $inputField . $typeSelect . $forumSelect;
+        }
+    ],
+    'fposts' => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsForumPostCount',
+        'rowFunction' => function (
+            string $inputName,
+            array $inputValue
+        ): string {
+            $inputType = 'number';
+
+            $inputValue = (int)$inputValue[0];
+
+            $inputField = eval(getTemplate('inputField'));
+
+            global $lang;
+            global $inputData;
+
+            $selectName = "{$inputName}type";
+
+            $selectOptions = '';
+
+            foreach (
+                [
+                    '>' => $lang->ougcAwardsControlPanelGreaterThan,
+                    '>=' => $lang->ougcAwardsControlPanelGreaterThanOrEqualTo,
+                    '=' => $lang->ougcAwardsControlPanelEqualTo,
+                    '<=' => $lang->ougcAwardsControlPanelLessThanOrEqualTo,
+                    '<' => $lang->ougcAwardsControlPanelLessThan,
+                ] as $optionValue => $optionName
+            ) {
+                $selectedElement = '';
+
+                if ($optionValue === $inputData[$selectName]) {
+                    $selectedElement = ' selected="selected"';
+                }
+
+                $selectOptions .= eval(getTemplate('selectFieldOption'));
+            }
+
+            $onChange = $multipleOption = '';
+
+            $typeSelect = eval(getTemplate('selectField'));
+
+            $selectName = "{$inputName}forums";
+
+            $selectOptions = '';
+
+            foreach (
+                cache_forums() as $forumData
+            ) {
+                $optionValue = (int)$forumData['fid'];
+
+                $optionName = htmlspecialchars_uni($forumData['name']);
+
+                $selectedElement = '';
+
+                if ($optionValue === $inputData[$selectName]) {
+                    $selectedElement = ' selected="selected"';
+                }
+
+                $selectOptions .= eval(getTemplate('selectFieldOption'));
+            }
+
+            $onChange = $multipleOption = '';
+
+            $forumSelect = eval(getTemplate('selectField'));
+
+            return $inputField . $typeSelect . $forumSelect;
+        }
+    ],
+    'registered' => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsTimeRegistered',
+        'rowFunction' => function (
+            string $inputName,
+            array $inputValue
+        ): string {
+            $inputType = 'number';
+
+            $inputValue = (int)$inputValue[0];
+
+            $inputField = eval(getTemplate('inputField'));
+
+            global $lang;
+            global $inputData;
+
+            $selectName = "{$inputName}type";
+
+            $selectOptions = '';
+
+            foreach (
+                [
+                    'hours' => $lang->ougcAwardsControlPanelHours,
+                    'days' => $lang->ougcAwardsControlPanelDays,
+                    'weeks' => $lang->ougcAwardsControlPanelWeeks,
+                    'months' => $lang->ougcAwardsControlPanelMonths,
+                    'years' => $lang->ougcAwardsControlPanelYears,
+                ] as $optionValue => $optionName
+            ) {
+                $selectedElement = '';
+
+                if ($optionValue === $inputData[$selectName]) {
+                    $selectedElement = ' selected="selected"';
+                }
+
+                $selectOptions .= eval(getTemplate('selectFieldOption'));
+            }
+
+            $onChange = $multipleOption = '';
+
+            $typeSelect = eval(getTemplate('selectField'));
+
+            return $inputField . $typeSelect;
+        }
+    ],
+    'online' => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsTimeOnline',
+        'rowFunction' => function (
+            string $inputName,
+            array $inputValue
+        ): string {
+            $inputType = 'number';
+
+            $inputValue = (int)$inputValue[0];
+
+            $inputField = eval(getTemplate('inputField'));
+
+            global $lang;
+            global $inputData;
+
+            $selectName = "{$inputName}type";
+
+            $selectOptions = '';
+
+            foreach (
+                [
+                    'hours' => $lang->ougcAwardsControlPanelHours,
+                    'days' => $lang->ougcAwardsControlPanelDays,
+                    'weeks' => $lang->ougcAwardsControlPanelWeeks,
+                    'months' => $lang->ougcAwardsControlPanelMonths,
+                    'years' => $lang->ougcAwardsControlPanelYears,
+                ] as $optionValue => $optionName
+            ) {
+                $selectedElement = '';
+
+                if ($optionValue === $inputData[$selectName]) {
+                    $selectedElement = ' selected="selected"';
+                }
+
+                $selectOptions .= eval(getTemplate('selectFieldOption'));
+            }
+
+            $onChange = $multipleOption = '';
+
+            $typeSelect = eval(getTemplate('selectField'));
+
+            return $inputField . $typeSelect;
+        }
+    ],
+    'reputation' => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsReputation',
+        'rowFunction' => function (
+            string $inputName,
+            array $inputValue
+        ): string {
+            $inputType = 'number';
+
+            $inputValue = (int)$inputValue[0];
+
+            $inputField = eval(getTemplate('inputField'));
+
+            global $lang;
+            global $inputData;
+
+            $selectName = "{$inputName}type";
+
+            $selectOptions = '';
+
+            foreach (
+                [
+                    '>' => $lang->ougcAwardsControlPanelGreaterThan,
+                    '>=' => $lang->ougcAwardsControlPanelGreaterThanOrEqualTo,
+                    '=' => $lang->ougcAwardsControlPanelEqualTo,
+                    '<=' => $lang->ougcAwardsControlPanelLessThanOrEqualTo,
+                    '<' => $lang->ougcAwardsControlPanelLessThan,
+                ] as $optionValue => $optionName
+            ) {
+                $selectedElement = '';
+
+                if ($optionValue === $inputData[$selectName]) {
+                    $selectedElement = ' selected="selected"';
+                }
+
+                $selectOptions .= eval(getTemplate('selectFieldOption'));
+            }
+
+            $onChange = $multipleOption = '';
+
+            $typeSelect = eval(getTemplate('selectField'));
+
+            return $inputField . $typeSelect;
+        }
+    ],
+    'referrals' => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsReferrals',
+        'rowFunction' => function (
+            string $inputName,
+            array $inputValue
+        ): string {
+            $inputType = 'number';
+
+            $inputValue = (int)$inputValue[0];
+
+            $inputField = eval(getTemplate('inputField'));
+
+            global $lang;
+            global $inputData;
+
+            $selectName = "{$inputName}type";
+
+            $selectOptions = '';
+
+            foreach (
+                [
+                    '>' => $lang->ougcAwardsControlPanelGreaterThan,
+                    '>=' => $lang->ougcAwardsControlPanelGreaterThanOrEqualTo,
+                    '=' => $lang->ougcAwardsControlPanelEqualTo,
+                    '<=' => $lang->ougcAwardsControlPanelLessThanOrEqualTo,
+                    '<' => $lang->ougcAwardsControlPanelLessThan,
+                ] as $optionValue => $optionName
+            ) {
+                $selectedElement = '';
+
+                if ($optionValue === $inputData[$selectName]) {
+                    $selectedElement = ' selected="selected"';
+                }
+
+                $selectOptions .= eval(getTemplate('selectFieldOption'));
+            }
+
+            $onChange = $multipleOption = '';
+
+            $typeSelect = eval(getTemplate('selectField'));
+
+            return $inputField . $typeSelect;
+        }
+    ],
+    'warnings' => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsWarningPoints',
+        'rowFunction' => function (
+            string $inputName,
+            array $inputValue
+        ): string {
+            $inputType = 'number';
+
+            $inputValue = (int)$inputValue[0];
+
+            $inputField = eval(getTemplate('inputField'));
+
+            global $lang;
+            global $inputData;
+
+            $selectName = "{$inputName}type";
+
+            $selectOptions = '';
+
+            foreach (
+                [
+                    '>' => $lang->ougcAwardsControlPanelGreaterThan,
+                    '>=' => $lang->ougcAwardsControlPanelGreaterThanOrEqualTo,
+                    '=' => $lang->ougcAwardsControlPanelEqualTo,
+                    '<=' => $lang->ougcAwardsControlPanelLessThanOrEqualTo,
+                    '<' => $lang->ougcAwardsControlPanelLessThan,
+                ] as $optionValue => $optionName
+            ) {
+                $selectedElement = '';
+
+                if ($optionValue === $inputData[$selectName]) {
+                    $selectedElement = ' selected="selected"';
+                }
+
+                $selectOptions .= eval(getTemplate('selectFieldOption'));
+            }
+
+            $onChange = $multipleOption = '';
+
+            $typeSelect = eval(getTemplate('selectField'));
+
+            return $inputField . $typeSelect;
+        }
+    ],
+    /*'newpoints' => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsNewpoints'
+    ],*/
+    'previousawards' => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsPreviousAwards',
+        'rowFunction' => function (
+            string $inputName,
+            array $inputValue
+        ): string {
+            global $inputData;
+
+            return generateSelectAwards(
+                "{$inputName}[]",
+                $inputData[$inputName],
+                ['multiple' => true]
+            );
+        }
+    ],
+    'profilefields' => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsFilledProfileFields',
+        'rowFunction' => function (
+            string $inputName,
+            array $inputValue
+        ): string {
+            global $inputData;
+
+            return generateSelectProfileFields(
+                "{$inputName}[]",
+                $inputData[$inputName],
+                ['multiple' => true, 'id' => $inputName]
+            );
+        }
+    ],
+    /*'mydownloads' => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsMyDownloads',
+        'rowFunction' => function (
+            string $inputName,
+            array $inputValue
+        ): string {
+            $inputType = 'number';
+
+            $inputValue = (int)$inputValue[0];
+
+            return eval(getTemplate('inputField'));
+        }
+    ],
+    'myarcadechampions' => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsMyArcadeChampions',
+        'rowFunction' => function (
+            string $inputName,
+            array $inputValue
+        ): string {
+            $inputType = 'number';
+
+            $inputValue = (int)$inputValue[0];
+
+            return eval(getTemplate('inputField'));
+        }
+    ],
+    'myarcadescores' => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsMyArcadeScores',
+        'rowFunction' => function (
+            string $inputName,
+            array $inputValue
+        ): string {
+            $inputType = 'number';
+
+            $inputValue = (int)$inputValue[0];
+
+            return eval(getTemplate('inputField'));
+        }
+    ],
+    'ougc_customrep_r' => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsCustomReputationReceived',
+        'rowFunction' => function (
+            string $inputName,
+            array $inputValue
+        ): string {
+            $inputType = 'number';
+
+            $inputValue = (int)$inputValue[0];
+
+            return eval(getTemplate('inputField'));
+        }
+    ],
+    'ougc_customrep_g' => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsCustomReputationGiven',
+        'rowFunction' => function (
+            string $inputName,
+            array $inputValue
+        ): string {
+            $inputType = 'number';
+
+            $inputValue = (int)$inputValue[0];
+
+            return eval(getTemplate('inputField'));
+        }
+    ],*/
+    'ruleScripts' => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsRuleScripts',
+        'rowFunction' => function (
+            string $inputName,
+            array $inputValue
+        ): string {
+            global $lang;
+
+            $inputValue = htmlspecialchars_uni((string)$inputValue[0]);
+
+            $inputRows = 10;
+
+            $inputPlaceholder = str_replace(
+                '"',
+                '&quot;',
+                $lang->ougcAwardsControlPanelNewTaskRequirementsRuleScriptsDescriptionPlaceHolder
+            );
+
+            return eval(getTemplate('textAreaField'));
+        }
+    ],
+];
 
 if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editCategory'], true)) {
     $newCategoryPage = $mybb->get_input('action') === 'newCategory';
@@ -357,9 +914,9 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
             ];
 
             if ($newCategoryPage) {
-                \ougc\Awards\Core\categoryInsert($categoryData);
+                categoryInsert($categoryData);
             } else {
-                \ougc\Awards\Core\categoryUpdate($categoryData, $categoryID);
+                categoryUpdate($categoryData, $categoryID);
             }
 
             cacheUpdate();
@@ -563,9 +1120,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     $pageContents = eval(getTemplate('controlPanelNewEditAwardForm'));
 } elseif (isModerator() && $mybb->get_input('action') === 'deleteAward') {
     if ($mybb->request_method === 'post') {
-        if (!verify_post_check($mybb->input['my_post_key'], true)) {
-            redirectAdmin($lang->invalid_post_verify_key2, true);
-        }
+        verify_post_check($mybb->get_input('my_post_key'));
 
         awardDelete($awardID);
 
@@ -927,6 +1482,12 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     if (isModerator()) {
         ++$columSpan;
 
+        $inputUserName = htmlspecialchars_uni($mybb->get_input('username'));
+
+        $inputReason = htmlspecialchars_uni($mybb->get_input('reason'));
+
+        $inputThread = htmlspecialchars_uni($mybb->get_input('thread'));
+
         $columnHeader = eval(getTemplate('controlPanelUsersColumnOptions'));
 
         $grantForm = eval(getTemplate('controlPanelUsersFormGrant'));
@@ -1084,12 +1645,12 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
     $formUrl = urlHandlerBuild(['action' => 'viewOwners', 'awardID' => $awardID]);
 
+    $inputUserName = htmlspecialchars_uni($mybb->get_input('username'));
+
     $pageContents = eval(getTemplate('controlPanelOwners'));
 } elseif (isModerator() && $mybb->get_input('action') === 'deleteOwner') {
     if ($mybb->request_method === 'post') {
-        if (!verify_post_check($mybb->input['my_post_key'], true)) {
-            redirectAdmin($lang->invalid_post_verify_key2, true);
-        }
+        verify_post_check($mybb->get_input('my_post_key'));
 
         ownerDelete($ownerID);
 
@@ -1103,8 +1664,6 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
     $pageTitle = $lang->ougcAwardsControlPanelDeleteOwnersTitle;
 
-    $formUrl = urlHandlerBuild();
-
     $confirmationTitle = $lang->ougcAwardsControlPanelDeleteOwnersTitle;
 
     $confirmationButtonText = $lang->ougcAwardsControlPanelDeleteOwnersButton;
@@ -1113,24 +1672,30 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
     $pageContents = eval(getTemplate('controlPanelConfirmation'));
 } elseif ($mybb->get_input('action') == 'viewRequests') {
-    $requestStatusOpen = REQUEST_STATUS_REJECTED;
+    $whereClauses = [
+        "aid='{$awardID}'",
+        'status' => "status='" . REQUEST_STATUS_PENDING . "'"
+    ];
 
-    $requestStatusOpen = REQUEST_STATUS_ACCEPTED;
+    $filterOptions = $mybb->get_input('filterOptions', MyBB::INPUT_ARRAY);
 
-    $requestStatusOpen = REQUEST_STATUS_ACCEPTED;
-
-    $whereClauses = ["aid='{$awardID}'"];
-
-    $filterOptions = $mybb->get_input('filterOptions', MyBB::INPUT_INT);
+    $filterOptionsSelected = [
+        'statusOpen' => '',
+        'statusAccepted' => '',
+        'statusRejected' => '',
+    ];
 
     if (isset($filterOptions['status'])) {
         $filterOptions['status'] = (int)$filterOptions['status'];
 
         switch ($filterOptions['status']) {
-            case $requestStatusOpen:
-            case $requestStatusOpen:
-            case $requestStatusOpen:
-                $whereClauses[] = "status='{$filterOptions['status']}'";
+            case REQUEST_STATUS_ACCEPTED:
+                $filterOptionsSelected['statusAccepted'] = ' selected="selected"';
+                $whereClauses['status'] = "status='" . REQUEST_STATUS_ACCEPTED . "'";
+                break;
+            case REQUEST_STATUS_REJECTED:
+                $filterOptionsSelected['statusRejected'] = ' selected="selected"';
+                $whereClauses['status'] = "status='" . REQUEST_STATUS_REJECTED . "'";
                 break;
         }
     }
@@ -1138,7 +1703,9 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     $selectedRequestIDs = [];
 
     if ($mybb->request_method === 'post') {
-        foreach ($mybb->get_input('selected', MyBB::INPUT_ARRAY) as $requestID => $v) {
+        foreach (
+            $mybb->get_input('selected', MyBB::INPUT_ARRAY) as $requestID => $v
+        ) {
             $selectedRequestIDs[(int)$requestID] = 1;
         }
 
@@ -1161,22 +1728,30 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
         }
 
         if (empty($errorMessages)) {
-            foreach ($pendingRequestsCache as $requestData) {
-                if ($mybb->get_input('accept')) {
-                    requestApprove((int)$requestData['rid']);
-                } else {
-                    requestReject((int)$requestData['rid']);
-                }
+            if (isset($pendingRequestsCache)) {
+                foreach ($pendingRequestsCache as $requestData) {
+                    if ((int)$requestData['status'] !== REQUEST_STATUS_PENDING) {
+                        continue;
+                    }
 
-                logAction();
+                    if (isset($mybb->input['accept'])) {
+                        requestApprove((int)$requestData['rid']);
+                    } else {
+                        requestReject((int)$requestData['rid']);
+                    }
+
+                    logAction();
+                }
             }
 
             cacheUpdate();
 
             if ($mybb->get_input('accept')) {
-                redirect(urlHandlerBuild(['action' => 'viewRequests']), $lang->ougcAwardsRedirectRequestAccepted);
+                redirect(urlHandlerBuild(['action' => 'viewRequests', 'awardID' => $awardID]),
+                    $lang->ougcAwardsRedirectRequestAccepted);
             } else {
-                redirect(urlHandlerBuild(['action' => 'viewRequests']), $lang->ougcAwardsRedirectRequestRejected);
+                redirect(urlHandlerBuild(['action' => 'viewRequests', 'awardID' => $awardID]),
+                    $lang->ougcAwardsRedirectRequestRejected);
             }
         }
     }
@@ -1194,6 +1769,8 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     }
 
     $requestsList = $buttons = '';
+
+    $paginationMenu = '';
 
     if (!$totalRequestsCount) {
         $requestsList = eval(getTemplate('controlPanelRequestsEmpty'));
@@ -1409,7 +1986,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     }
 
     if ($mybb->request_method === 'post') {
-        if ($mybb->get_input('newPreset', \MyBB::INPUT_INT) === 1) {
+        if ($mybb->get_input('newPreset', MyBB::INPUT_INT) === 1) {
             if (getSetting('presets_maximum') <= $totalPresets) {
                 error_no_permission();
             }
@@ -1454,7 +2031,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
             $selectedElement = '';
 
-            if ($presetID === (int)$presetData['pid']) {
+            if ($presetID === $optionValue) {
                 $selectedElement = ' selected="selected"';
             }
 
@@ -1464,6 +2041,8 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
         $selectName = 'presetID';
 
         $onChange = 'this.form.submit()';
+
+        $multipleOption = '';
 
         $presetOptions = eval(getTemplate('selectField'));
 
@@ -1479,7 +2058,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     }
 
     if ($presetID) {
-        $grantStatusVisible = \ougc\Awards\Core\GRANT_STATUS_VISIBLE;
+        $grantStatusVisible = GRANT_STATUS_VISIBLE;
 
         $categoriesIDs = $awardIDs = [];
 
@@ -1499,7 +2078,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
         $awardIDs = implode("','", $awardIDs);
 
-        $grantCacheData = \ougc\Awards\Core\awardGetUser([
+        $grantCacheData = awardGetUser([
             "uid='{$currentUserID}'",
             "visible='{$grantStatusVisible}'",
             "aid IN ('{$awardIDs}')",
@@ -1545,6 +2124,8 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     }
 
     $pageTitle = $lang->ougcAwardsControlPanelPresetsTitle;
+
+    $inputMessage = htmlspecialchars_uni($mybb->get_input('message'));
 
     $pageContents = eval(getTemplate('controlPanelPresets'));
 } elseif ($mybb->get_input('action') === 'viewUser') {
@@ -1632,7 +2213,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
                 $totalGrantedCount,
                 $queryLimit,
                 $currentPage,
-                "javascript: OUGC_Plugins.ViewAll('{$userID}', '{page}');"
+                "javascript: ougcAwards.ViewAll('{$userID}', '{page}');"
             //urlHandlerBuild(['view' => 'awards'])
             );
 
@@ -1750,8 +2331,6 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
         $formContents = eval(getTemplate('pageRequestSuccess'));
 
-        $formUrl = urlHandlerBuild();
-
         $modalContents = eval(getTemplate('pageRequest', false));
 
         echo json_encode(['modal' => $modalContents]);
@@ -1775,8 +2354,6 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
         $formContents = eval(getTemplate('pageRequestForm'));
     }
 
-    $formUrl = urlHandlerBuild();
-
     $modalContents = eval(getTemplate('pageRequest', false));
 
     echo $modalContents;
@@ -1785,7 +2362,11 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 } elseif (isModerator() && in_array($mybb->get_input('action'), ['newTask', 'editTask'], true)) {
     $newTaskPage = $mybb->get_input('action') === 'newTask';
 
-    $taskData = \ougc\Awards\Core\taskGet(["tid='{$taskID}'"], '*', ['limit' => 1]);
+    $taskData = taskGet(["tid='{$taskID}'"], '*', ['limit' => 1]);
+
+    if (!$newTaskPage && empty($taskData['tid'])) {
+        error($lang->ougcAwardsErrorInvalidTask);
+    }
 
     $inputData = [];
 
@@ -1794,19 +2375,82 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
             'name',
             'description',
             'reason',
-            'disporder',
-            'active',
-            'reason',
-            'thread',
-            'allowmultiple',
+            'threadstype',
+            'poststype',
+            'fthreadstype',
+            'fthreadsforums',
+            'fpoststype',
+            'fpostsforums',
+            'registeredtype',
+            'onlinetype',
+            'reputationtype',
+            'referralstype',
+            'warningstype',
+            //'newpointstype',
+            //'mydownloadstype',
+            //'myarcadechampionstype',
+            //'myarcadescorestype',
+            //'ougc_customreptype_r',
+            //'ougc_customrepids_r',
+            //'ougc_customreptype_g',
+            //'ougc_customrepids_g',
+            'ruleScripts',
         ] as $inputKey
     ) {
         if (isset($mybb->input[$inputKey])) {
             $inputData[$inputKey] = $mybb->get_input($inputKey);
-        } elseif (isset($taskData[$inputKey])) {
-            $inputData[$inputKey] = $taskData[$inputKey];
+        } elseif (isset($grantData[$inputKey])) {
+            $inputData[$inputKey] = $grantData[$inputKey];
         } else {
             $inputData[$inputKey] = '';
+        }
+    }
+
+    foreach (
+        [
+            //'newpoints',
+        ] as $inputKey
+    ) {
+        if (isset($mybb->input[$inputKey])) {
+            $inputData[$inputKey] = $mybb->get_input($inputKey, MyBB::INPUT_FLOAT);
+        } elseif (isset($taskData[$inputKey])) {
+            $inputData[$inputKey] = (float)$taskData[$inputKey];
+        } else {
+            $inputData[$inputKey] = 0;
+        }
+    }
+
+    foreach (
+        [
+            'tid',
+            'active',
+            'logging',
+            'thread',
+            'allowmultiple',
+            'disporder',
+            'additionalgroups',
+            'threads',
+            'posts',
+            'fthreads',
+            'fposts',
+            'registered',
+            'online',
+            'reputation',
+            'referrals',
+            'warnings',
+            //'mydownloads',
+            //'myarcadechampions',
+            //'myarcadescores',
+            //'ougc_customrep_r',
+            //'ougc_customrep_g',
+        ] as $inputKey
+    ) {
+        if (isset($mybb->input[$inputKey])) {
+            $inputData[$inputKey] = $mybb->get_input($inputKey, MyBB::INPUT_INT);
+        } elseif (isset($taskData[$inputKey])) {
+            $inputData[$inputKey] = (int)$taskData[$inputKey];
+        } else {
+            $inputData[$inputKey] = 0;
         }
     }
 
@@ -1815,10 +2459,13 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
             'requirements',
             'give',
             'revoke',
+            'usergroups',
+            'previousawards',
+            'profilefields',
         ] as $inputKey
     ) {
         if (isset($mybb->input[$inputKey])) {
-            $inputData[$inputKey] = $mybb->get_input($inputKey, \MyBB::INPUT_ARRAY);
+            $inputData[$inputKey] = $mybb->get_input($inputKey, MyBB::INPUT_ARRAY);
         } elseif (isset($taskData[$inputKey])) {
             $inputData[$inputKey] = explode(',', $taskData[$inputKey]);
         } else {
@@ -1837,23 +2484,66 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
             $errorMessages[] = $lang->ougcAwardsErrorInvalidTaskDescription;
         }
 
+        if (!empty($inputData['ruleScripts']) && !json_decode($inputData['ruleScripts'])) {
+            $errorMessages[] = $lang->ougcAwardsErrorInvalidTaskScript;
+        }
+
         if (empty($errorMessages)) {
             $insertData = [
                 'name' => $inputData['name'],
                 'description' => $inputData['description'],
-                'reason' => $inputData['reason'],
-                'disporder' => $inputData['disporder'],
                 'active' => $inputData['active'],
                 'requirements' => $inputData['requirements'],
                 'give' => $inputData['give'],
+                'reason' => $inputData['reason'],
+                'thread' => $inputData['thread'],
+                'allowmultiple' => $inputData['allowmultiple'],
+                'revoke' => $inputData['revoke'],
+                'disporder' => $inputData['disporder'],
+                'usergroups' => $inputData['usergroups'],
+                'additionalgroups' => $inputData['additionalgroups'],
+                'threads' => $inputData['threads'],
+                'threadstype' => $inputData['threadstype'],
+                'posts' => $inputData['posts'],
+                'poststype' => $inputData['poststype'],
+                'fthreads' => $inputData['fthreads'],
+                'fthreadstype' => $inputData['fthreadstype'],
+                'fthreadsforums' => $inputData['fthreadsforums'],
+                'fposts' => $inputData['fposts'],
+                'fpoststype' => $inputData['fpoststype'],
+                'fpostsforums' => $inputData['fpostsforums'],
+                'registered' => $inputData['registered'],
+                'registeredtype' => $inputData['registeredtype'],
+                'online' => $inputData['online'],
+                'onlinetype' => $inputData['onlinetype'],
+                'reputation' => $inputData['reputation'],
+                'reputationtype' => $inputData['reputationtype'],
+                'referrals' => $inputData['referrals'],
+                'referralstype' => $inputData['referralstype'],
+                'warnings' => $inputData['warnings'],
+                'warningstype' => $inputData['warningstype'],
+                //'newpoints' => $inputData['newpoints'],
+                //'newpointstype' => $inputData['newpointstype'],
+                'previousawards' => $inputData['previousawards'],
+                'profilefields' => $inputData['profilefields'],
+                //'mydownloads' => $inputData['mydownloads'],
+                //'mydownloadstype' => $inputData['mydownloadstype'],
+                //'myarcadechampions' => $inputData['myarcadechampions'],
+                //'myarcadechampionstype' => $inputData['myarcadechampionstype'],
+                //'myarcadescores' => $inputData['myarcadescores'],
+                //'myarcadescorestype' => $inputData['myarcadescorestype'],
+                //'ougc_customrep_r' => $inputData['ougc_customrep_r'],
+                //'ougc_customreptype_r' => $inputData['ougc_customreptype_r'],
+                //'ougc_customrepids_r' => $inputData['ougc_customrepids_r'],
+                //'ougc_customrep_g' => $inputData['ougc_customrep_g'],
+                //'ougc_customreptype_g' => $inputData['ougc_customreptype_g'],
+                //'ougc_customrepids_g' => $inputData['ougc_customrepids_g'],
+                'ruleScripts' => $inputData['ruleScripts'],
             ];
-
-            //_dump($inputData);
-
             if ($newTaskPage) {
-                \ougc\Awards\Core\taskInsert($insertData);
+                taskInsert($insertData);
             } else {
-                \ougc\Awards\Core\taskUpdate($insertData, $taskID);
+                taskUpdate($insertData, $taskID);
             }
 
             cacheUpdate();
@@ -1873,8 +2563,26 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
             'name',
             'description',
             'reason',
-            'disporder',
-            'active',
+            'threadstype',
+            'poststype',
+            'fthreadstype',
+            'fthreadsforums',
+            'fpoststype',
+            'fpostsforums',
+            'registeredtype',
+            'onlinetype',
+            'reputationtype',
+            'referralstype',
+            'warningstype',
+            //'newpointstype',
+            //'mydownloadstype',
+            //'myarcadechampionstype',
+            //'myarcadescorestype',
+            //'ougc_customreptype_r',
+            //'ougc_customrepids_r',
+            //'ougc_customreptype_g',
+            //'ougc_customrepids_g',
+            'ruleScripts',
         ] as $inputKey
     ) {
         if (isset($mybb->input[$inputKey])) {
@@ -1889,7 +2597,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     $selectedElementEnabledYes = $selectedElementEnabledNo = '';
 
     switch ($inputData['active']) {
-        case \ougc\Awards\Core\TASK_STATUS_ENABLED:
+        case TASK_STATUS_ENABLED:
             $selectedElementEnabledYes = 'checked="checked"';
             break;
         default:
@@ -1906,30 +2614,11 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     $selectedRequirements = array_flip($inputData['requirements']);
 
     foreach (
-        [
-            'usergroups' => $lang->ougcAwardsControlPanelNewTaskRequirementsGroups,
-            'posts' => $lang->ougcAwardsControlPanelNewTaskRequirementsPostCount,
-            'threads' => $lang->ougcAwardsControlPanelNewTaskRequirementsThreadCount,
-            'fposts' => $lang->ougcAwardsControlPanelNewTaskRequirementsForumPostCount,
-            'fthreads' => $lang->ougcAwardsControlPanelNewTaskRequirementsForumThreadCount,
-            'registered' => $lang->ougcAwardsControlPanelNewTaskRequirementsTimeRegistered,
-            'online' => $lang->ougcAwardsControlPanelNewTaskRequirementsTimeOnline,
-            'reputation' => $lang->ougcAwardsControlPanelNewTaskRequirementsReputation,
-            'referrals' => $lang->ougcAwardsControlPanelNewTaskRequirementsReferrals,
-            'warnings' => $lang->ougcAwardsControlPanelNewTaskRequirementsWarningPoints,
-            //'newpoints' => $lang->ougcAwardsControlPanelNewTaskRequirementsNewpoints,
-            'previousawards' => $lang->ougcAwardsControlPanelNewTaskRequirementsPreviousAwards,
-            'profilefields' => $lang->ougcAwardsControlPanelNewTaskRequirementsFilledProfileFields,
-            //'mydownloads' => $lang->ougcAwardsControlPanelNewTaskRequirementsMyDownloads,
-            //'myarcadechampions'	=> $lang->ougcAwardsControlPanelNewTaskRequirementsMyArcadeChampions,
-            //'myarcadescores' => $lang->ougcAwardsControlPanelNewTaskRequirementsMyArcadeScores,
-            'ougc_customrep_r' => $lang->ougcAwardsControlPanelNewTaskRequirementsCustomReputationReceived,
-            'ougc_customrep_g' => $lang->ougcAwardsControlPanelNewTaskRequirementsCustomReputationGiven
-        ] as $requirementKey => $requirementText
+        $requirementCriteria as $requirementKey => $requirementOption
     ) {
         $optionValue = $requirementKey;
 
-        $optionName = $requirementText;
+        $optionName = $lang->{$requirementOption['languageVar']};
 
         $selectedElement = '';
 
@@ -1948,12 +2637,12 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
     $requirementOptions = eval(getTemplate('selectField'));
 
-    $awardsGrantSelect = \ougc\Awards\Core\generateSelectAwards('give[]', $inputData['give'], ['multiple' => true]);
+    $awardsGrantSelect = generateSelectAwards('give[]', $inputData['give'], ['multiple' => true]);
 
     $selectedElementMultipleYes = $selectedElementMultipleNo = '';
 
     switch ($inputData['allowmultiple']) {
-        case \ougc\Awards\Core\TASK_ALLOW_MULTIPLE:
+        case TASK_ALLOW_MULTIPLE:
             $selectedElementMultipleYes = 'checked="checked"';
             break;
         default:
@@ -1961,7 +2650,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
             break;
     }
 
-    $awardsRevokeSelect = \ougc\Awards\Core\generateSelectAwards('revoke[]', $inputData['revoke'], ['multiple' => true]
+    $awardsRevokeSelect = generateSelectAwards('revoke[]', $inputData['revoke'], ['multiple' => true]
     );
 
     $pageTitle = $lang->ougcAwardsControlPanelEditTaskTitle;
@@ -1982,34 +2671,65 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
         $buttonText = $lang->ougcAwardsControlPanelNewTaskButton;
     }
 
+    $requirementRows = '';
+
+    foreach (
+        $requirementCriteria as $requirementKey => $requirementOption
+    ) {
+        $optionName = $lang->{$requirementOption['languageVar']};
+
+        $optionDescription = $lang->{"{$requirementOption['languageVar']}Description"};
+
+        $selectedElement = '';
+
+        if (isset($selectedRequirements[$requirementKey])) {
+            $selectedElement = ' selected="selected"';
+        }
+
+        $inputRow = '';
+
+        if (isset($requirementOption['rowFunction'])) {
+            $inputRow = $requirementOption['rowFunction']($requirementKey, (array)$inputData[$requirementKey]);
+        }
+
+        $requirementRows .= eval(getTemplate('controlPanelNewEditTaskFormRequirementRow'));
+    }
+
     $pageContents = eval(getTemplate('controlPanelNewEditTaskForm'));
+} elseif (isModerator() && $mybb->get_input('action') === 'deleteTask') {
+    $taskData = taskGet(["tid='{$taskID}'"], '*', ['limit' => 1]);
+
+    if (empty($taskData['tid'])) {
+        error($lang->ougcAwardsErrorInvalidTask);
+    }
+
+    if ($mybb->request_method === 'post') {
+        verify_post_check($mybb->get_input('my_post_key'));
+
+        \ougc\Awards\Core\taskDelete($taskID);
+
+        cacheUpdate();
+
+        logAction();
+
+        redirect(urlHandlerBuild(['action' => 'manageTasks']), $lang->ougcAwardsRedirectTaskDeleted);
+    }
+
+    $pageTitle = $lang->ougcAwardsControlPanelDeleteAwardTitle;
+
+    $confirmationTitle = $lang->ougcAwardsControlPanelDeleteTaskTableTitle;
+
+    $confirmationButtonText = $lang->ougcAwardsControlPanelDeleteTaskTableButton;
+
+    $confirmationContent = $lang->ougcAwardsControlPanelDeleteTaskTableDescription;
+
+    $pageContents = eval(getTemplate('controlPanelConfirmation'));
 } elseif ($mybb->get_input('action') === 'manageTasks') {
     $alternativeBackground = alt_trow(true);
 
     $taskRows = '';
 
-    $requirementCriteria = [
-        'usergroups' => $lang->ougcAwardsControlPanelNewTaskRequirementsGroups,
-        'posts' => $lang->ougcAwardsControlPanelNewTaskRequirementsPostCount,
-        'threads' => $lang->ougcAwardsControlPanelNewTaskRequirementsThreadCount,
-        'fposts' => $lang->ougcAwardsControlPanelNewTaskRequirementsForumPostCount,
-        'fthreads' => $lang->ougcAwardsControlPanelNewTaskRequirementsForumThreadCount,
-        'registered' => $lang->ougcAwardsControlPanelNewTaskRequirementsTimeRegistered,
-        'online' => $lang->ougcAwardsControlPanelNewTaskRequirementsTimeOnline,
-        'reputation' => $lang->ougcAwardsControlPanelNewTaskRequirementsReputation,
-        'referrals' => $lang->ougcAwardsControlPanelNewTaskRequirementsReferrals,
-        'warnings' => $lang->ougcAwardsControlPanelNewTaskRequirementsWarningPoints,
-        //'newpoints' => $lang->ougcAwardsControlPanelNewTaskRequirementsNewpoints,
-        'previousawards' => $lang->ougcAwardsControlPanelNewTaskRequirementsPreviousAwards,
-        'profilefields' => $lang->ougcAwardsControlPanelNewTaskRequirementsFilledProfileFields,
-        //'mydownloads' => $lang->ougcAwardsControlPanelNewTaskRequirementsMyDownloads,
-        //'myarcadechampions' => $lang->ougcAwardsControlPanelNewTaskRequirementsMyArcadeChampions,
-        //'myarcadescores' => $lang->ougcAwardsControlPanelNewTaskRequirementsMyArcadeScores,
-        'ougc_customrep_r' => $lang->ougcAwardsControlPanelNewTaskRequirementsCustomReputationReceived,
-        'ougc_customrep_g' => $lang->ougcAwardsControlPanelNewTaskRequirementsCustomReputationGiven,
-    ];
-
-    foreach (\ougc\Awards\Core\taskGet() as $taskData) {
+    foreach (taskGet() as $taskData) {
         $taskID = (int)$taskData['tid'];
 
         $taskName = htmlspecialchars_uni($taskData['name']);
@@ -2019,7 +2739,9 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
         $taskRequirements = array_flip(explode(',', $taskData['requirements']));
 
         foreach ($taskRequirements as $taskRequirementKey => &$taskRequirementValue) {
-            $taskRequirementValue = $requirementCriteria[$taskRequirementKey];
+            if (isset($lang->{$requirementCriteria[$taskRequirementKey]['languageVar']})) {
+                $taskRequirementValue = $lang->{$requirementCriteria[$taskRequirementKey]['languageVar']};
+            }
         }
 
         $taskRequirements = implode($lang->comma, $taskRequirements);
@@ -2029,6 +2751,8 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
         $taskGrantAwardIDs = implode("','", array_map('intval', explode(',', $taskData['give'])));
 
         foreach (awardsGetCache(["aid IN ('{$taskGrantAwardIDs}')"]) as $awardID => $awardData) {
+            $awardName = awardGetInfo(INFORMATION_TYPE_NAME, $awardID);
+
             $awardImage = $awardClass = awardGetIcon($awardID);
 
             $awardImage = eval(getTemplate(awardGetInfo(INFORMATION_TYPE_TEMPLATE, $awardID), false));
@@ -2054,6 +2778,8 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
         $taskStatus = (int)$taskData['active'];
 
+        $viewLogsUrl = urlHandlerBuild(['action' => 'taskLogs', 'taskID' => $taskID]);
+
         $editUrl = urlHandlerBuild(['action' => 'editTask', 'taskID' => $taskID]);
 
         $deleteUrl = urlHandlerBuild(['action' => 'deleteTask', 'taskID' => $taskID]);
@@ -2072,6 +2798,68 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     $pageTitle = $lang->ougcAwardsControlPanelTasksTitle;
 
     $pageContents = eval(getTemplate('controlPanelTasks'));
+} elseif ($mybb->get_input('action') === 'taskLogs') {
+    $taskData = taskGet(["tid='{$taskID}'"], '*', ['limit' => 1]);
+
+    if (empty($taskData['tid'])) {
+        error($lang->ougcAwardsErrorInvalidTask);
+    }
+
+    $alternativeBackground = alt_trow(true);
+
+    $logsRows = '';
+
+    foreach (\ougc\Awards\Core\logGet(["tid='{$taskID}'"]) as $logData) {
+        $logID = (int)$logData['lid'];
+
+        $userID = (int)$logData['uid'];
+
+        $userData = get_user($userID);
+
+        if (!empty($userData['uid'])) {
+            $userName = htmlspecialchars_uni($userData['username']);
+
+            $userName = format_name($userName, $userData['usergroup'], $userData['displaygroup']);
+
+            $userName = build_profile_link($userName, $userData['uid']);
+        } else {
+            $userName = $lang->na;
+        }
+
+        $logGrantAwards = $logRevokeAwards = '';
+
+        $logGrantAwardIDs = implode("','", array_map('intval', explode(',', $logData['gave'])));
+
+        foreach (awardsGetCache(["aid IN ('{$logGrantAwardIDs}')"]) as $awardID => $awardData) {
+            $awardName = awardGetInfo(INFORMATION_TYPE_NAME, $awardID);
+
+            $awardImage = $awardClass = awardGetIcon($awardID);
+
+            $awardImage = eval(getTemplate(awardGetInfo(INFORMATION_TYPE_TEMPLATE, $awardID), false));
+
+            $logGrantAwards .= eval(getTemplate('awardWrapper', false));
+        }
+
+        $taskRevokeAwardIDs = implode("','", array_map('intval', explode(',', $logData['revoked'])));
+
+        foreach (awardsGetCache(["aid IN ('{$taskRevokeAwardIDs}')"]) as $awardID => $awardData) {
+            $awardImage = $awardClass = awardGetIcon($awardID);
+
+            $awardImage = eval(getTemplate(awardGetInfo(INFORMATION_TYPE_TEMPLATE, $awardID), false));
+
+            $logRevokeAwards .= eval(getTemplate('awardWrapper', false));
+        }
+
+        $logDate = my_date('relative', (int)$logData['date']);
+
+        $logsRows .= eval(getTemplate('controlPanelLogsRow'));
+
+        $alternativeBackground = alt_trow();
+    }
+
+    $pageTitle = $lang->ougcAwardsControlPanelLogsTitle;
+
+    $pageContents = eval(getTemplate('controlPanelLogs'));
 } else {
     if ($mybb->request_method === 'post') {
         $categoryID = $mybb->get_input('categoryID', MyBB::INPUT_INT);
@@ -2251,7 +3039,9 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
     if (!$pageContents) {
         $pageContents = eval(getTemplate('controlPanelEmpty'));
-    } elseif (isModerator()) {
+    }
+
+    if (isModerator()) {
         $buttonUrl = urlHandlerBuild(['action' => 'newCategory']);
 
         $buttonText = $lang->ougcAwardsControlPanelButtonNewCategory;

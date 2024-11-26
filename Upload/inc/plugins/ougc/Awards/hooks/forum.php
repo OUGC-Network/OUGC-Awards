@@ -32,110 +32,83 @@ namespace ougc\Awards\Hooks\Forum;
 
 use MyBB;
 
-use UserDataHandler;
-
-use function ougc\Awards\Admin\pluginInfo;
+use MybbStuff_MyAlerts_AlertFormatterManager;
+use OUGC_Awards_MyAlerts_Formatter;
 
 use function ougc\Awards\Core\awardGet;
-
 use function ougc\Awards\Core\awardGetIcon;
-
 use function ougc\Awards\Core\awardGetInfo;
-
 use function ougc\Awards\Core\awardGetUser;
 use function ougc\Awards\Core\awardsGetCache;
 use function ougc\Awards\Core\categoryGetCache;
-use function ougc\Awards\Core\grantInsert;
-
-use function ougc\Awards\Core\grantDelete;
-
 use function ougc\Awards\Core\cacheUpdate;
-
-use function ougc\Awards\Core\canManageUsers;
-
-use function ougc\Awards\Core\categoryGet;
-
-use function ougc\Awards\Core\generateSelectGrant;
-
-use function ougc\Awards\Core\getThreadByUrl;
-
-use function ougc\Awards\Core\getUser;
-
-use function ougc\Awards\Core\getUserByUserName;
-
-use function ougc\Awards\Core\grantFind;
-
-use function ougc\Awards\Core\grantGetSingle;
-
 use function ougc\Awards\Core\grantUpdate;
-
-use function ougc\Awards\Core\logAction;
-
-use function ougc\Awards\Core\ownerFind;
-
+use function ougc\Awards\Core\myAlertsInitiate;
 use function ougc\Awards\Core\parseMessage;
-
 use function ougc\Awards\Core\parseUserAwards;
-use function ougc\Awards\Core\presetDelete;
-
 use function ougc\Awards\Core\presetGet;
-
-use function ougc\Awards\Core\presetInsert;
-
 use function ougc\Awards\Core\presetUpdate;
-
-use function ougc\Awards\Core\requestApprove;
-
-use function ougc\Awards\Core\requestReject;
-
 use function ougc\Awards\Core\urlHandlerBuild;
-
 use function ougc\Awards\Core\loadLanguage;
-
 use function ougc\Awards\Core\getTemplate;
-
 use function ougc\Awards\Core\urlHandlerSet;
-
 use function ougc\Awards\Core\getSetting;
 
 use const ougc\Awards\Core\GRANT_STATUS_POSTS;
 use const ougc\Awards\Core\GRANT_STATUS_VISIBLE;
 use const ougc\Awards\Core\INFORMATION_TYPE_DESCRIPTION;
-
 use const ougc\Awards\Core\INFORMATION_TYPE_NAME;
-
 use const ougc\Awards\Core\INFORMATION_TYPE_REASON;
-
 use const ougc\Awards\Core\INFORMATION_TYPE_TEMPLATE;
 use const TIME_NOW;
 
 function global_start(): bool
 {
-    if (class_exists('MybbStuff_MyAlerts_AlertFormatterManager')) {
-        global $mybb, $lang, $awards;
+    myAlertsInitiate();
 
-        $formatterManager = MybbStuff_MyAlerts_AlertFormatterManager::getInstance();
+    global $cache, $templatelist;
 
-        $formatterManager || $formatterManager = MybbStuff_MyAlerts_AlertFormatterManager::createInstance($mybb, $lang);
+    if (isset($templatelist)) {
+        $templatelist .= ',';
+    } else {
+        $templatelist = '';
+    }
 
-        $formatterManager->registerFormatter(new OUGC_Awards_MyAlerts_Formatter($mybb, $lang, 'ougc_awards'));
+    $templatelist .= 'ougcawards_js,ougcawards_css, ougcawards_global_menu,ougcawards_global_notification,ougcawards_welcomeblock,ougcawards_award_image,ougcawards_award_image_class,';
+
+    $awards = $cache->read('ougc_awards');
+    foreach ($awards['awards'] as $aid => $award) {
+        if ($award['template'] == 2) {
+            $templatelist .= 'ougcawards_award_image' . $aid . ',ougcawards_award_image_cat' . $award['cid'] . ',ougcawards_award_image_class' . $aid . ',ougcawards_award_image_class' . $aid . ',';
+        }
+    }
+    unset($awards, $award);
+
+    switch (constant('THIS_SCRIPT')) {
+        case 'showthread.php':
+        case 'newreply.php':
+        case 'newthread.php':
+        case 'editpost.php':
+        case 'private.php':
+        case 'announcements.php':
+            $templatelist .= 'ougcawards_postbit, ougcawards_stats_user_viewall, ougcawards_postbit_preset_award, ougcawards_postbit_preset';
+            break;
+        case 'member.php':
+            global $mybb;
+
+            if ((string)$mybb->input['action'] == 'profile') {
+                $templatelist .= 'ougcawards_profile_row, ougcawards_profile_row_category, ougcawards_profile, ougcawards_profile_multipage, multipage_prevpage, multipage_page, multipage_page_current, multipage_nextpage, multipage, ougcawards_profile_preset_row, ougcawards_profile_preset';
+            }
+            break;
+        case 'usercp.php':
+        case 'modcp.php':
+            break;
+        case 'stats.php':
+            $templatelist .= 'ougcawards_stats_user_viewall, ougcawards_stats_user, ougcawards_stats';
+            break;
     }
 
     return true;
-
-    global $db;
-
-    $query = $db->simple_select("tasks", "*", "tid='5'");
-    $task = $db->fetch_array($query);
-
-    $file = basename($task['file'], '.php');
-    require_once MYBB_ROOT . "inc/functions_task.php";
-    require_once MYBB_ROOT . "inc/tasks/{$file}.php";
-    $function = "task_{$task['file']}";
-
-    if (function_exists($function)) {
-        $function($task);
-    }
 }
 
 function global_intermediate10(): bool
@@ -148,8 +121,21 @@ function global_intermediate10(): bool
         cacheUpdate();
     }
 
+    global $ougcAwardsGlobalNotificationRequests;
+
+    $ougcAwardsGlobalNotificationRequests = '';
+
     if (!empty($cacheData['requests']['pending'])) {
-        _dump('PENDING NOTIFICATION');
+        global $lang;
+
+        loadLanguage();
+
+        $messageContent = $lang->sprintf(
+            $lang->ougcAwardsGlobalNotificationsRequests,
+            my_number_format($cacheData['requests']['pending'])
+        );
+
+        $ougcAwardsGlobalNotificationRequests = eval(getTemplate('globalNotification'));
     }
 
     return false;
@@ -220,7 +206,7 @@ function global_intermediate(): bool
         }
     }
 
-    if ($pending < 1) {
+    if ($pending < 1 || true) {
         return false;
     }
 
@@ -262,6 +248,13 @@ function build_friendly_wol_location_end(array &$locationArguments): array
     }
 
     return $locationArguments;
+}
+
+function xmlhttp05(): bool
+{
+    myAlertsInitiate();
+
+    return true;
 }
 
 function xmlhttp(): bool
@@ -744,7 +737,7 @@ function member_profile_end(): bool
             $totalGrantedCount,
             $queryLimit,
             $currentPage,
-            "javascript: OUGC_Plugins.ViewAwards('{$userID}', '{page}');"
+            "javascript: ougcAwards.ViewAwards('{$userID}', '{page}');"
         //urlHandlerBuild(['view' => 'awards'])
         );
 
@@ -1294,9 +1287,25 @@ function stats_end(): bool
     return true;
 }
 
-function datahandler_user_insert(UserDataHandler &$dataHandler): UserDataHandler
-{
-    $dataHandler->user_insert_data['ougc_awards'] = '';
+function myalerts_register_client_alert_formatters(MybbStuff_MyAlerts_AlertFormatterManager &$hookArguments
+): MybbStuff_MyAlerts_AlertFormatterManager {
+    if (
+        class_exists('MybbStuff_MyAlerts_Formatter_AbstractFormatter') &&
+        class_exists('MybbStuff_MyAlerts_AlertFormatterManager') &&
+        !class_exists('OUGC_Awards_MyAlerts_Formatter')
+    ) {
+        global $mybb, $lang;
 
-    return $dataHandler;
+        $formatterManager = MybbStuff_MyAlerts_AlertFormatterManager::getInstance();
+
+        if (!$formatterManager) {
+            $formatterManager = MybbStuff_MyAlerts_AlertFormatterManager::createInstance($mybb, $lang);
+        }
+
+        if ($formatterManager) {
+            $formatterManager->registerFormatter(new OUGC_Awards_MyAlerts_Formatter($mybb, $lang, 'ougc_awards'));
+        }
+    }
+
+    return $hookArguments;
 }
