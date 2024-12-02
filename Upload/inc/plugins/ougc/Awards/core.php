@@ -30,22 +30,17 @@ declare(strict_types=1);
 
 namespace ougc\Awards\Core;
 
+use MyBB;
 use MybbStuff_MyAlerts_AlertManager;
-
+use MybbStuff_MyAlerts_AlertTypeManager;
 use MybbStuff_MyAlerts_Entity_Alert;
-
-use PMDataHandler;
-
+use PluginLibrary;
 use postParser;
-
 use stdClass;
-
-use function ougc\Awards\Admin\pluginIsInstall;
 
 use function ougc\Awards\Admin\pluginInfo;
 
 use const ougc\Awards\ROOT;
-
 use const TIME_NOW;
 
 const URL = 'index.php?module=user-ougc_awards';
@@ -149,6 +144,11 @@ const TABLES_DATA = [
             'default' => ''
         ],
         'description' => [
+            'type' => 'VARCHAR',
+            'size' => 255,
+            'default' => ''
+        ],
+        'award_file' => [
             'type' => 'VARCHAR',
             'size' => 255,
             'default' => ''
@@ -350,11 +350,11 @@ const TABLES_DATA = [
             'unsigned' => true,
             'default' => 0
         ],
-        'allowmultiple' => [
+        /*'allowmultiple' => [
             'type' => 'SMALLINT',
             'unsigned' => true,
             'default' => 0
-        ],
+        ],*/
         'revoke' => [
             'type' => 'TEXT',
             'null' => true,
@@ -613,11 +613,30 @@ const TABLES_DATA = [
 
 const FIELDS_DATA = [
     'users' => [
-        'ougc_awards' => 'text NULL',
-        'ougc_awards_owner' => "tinyint(1) NOT NULL DEFAULT '0'",
-        'ougc_awards_preset' => "int NOT NULL DEFAULT '0'"
+        'ougc_awards' => [
+            'type' => 'TEXT',
+            'null' => true
+        ],
+        'ougc_awards_owner' => [
+            'type' => 'TINYINT',
+            'unsigned' => true,
+            'default' => 0
+        ],
+        'ougc_awards_preset' => [
+            'type' => 'INT',
+            'unsigned' => true,
+            'default' => 0
+        ]
     ]
 ];
+
+const FILE_UPLOAD_ERROR_FAILED = 1;
+
+const FILE_UPLOAD_ERROR_INVALID_TYPE = 2;
+
+const FILE_UPLOAD_ERROR_UPLOAD_SIZE = 3;
+
+const FILE_UPLOAD_ERROR_RESIZE = 4;
 
 function addHooks(string $namespace)
 {
@@ -782,18 +801,18 @@ function executeTask(): bool
     while ($award_task = $db->fetch_array($query)) {
         $award_task['tid'] = (int)$award_task['tid'];
 
-        $where_clause = $left_join = array();
+        $where_clause = $left_join = [];
 
         $requirements = explode(',', $award_task['requirements']);
 
         foreach (
-            array(
+            [
                 'posts' => 'postnum',
                 'threads' => 'threadnum',
                 'referrals' => 'referrals',
                 'warnings' => 'warningpoints',
                 'newpoints' => 'newpoints'
-            ) as $k => $c
+            ] as $k => $c
         ) {
             $t = $k . 'type';
             if (in_array($k, $requirements) && (int)$award_task[$k] >= 0 && !empty($award_task[$t])) {
@@ -801,7 +820,7 @@ function executeTask(): bool
             }
         }
 
-        foreach (array('reputation' => 'reputation') as $k => $c) {
+        foreach (['reputation' => 'reputation'] as $k => $c) {
             $t = $k . 'type';
             if (in_array($k, $requirements) && !empty($award_task[$t])) {
                 $where_clause[] = "u.{$c}{$award_task[$t]}'{$award_task[$k]}'";
@@ -861,7 +880,7 @@ function executeTask(): bool
 
         if (in_array('usergroups', $requirements) && !empty($award_task['usergroups'])) {
             $usergroups = array_map('intval', explode(',', $award_task['usergroups']));
-            $group_clause = array("usergroup IN ('" . implode("','", $usergroups) . "')");
+            $group_clause = ["usergroup IN ('" . implode("','", $usergroups) . "')"];
             if ($award_task['additionalgroups']) {
                 foreach ($usergroups as $gid) {
                     switch ($db->type) {
@@ -983,15 +1002,15 @@ function executeTask(): bool
             $where_clause[] = "ocg.ougc_custom_reputation_gived{$award_task['ougc_customreptype_g']}'{$award_task['ougc_customrep_g']}'";
         }
 
-        $log_inserts = array();
+        $log_inserts = [];
 
         if (is_object($plugins)) {
-            $args = array(
+            $args = [
                 'task' => &$task,
                 'award_task' => &$award_task,
                 'left_join' => &$left_join,
                 'where_clause' => &$where_clause
-            );
+            ];
 
             $plugins->run_hooks('task_ougc_awards', $args);
         }
@@ -1004,9 +1023,9 @@ function executeTask(): bool
 
         while ($user = $db->fetch_array($query2)) {
             $log = false;
-            $gave_cache = $revoke_cache = $aids = $gave_list = $revoke_list = array();
+            $gave_cache = $revoke_cache = $aids = $gave_list = $revoke_list = [];
 
-            if (($award_task['give'] && !$award_task['allowmultiple']) || $award_task['revoke']) {
+            if (/*($award_task['give'] && !$award_task['allowmultiple']) || */ $award_task['revoke']) {
                 $q1 = $db->simple_select(
                     'ougc_awards_users',
                     'gid, aid',
@@ -1027,13 +1046,13 @@ function executeTask(): bool
 
             if ($award_task['give']) {
                 $aids = array_flip(explode(',', $award_task['give']));
-                if (!$award_task['allowmultiple']) {
+                /*if (!$award_task['allowmultiple']) {
                     foreach ($gave_cache as $aid) {
                         if (isset($aids[$aid])) {
                             unset($aids[$aid]);
                         }
                     }
-                }
+                }*/
 
                 if (!empty($aids)) {
                     foreach ($aids as $aid => $i) {
@@ -1041,7 +1060,7 @@ function executeTask(): bool
                         $award = awardGet($aid);
                         $result = grantInsert(
                             $aid,
-                            $user,
+                            (int)$user['uid'],
                             '',
                             $award_task['thread'],
                             $award_task['tid']
@@ -1059,19 +1078,19 @@ function executeTask(): bool
                 }
             }
 
-            !$log or $log_inserts[] = array(
+            !$log or $log_inserts[] = [
                 'tid' => (int)$award_task['tid'],
                 'uid' => (int)$user['uid'],
                 'gave' => $db->escape_string(implode(',', $gave_list)),
                 'revoked' => $db->escape_string(implode(',', $revoke_list)),
                 'date' => TIME_NOW
-            );
+            ];
         }
 
         if (count($log_inserts) > 0) {
             $db->insert_query_multiple('ougc_awards_tasks_logs', $log_inserts);
 
-            $log_inserts = array();
+            $log_inserts = [];
         }
     }
 
@@ -1300,19 +1319,9 @@ function ownerFind(int $awardID, int $userID): array
     return [];
 }
 
-function categoryInsert(array $categoryData, int $categoryID = null, bool $updateCategory = false): int
+function categoryInsert(array $insertData, int $categoryID = null, bool $updateCategory = false): int
 {
     global $db;
-
-    $insertData = array();
-
-    !isset($categoryData['name']) || $insertData['name'] = $db->escape_string($categoryData['name']);
-    !isset($categoryData['description']) || $insertData['description'] = $db->escape_string(
-        $categoryData['description']
-    );
-    !isset($categoryData['disporder']) || $insertData['disporder'] = (int)$categoryData['disporder'];
-    !isset($categoryData['allowrequests']) || $insertData['allowrequests'] = (int)$categoryData['allowrequests'];
-    !isset($categoryData['visible']) || $insertData['visible'] = (int)$categoryData['visible'];
 
     if ($updateCategory) {
         return (int)$db->update_query('ougc_awards_categories', $insertData, "cid='{$categoryID}'");
@@ -1321,9 +1330,9 @@ function categoryInsert(array $categoryData, int $categoryID = null, bool $updat
     return (int)$db->insert_query('ougc_awards_categories', $insertData);
 }
 
-function categoryUpdate(array $categoryData, int $categoryID): int
+function categoryUpdate(array $updateData, int $categoryID): int
 {
-    return categoryInsert($categoryData, $categoryID, true);
+    return categoryInsert($updateData, $categoryID, true);
 }
 
 function categoryDelete(int $categoryID): bool
@@ -1390,22 +1399,9 @@ function categoryGetCache(array $whereClauses = [], string $queryFields = '*', a
     return $cacheObjects;
 }
 
-function awardInsert(array $awardData, int $awardID = 0, bool $updateAward = false): int
+function awardInsert(array $insertData, int $awardID = 0, bool $updateAward = false): int
 {
     global $db;
-
-    $insertData = array();
-
-    !isset($awardData['name']) || $insertData['name'] = $db->escape_string($awardData['name']);
-    !isset($awardData['cid']) || $insertData['cid'] = (int)$awardData['cid'];
-    !isset($awardData['description']) || $insertData['description'] = $db->escape_string($awardData['description']);
-    !isset($awardData['image']) || $insertData['image'] = $db->escape_string($awardData['image']);
-    !isset($awardData['template']) || $insertData['template'] = (int)$awardData['template'];
-    !isset($awardData['disporder']) || $insertData['disporder'] = (int)$awardData['disporder'];
-    !isset($awardData['allowrequests']) || $insertData['allowrequests'] = (int)$awardData['allowrequests'];
-    !isset($awardData['pm']) || $insertData['pm'] = $db->escape_string($awardData['pm']);
-    !isset($awardData['visible']) || $insertData['visible'] = (int)$awardData['visible'];
-    !isset($awardData['type']) || $insertData['type'] = (int)$awardData['type'];
 
     if ($updateAward) {
         return (int)$db->update_query('ougc_awards', $insertData, "aid='{$awardID}'");
@@ -1414,9 +1410,9 @@ function awardInsert(array $awardData, int $awardID = 0, bool $updateAward = fal
     return (int)$db->insert_query('ougc_awards', $insertData);
 }
 
-function awardUpdate(array $awardData, int $awardID = 0): int
+function awardUpdate(array $updateData, int $awardID = 0): int
 {
-    return awardInsert($awardData, $awardID, true);
+    return awardInsert($updateData, $awardID, true);
 }
 
 function awardDelete(int $awardID): bool
@@ -1436,6 +1432,20 @@ function awardDelete(int $awardID): bool
     }
 
     $db->delete_query('ougc_awards', "aid='{$awardID}'");
+
+    $dir = opendir(getSetting('uploadPath'));
+
+    if ($dir) {
+        while ($file = @readdir($dir)) {
+            if (preg_match('#award_' . $awardID . '\.#', $file) && is_file(
+                    getSetting('uploadPath') . '/' . $file
+                )) {
+                delete_uploaded_file(getSetting('uploadPath') . '/' . $file);
+            }
+        }
+
+        closedir($dir);
+    }
 
     return true;
 }
@@ -1469,6 +1479,10 @@ function awardGetIcon(int $awardID): string
         '{cid}' => $awardData['cid']
     ];
 
+    if (empty($awardData['image'])) {
+        $awardData['image'] = $mybb->get_asset_url(getSetting('uploadPath') . $awardData['award_file']);
+    }
+
     return str_replace(
         array_keys($replaceObjects),
         array_values($replaceObjects),
@@ -1478,7 +1492,7 @@ function awardGetIcon(int $awardID): string
 
 function awardGetInfo(
     int $informationType = INFORMATION_TYPE_TEMPLATE,
-    int $awardID,
+    int $awardID = 0,
     int $grantID = 0,
     int $requestID = 0,
     int $taskID = 0
@@ -1674,17 +1688,9 @@ function grantInsert(
     return $grantID;
 }
 
-function grantUpdate(array $grantData, int $grantID): bool
+function grantUpdate(array $updateData, int $grantID): bool
 {
     global $db, $plugins;
-
-    $updateData = array();
-
-    !isset($grantData['date']) || $updateData['date'] = (int)$grantData['date'];
-    !isset($grantData['reason']) || $updateData['reason'] = $db->escape_string($grantData['reason']);
-    !isset($grantData['thread']) || $updateData['thread'] = (int)$grantData['thread'];
-    //!isset($grantData['visible']) || $updateData['visible'] = (int)$grantData['visible'];
-    //!isset($grantData['disporder']) || $updateData['disporder'] = (int)$grantData['disporder'];
 
     $hookArguments = [
         'gid' => &$grantID,
@@ -1746,12 +1752,6 @@ function requestInsert(array $requestData, int $requestID = 0, bool $updateReque
 
     $insertData = [];
 
-    !isset($requestData['uid']) || $insertData['uid'] = (int)$requestData['uid'];
-    !isset($requestData['muid']) || $insertData['muid'] = (int)$requestData['muid'];
-    !isset($requestData['aid']) || $insertData['aid'] = (int)$requestData['aid'];
-    !isset($requestData['message']) || $insertData['message'] = $db->escape_string($requestData['message']);
-    !isset($requestData['status']) || $insertData['status'] = (int)$requestData['status'];
-
     if ($updateRequest) {
         return (int)$db->update_query('ougc_awards_requests', $insertData, "rid='{$requestID}'");
     }
@@ -1759,9 +1759,9 @@ function requestInsert(array $requestData, int $requestID = 0, bool $updateReque
     return (int)$db->insert_query('ougc_awards_requests', $insertData);
 }
 
-function requestUpdate(array $requestData, int $requestID)
+function requestUpdate(array $updateData, int $requestID)
 {
-    requestInsert($requestData, $requestID, true);
+    requestInsert($updateData, $requestID, true);
 }
 
 function requestGet(array $whereClauses = []): array
@@ -1879,7 +1879,7 @@ function taskInsert(array $taskData, int $taskID = 0, bool $updateTask = false):
 {
     global $db;
 
-    $insertData = array();
+    $insertData = [];
 
     foreach (
         [
@@ -1908,7 +1908,9 @@ function taskInsert(array $taskData, int $taskID = 0, bool $updateTask = false):
             'ruleScripts',
         ] as $k
     ) {
-        !isset($taskData[$k]) || $insertData[$k] = $db->escape_string($taskData[$k]);
+        if (isset($taskData[$k])) {
+            $insertData[$k] = $insertData[$k] = $db->escape_string($taskData[$k]);
+        }
     }
 
     foreach (
@@ -1916,7 +1918,9 @@ function taskInsert(array $taskData, int $taskID = 0, bool $updateTask = false):
             //'newpoints',
         ] as $k
     ) {
-        !isset($taskData[$k]) || $insertData[$k] = (float)$taskData[$k];
+        if (isset($taskData[$k])) {
+            $insertData[$k] = (float)$taskData[$k];
+        }
     }
 
     foreach (
@@ -1925,7 +1929,7 @@ function taskInsert(array $taskData, int $taskID = 0, bool $updateTask = false):
             'active',
             'logging',
             'thread',
-            'allowmultiple',
+            //'allowmultiple',
             'disporder',
             'additionalgroups',
             'threads',
@@ -1944,7 +1948,9 @@ function taskInsert(array $taskData, int $taskID = 0, bool $updateTask = false):
             //'ougc_customrep_g',
         ] as $k
     ) {
-        !isset($taskData[$k]) || $insertData[$k] = (int)$taskData[$k];
+        if (isset($taskData[$k])) {
+            $insertData[$k] = (int)$taskData[$k];
+        }
     }
 
     foreach (
@@ -1964,23 +1970,23 @@ function taskInsert(array $taskData, int $taskID = 0, bool $updateTask = false):
             //'ougc_customreptype_g'
         ] as $k
     ) {
-        in_array($taskData[$k], ['>', '>=', '=', '<=', '<']) || $taskData[$k] = '=';
-
-        !isset($taskData[$k]) || $insertData[$k] = $db->escape_string($taskData[$k]);
+        if (isset($taskData[$k]) && in_array($taskData[$k], ['>', '>=', '=', '<=', '<'])) {
+            $insertData[$k] = $db->escape_string($taskData[$k]);
+        }
     }
 
     foreach (['registeredtype', 'onlinetype'] as $k) {
-        in_array($taskData[$k], ['hours', 'days', 'weeks', 'months', 'years']) || $taskData[$k] = '=';
-
-        !isset($taskData[$k]) || $insertData[$k] = $db->escape_string($taskData[$k]);
+        if (isset($taskData[$k]) && in_array($taskData[$k], ['hours', 'days', 'weeks', 'months', 'years'])) {
+            $insertData[$k] = $db->escape_string($taskData[$k]);
+        }
     }
 
     foreach (['give', 'revoke', 'usergroups', 'previousawards', 'profilefields'] as $k) {
-        is_array($taskData[$k]) || $taskData[$k] = [$taskData[$k]];
-
-        $taskData[$k] = implode(',', array_filter(array_unique(array_map('intval', $taskData[$k]))));
-
-        !isset($taskData[$k]) || $insertData[$k] = $db->escape_string($taskData[$k]);
+        if (isset($taskData[$k]) && is_array($taskData[$k])) {
+            $insertData[$k] = $db->escape_string(
+                implode(',', array_filter(array_unique(array_map('intval', $taskData[$k]))))
+            );
+        }
     }
 
     !isset($taskData['requirements']) || $insertData['requirements'] = $db->escape_string(
@@ -2273,7 +2279,7 @@ function cacheUpdate(): bool
     return true;
 }
 
-function generateSelectAwards(string $inputName, array $selectedIDs = [], array $selectOptions): string
+function generateSelectAwards(string $inputName, array $selectedIDs = [], array $selectOptions = []): string
 {
     global $db, $mybb;
 
@@ -2302,7 +2308,7 @@ function generateSelectAwards(string $inputName, array $selectedIDs = [], array 
     return $selectCode;
 }
 
-function generateSelectProfileFields(string $inputName, array $selectedIDs = [], array $selectOptions): string
+function generateSelectProfileFields(string $inputName, array $selectedIDs = [], array $selectOptions = []): string
 {
     global $db, $mybb;
 
@@ -2721,12 +2727,12 @@ function getThreadByUrl(string $threadUrl)
 
         if (!empty($temp)) {
             for ($i = 0; $i < count($temp); $i++) {
-                $temp2 = explode('=', $temp[$i], 2);
+                $temp2 = explode('=', $temp[$i], MyBB::INPUT_ARRAY);
 
                 $parameters[$temp2[0]] = $temp2[1];
             }
         } else {
-            $temp2 = explode('=', $splitloc[1], 2);
+            $temp2 = explode('=', $splitloc[1], MyBB::INPUT_ARRAY);
 
             $parameters[$temp2[0]] = $temp2[1];
         }
@@ -2745,10 +2751,7 @@ function getThreadByUrl(string $threadUrl)
 
 function isModerator(): bool
 {
-    global $mybb;
-
-    return (int)$mybb->user['uid'] === 1;
-    is_member(getSetting('groupsModerators'));
+    return (bool)is_member(getSetting('groupsModerators'));
 }
 
 function isVisibleCategory(int $categoryID): bool
@@ -2772,4 +2775,119 @@ function myAlertsInitiate()
             yourcoolplugin_register_myalerts_formatter();
         }
     }
+}
+
+function uploadAward(array $awardFile = [], int $awardID)
+{
+    global $mybb;
+
+    $ret = [];
+
+    if (!is_uploaded_file($awardFile['tmp_name'])) {
+        return FILE_UPLOAD_ERROR_FAILED;
+    }
+
+    $fileExtension = get_extension(my_strtolower($awardFile['name']));
+
+    if (!preg_match('#^(gif|jpg|jpeg|jpe|bmp|png)$#i', $fileExtension)) {
+        return FILE_UPLOAD_ERROR_INVALID_TYPE;
+    }
+
+    $uploadPath = getSetting('uploadPath');
+
+    $fileName = "award_{$awardID}.{$fileExtension}";
+
+    $fileUpload = upload_file($awardFile, $uploadPath, $fileName);
+
+    $fullFilePath = "{$uploadPath}/{$fileName}";
+
+    if (!empty($fileUpload['error'])) {
+        delete_uploaded_file($fullFilePath);
+
+        return FILE_UPLOAD_ERROR_FAILED;
+    }
+
+    if (!file_exists($fullFilePath)) {
+        delete_uploaded_file($fullFilePath);
+
+        return FILE_UPLOAD_ERROR_FAILED;
+    }
+
+    $imageDimensions = getimagesize($fullFilePath);
+
+    if (!is_array($imageDimensions)) {
+        delete_uploaded_file($fullFilePath);
+
+        return FILE_UPLOAD_ERROR_FAILED;
+    }
+
+    if (getSetting('uploadDimensions')) {
+        list($maximumWidth, $maximumHeight) = preg_split('/[|x]/', getSetting('uploadDimensions'));
+
+        if (($maximumWidth && $imageDimensions[0] > $maximumWidth) || ($maximumHeight && $imageDimensions[1] > $maximumHeight)) {
+            require_once MYBB_ROOT . 'inc/functions_image.php';
+
+            $thumbnail = generate_thumbnail(
+                $fullFilePath,
+                $uploadPath,
+                $fileName,
+                $maximumHeight,
+                $maximumWidth
+            );
+
+            if (empty($thumbnail['filename'])) {
+                delete_uploaded_file($fullFilePath);
+
+                return FILE_UPLOAD_ERROR_RESIZE;
+            } else {
+                copy_file_to_cdn("{$uploadPath}/{$thumbnail['filename']}");
+
+                $awardFile['size'] = filesize($fullFilePath);
+
+                $imageDimensions = getimagesize($fullFilePath);
+            }
+        }
+    }
+
+    $awardFile['type'] = my_strtolower($awardFile['type']);
+
+    switch ($awardFile['type']) {
+        case 'image/gif':
+            $imageType = 1;
+            break;
+        case 'image/jpeg':
+        case 'image/x-jpg':
+        case 'image/x-jpeg':
+        case 'image/pjpeg':
+        case 'image/jpg':
+            $imageType = 2;
+            break;
+        case 'image/png':
+        case 'image/x-png':
+            $imageType = 3;
+            break;
+        case 'image/bmp':
+        case 'image/x-bmp':
+        case 'image/x-windows-bmp':
+            $imageType = 6;
+            break;
+    }
+
+    if ((int)$imageDimensions[2] !== $imageType || empty($imageType)) {
+        delete_uploaded_file($fullFilePath);
+
+        return FILE_UPLOAD_ERROR_FAILED;
+    }
+
+    if (getSetting('uploadSize') > 0 && $awardFile['size'] > (getSetting('uploadSize') * 1024)) {
+        delete_uploaded_file($fullFilePath);
+
+        return FILE_UPLOAD_ERROR_UPLOAD_SIZE;
+    }
+
+    return [
+        'fileName' => $fileName,
+        'fileWidth' => (int)$imageDimensions[0],
+        'fileHeight' => (int)$imageDimensions[1]
+    ];
 }

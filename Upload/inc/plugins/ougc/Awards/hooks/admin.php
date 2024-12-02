@@ -31,7 +31,6 @@ declare(strict_types=1);
 namespace ougc\Awards\Hooks\Admin;
 
 use MyBB;
-use UserDataHandler;
 
 use function ougc\Awards\Core\allowImports;
 use function ougc\Awards\Core\grantInsert;
@@ -214,9 +213,9 @@ function admin_config_plugins_begin()
         while ($award = $db->fetch_array($query)) {
             $insert_award = [
                 'cid' => $categoryID,
-                'name' => (string)$award[$keys['name']],
-                'description' => (string)$award[$keys['description']],
-                'image' => $img_prefix . $award[$keys['image']],
+                'name' => $db->escape_string($award[$keys['name']]),
+                'description' => $db->escape_string($award[$keys['description']]),
+                'image' => $db->escape_string($img_prefix . $award[$keys['image']]),
                 'disporder' => isset($award[$keys['disporder']]) ? (int)$award[$keys['disporder']] : ++$disporder,
                 'allowrequests' => 0,
                 'pm' => ''

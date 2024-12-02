@@ -36,17 +36,19 @@
                        value="{$inputData['description']}"/></td>
         </tr>
         <tr>
-            <td class="trow2" width="20%" style="vertical-align: top;">
+            <td class="trow1" width="20%" style="vertical-align: top;">
                 <strong>{$lang->ougcAwardsControlPanelNewCategoryAllowRequests}</strong>
                 <div class="smalltext">
                     {$lang->ougcAwardsControlPanelNewCategoryAllowRequestsDescription}
                 </div>
             </td>
-            <td class="trow2" style="vertical-align: middle;">
-                <input type="radio" class="radio" name="allowrequests" value="1" {$selectedElementAllowRequestsYes}>
-                {$lang->yes}
-                <input type="radio" class="radio" name="allowrequests" value="0" {$selectedElementAllowRequestsNo}>
-                {$lang->no}
+            <td class="trow1" style="vertical-align: middle;">
+                <input type="radio" class="radio" name="allowrequests" value="1" id="allowrequests_yes"
+                       {$selectedElementAllowRequestsYes}>
+                <label for="allowrequests_yes">{$lang->yes}</label>
+                <input type="radio" class="radio" name="allowrequests" value="0" id="allowrequests_no"
+                       {$selectedElementAllowRequestsNo}>
+                <label for="allowrequests_no">{$lang->no}</label>
             </td>
         </tr>
         <tr>
@@ -57,24 +59,26 @@
                 </div>
             </td>
             <td class="trow2" style="vertical-align: middle;">
-                <input type="radio" class="radio" name="visible" value="1" {$selectedElementEnabledYes}>
-                {$lang->yes}
-                <input type="radio" class="radio" name="visible" value="0" {$selectedElementEnabledNo}>
-                {$lang->no}
+                <input type="radio" class="radio" name="visible" value="1" id="visible_yes"
+                       {$selectedElementEnabledYes}>
+                <label for="visible_yes">{$lang->yes}</label>
+                <input type="radio" class="radio" name="visible" value="0" id="visible_no" {$selectedElementEnabledNo}>
+                <label for="visible_no">{$lang->no}</label>
             </td>
         </tr>
         <tr>
-            <td class="trow2" width="20%" style="vertical-align: top;">
+            <td class="trow1" width="20%" style="vertical-align: top;">
                 <strong>{$lang->ougcAwardsControlPanelNewCategoryDisplayOrder}</strong>
                 <div class="smalltext">
                     {$lang->ougcAwardsControlPanelNewCategoryDisplayOrderDescription}
                 </div>
             </td>
-            <td class="trow2" style="vertical-align: middle;">
+            <td class="trow1" style="vertical-align: middle;">
                 <input type="number" name="disporder" value="{$inputData['disporder']}" class="textbox" size="5"
                        maxlength="4" style="text-align: center;"/>
             </td>
         </tr>
+        {$additionalRows}
     </table>
     <br/>
     <div align="center">

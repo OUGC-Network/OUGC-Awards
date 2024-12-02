@@ -74,5 +74,17 @@
   "pageAction": {
     "optionscode": "text",
     "value": "awards"
+  },
+  "uploadPath": {
+    "optionscode": "text",
+    "value": "./uploads/awards/"
+  },
+  "uploadDimensions": {
+    "optionscode": "text",
+    "value": "32|32"
+  },
+  "uploadSize": {
+    "optionscode": "text",
+    "value": "50"
   }
-}
+}Maximum file size (in kilobytes) of uploaded avatars. Set to 0 to disable the limitation.

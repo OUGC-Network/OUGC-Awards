@@ -43,10 +43,10 @@
                 </div>
             </td>
             <td class="trow2" style="vertical-align: middle;">
-                <input type="radio" class="radio" name="active" value="1" {$selectedElementEnabledYes}>
-                {$lang->yes}
-                <input type="radio" class="radio" name="active" value="0" {$selectedElementEnabledNo}>
-                {$lang->no}
+                <input type="radio" class="radio" name="active" value="1" id="active_yes" {$selectedElementEnabledYes}>
+                <label for="active_yes">{$lang->yes}</label>
+                <input type="radio" class="radio" name="active" value="0" id="active_no" {$selectedElementEnabledNo}>
+                <label for="active_no">{$lang->no}</label>
             </td>
         </tr>
         <tr>
@@ -91,20 +91,6 @@
             </td>
             <td class="trow2" style="vertical-align: middle;">
                 <input type="text" class="textbox" name="thread" size="40" value="{$inputData['thread']}"/>
-            </td>
-        </tr>
-        <tr>
-            <td class="trow1" width="20%" style="vertical-align: top;">
-                <strong>{$lang->ougcAwardsControlPanelNewTaskMultiple}</strong>
-                <div class="smalltext">
-                    {$lang->ougcAwardsControlPanelNewTaskMultipleDescription}
-                </div>
-            </td>
-            <td class="trow1" style="vertical-align: middle;">
-                <input type="radio" class="radio" name="allowmultiple" value="1" {$selectedElementMultipleYes}>
-                {$lang->yes}
-                <input type="radio" class="radio" name="allowmultiple" value="0" {$selectedElementMultipleNo}>
-                {$lang->no}
             </td>
         </tr>
         <tr>

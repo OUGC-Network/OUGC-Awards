@@ -188,7 +188,7 @@ function global_intermediate(): bool
                 "uid='1' AND aid IN ('" . implode("','", $aids) . "')"
             );
 
-            $aids = array();
+            $aids = [];
 
             while ($aids[] = (int)$db->fetch_field($query, 'aid')) {
             }
@@ -446,7 +446,7 @@ function postbit(array &$postData): array
                         $taskID
                     ))) {
                         if (!($grantReason = $award['reason'])) {
-                            $grantReason = $lang->ougc_awards_pm_noreason;
+                            $grantReason = $lang->na;
                         }
                     }
 
@@ -502,7 +502,7 @@ function postbit(array &$postData): array
 
     if (!isset($ougc_awards_cache)) {
         global $db;
-        $cids = array();
+        $cids = [];
 
         foreach ($awards_cache['categories'] as $cid => $category) {
             $cids[] = (int)$cid;
@@ -512,7 +512,7 @@ function postbit(array &$postData): array
 
         // First we need to get our data
         if (THIS_SCRIPT == 'showthread.php' && isset($GLOBALS['pids'])) {
-            $ougc_awards_cache = array();
+            $ougc_awards_cache = [];
 
             $pids = array_filter(array_unique(array_map('intval', explode('\'', $GLOBALS['pids']))));
             $query = $db->query(
@@ -532,7 +532,7 @@ function postbit(array &$postData): array
             }
         } else {
             global $db;
-            $ougc_awards_cache = array();
+            $ougc_awards_cache = [];
 
             $query = $db->query(
                 '
@@ -565,29 +565,29 @@ function postbit(array &$postData): array
 
     $total = count($awardlist);
 
-    foreach ($awardlist as $award) {
-        $grantID = (int)$award['gid'];
+    foreach ($awardlist as $awardData) {
+        $grantID = (int)$awardData['gid'];
 
-        $requestID = (int)$award['rid'];
+        $requestID = (int)$awardData['rid'];
 
-        $taskID = (int)$award['tid'];
+        $taskID = (int)$awardData['tid'];
 
-        $awardID = (int)$award['aid'];
+        $awardID = (int)$awardData['aid'];
 
-        $award = array_merge(awardGet($awardID), $award);
+        $awardData = array_merge(awardGet($awardID), $awardData);
 
         if ($name = awardGetInfo(
             INFORMATION_TYPE_NAME,
             $awardID
         )) {
-            $award['name'] = $name;
+            $awardData['name'] = $name;
         }
 
-        $award['name_ori'] = $award['name'];
+        $awardData['name_ori'] = $awardData['name'];
 
-        $award['name'] = strip_tags($award['name_ori']);
+        $awardData['name'] = strip_tags($awardData['name_ori']);
 
-        $award['image'] = awardGetIcon($awardID);
+        $awardData['image'] = awardGetIcon($awardID);
 
         if (getSetting('postbit') == -1 || $count < getSetting('postbit')) {
             ++$count;
@@ -600,7 +600,7 @@ function postbit(array &$postData): array
 
             if (getSetting('postbit') != -1 && $count == getSetting('postbit') && $total != $count) {
                 $uid = $postData['uid'];
-                $message = $lang->ougc_awards_stats_viewall;
+                $message = $lang->ougcAwardsStatsViewAll;
                 $viewall = eval(getTemplate('stats_user_viewall'));
             }
 
@@ -611,16 +611,20 @@ function postbit(array &$postData): array
                 $requestID,
                 $taskID
             ))) {
-                if (!($grantReason = $award['reason'])) {
-                    $grantReason = $lang->ougc_awards_pm_noreason;
+                if (!($grantReason = $awardData['reason'])) {
+                    $grantReason = $lang->na;
                 }
             }
 
-            $grantReason = $award['reason'] = htmlspecialchars_uni($grantReason);
+            $grantReason = $awardData['reason'] = htmlspecialchars_uni($grantReason);
 
-            parseMessage($award['reason']);
+            parseMessage($awardData['reason']);
 
-            $award['fimage'] = eval(getTemplate(awardGetInfo(INFORMATION_TYPE_TEMPLATE, $awardID), false));
+            $awardImage = $imageClass = awardGetIcon($awardID);
+
+            $awardName = htmlspecialchars_uni($awardData['name']);
+
+            $awardImage = eval(getTemplate(awardGetInfo(INFORMATION_TYPE_TEMPLATE, $awardID), false));
 
             $new_award = eval(getTemplate('postbit', true, false));
 
@@ -863,22 +867,22 @@ function modcp_start10(): bool
 
 function usercp_menu_built(): bool
 {
-    _dump(123);
+    //_dump(123);
     global $mybb;
 
-    if (!is_member(\ougc\DefaultPostStyle\Core\getSetting('groups'))) {
+    if (!is_member(getSetting('groups'))) {
         return false;
     }
 
     global $lang, $templates, $usercpnav;
 
-    \ougc\DefaultPostStyle\Core\loadLanguage();
+    loadLanguage();
 
-    $pageUrl = \ougc\DefaultPostStyle\Core\urlHandlerBuild(['action' => getSetting('pageAction')]);
+    $pageUrl = urlHandlerBuild(['action' => getSetting('pageAction')]);
 
-    $navigationItem = eval(\ougc\DefaultPostStyle\Core\getTemplate('menu'));
+    $navigationItem = eval(getTemplate('menu'));
 
-    $usercpnav = str_replace('<!--OUGC_DEFAULTPOSTSTYLE-->', $navigationItem, $usercpnav);
+    $usercpnav = str_replace('<!--OUGC_AWARDS-->', $navigationItem, $usercpnav);
 
     return true;
 }
@@ -961,12 +965,12 @@ function modcp_start(): bool
         }
     }
 
-    $error = array();
+    $error = [];
     $button = $errors = $paginationMenu = $content = '';
 
     $_cache = $mybb->cache->read('ougc_awards');
 
-    $where_cids = $where_aids = array();
+    $where_cids = $where_aids = [];
     foreach ($_cache['categories'] as $cid => $category) {
         $where_cids[] = (int)$cid;
     }
@@ -981,8 +985,8 @@ function modcp_start(): bool
 
     $where_aids = implode("','", $isModerationPanel ? $where_aids : $owner_aids);
 
-    if ($mybb->get_input('page', 1) > 0) {
-        $startPage = ($mybb->get_input('page', 1) - 1) * getSetting('perpage');
+    if ($mybb->get_input('page', MyBB::INPUT_INT) > 0) {
+        $startPage = ($mybb->get_input('page', MyBB::INPUT_INT) - 1) * getSetting('perpage');
     } else {
         $startPage = 0;
         $mybb->input['page'] = 1;
@@ -991,20 +995,20 @@ function modcp_start(): bool
     $_awards = [];
 
     if (!$isModerationPanel && $mybb->get_input('action') == 'sort') {
-        $categories = $cids = array();
+        $categories = $cids = [];
         $awardlist = '';
 
         $catscount = count($_cache['categories']);
 
         if ($mybb->request_method === 'post') {
-            $updates = array();
+            $updates = [];
 
-            $disporder = $mybb->get_input('disporder', 2);
+            $disporder = $mybb->get_input('disporder', MyBB::INPUT_ARRAY);
             foreach ($disporder as $key => $value) {
-                $updates[(int)$key] = array('disporder' => (int)$value, 'visible' => 0);
+                $updates[(int)$key] = ['disporder' => (int)$value, 'visible' => 0];
             }
 
-            $visible = $mybb->get_input('visible', 2);
+            $visible = $mybb->get_input('visible', MyBB::INPUT_ARRAY);
             foreach ($visible as $key => $value) {
                 $updates[(int)$key]['visible'] = 1;
             }
@@ -1020,7 +1024,7 @@ function modcp_start(): bool
             'ougc_awards_categories',
             '*',
             "visible='1'",
-            array('limit_start' => $startPage, 'limit' => (int)getSetting('perpage'), 'order_by' => 'disporder')
+            ['limit_start' => $startPage, 'limit' => (int)getSetting('perpage'), 'order_by' => 'disporder']
         );
         if ($db->num_rows($query)) {
             while ($category = $db->fetch_array($query)) {
@@ -1031,7 +1035,7 @@ function modcp_start(): bool
             $paginationMenu = (string)multipage(
                 $catscount,
                 getSetting('perpage'),
-                $mybb->get_input('page', 1),
+                $mybb->get_input('page', MyBB::INPUT_INT),
                 urlHandlerBuild()
             );
         }
@@ -1105,7 +1109,7 @@ function modcp_start(): bool
                             $taskID
                         ))) {
                             if (!($grantReason = $grantData['reason'])) {
-                                $grantReason = $lang->ougc_awards_pm_noreason;
+                                $grantReason = $lang->na;
                             }
                         }
 
@@ -1203,7 +1207,7 @@ function stats_end(): bool
     if (empty($stats['top'])) {
         $userlist = eval(getTemplate('stats_empty'));
     } else {
-        $_users = array();
+        $_users = [];
 
         $query = $db->simple_select(
             'users',
@@ -1247,7 +1251,7 @@ function stats_end(): bool
     if (empty($stats['last'])) {
         $userlist = eval(getTemplate('stats_empty'));
     } else {
-        $_users = array();
+        $_users = [];
 
         $query = $db->simple_select(
             'users',

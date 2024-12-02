@@ -44,6 +44,7 @@
             </td>
             <td class="trow1" style="vertical-align: middle;">{$categorySelect}</td>
         </tr>
+        {$fileUploadRow}
         <tr>
             <td class="trow2" width="20%" style="vertical-align: top;">
                 <strong>{$lang->ougcAwardsControlPanelNewAwardImageType}</strong>
@@ -84,10 +85,12 @@
                 </div>
             </td>
             <td class="trow2" style="vertical-align: middle;">
-                <input type="radio" class="radio" name="allowrequests" value="1" {$selectedElementAllowRequestsYes}>
-                {$lang->yes}
-                <input type="radio" class="radio" name="allowrequests" value="0" {$selectedElementAllowRequestsNo}>
-                {$lang->no}
+                <input type="radio" class="radio" name="allowrequests" value="1" id="allowrequests_yes"
+                       {$selectedElementAllowRequestsYes}>
+                <label for="allowrequests_yes">{$lang->yes}</label>
+                <input type="radio" class="radio" name="allowrequests" value="0" id="allowrequests_no"
+                       {$selectedElementAllowRequestsNo}>
+                <label for="allowrequests_no">{$lang->no}</label>
             </td>
         </tr>
         <tr>
@@ -122,6 +125,7 @@
                 </select>
             </td>
         </tr>
+        {$additionalRows}
     </table>
     <br/>
     <div align="center">

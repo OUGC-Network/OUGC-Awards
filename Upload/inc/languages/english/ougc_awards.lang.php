@@ -103,7 +103,7 @@ $l = [
     'ougcAwardsControlPanelEditAward' => 'Edit Award',
     'ougcAwardsControlPanelDeleteAward' => 'Delete Award',
     'ougcAwardsControlPanelRequestAward' => 'Request Award',
-    'ougcAwardsControlPanelButtonUpdate' => 'Update Award',
+    'ougcAwardsControlPanelButtonUpdate' => 'Update Awards',
     'ougcAwardsControlPanelButtonNewAward' => 'New Award',
 
     'ougcAwardsControlPanelNewAwardTitle' => 'New Award',
@@ -115,23 +115,26 @@ $l = [
     'ougcAwardsControlPanelNewAwardDescriptionDescription' => 'Select a short description for this award.',
     'ougcAwardsControlPanelNewAwardCategory' => 'Category',
     'ougcAwardsControlPanelNewAwardCategoryDescription' => 'Select the category for this award.',
-    'ougcAwardsControlPanelNewAwardImageType' => 'Image / Class',
-    'ougcAwardsControlPanelNewAwardImageTypeDescription' => 'Enter the image path or class name for this award below. The following variables are available.<br /><pre style="color: darkgreen;">
+    'ougcAwardsControlPanelNewAwardImageFile' => 'Icon File',
+    'ougcAwardsControlPanelNewAwardImageFileDescription' => 'Upload an image for this award.',
+    'ougcAwardsControlPanelNewAwardImageFileNote' => 'Current file icon will be replaced if a new file is uploaded.',
+    'ougcAwardsControlPanelNewAwardImageType' => 'URL / Class',
+    'ougcAwardsControlPanelNewAwardImageTypeDescription' => 'Enter the image path or class name for this award below. The following variables are available.<br />Leave empty to use the uploaded file icon.<br /><pre style="color: darkgreen;">
 {bburl} -> Forum URL
 {homeurl} -> Home URL
 {imgdir} -> Theme Directory URL
 {aid} -> Award ID
 {cid} -> Category ID
 </pre>',
-    'ougcAwardsControlPanelNewAwardTemplateType' => 'Template Type',
-    'ougcAwardsControlPanelNewAwardTemplateTypeDescription' => 'Select what template type to use for this award.<br /><pre style="color: darkgreen;">
-Image Template: Best for image (file) awards.
-Class Template: Best for CSS (class) awards.
-Custom Template (Advanced): A custom template for this award.
+    'ougcAwardsControlPanelNewAwardTemplateType' => 'Icon Type',
+    'ougcAwardsControlPanelNewAwardTemplateTypeDescription' => 'Select what icon type to use for this award.<br /><pre style="color: darkgreen;">
+File or URL Icon: Best for image (file) awards.
+Class Icon: Best for CSS (class) awards.
+Custom Icon (Advanced): A custom template for this award.
 </pre>',
-    'ougcAwardsControlPanelNewAwardTemplateTypeImage' => 'Image Template',
-    'ougcAwardsControlPanelNewAwardTemplateTypeClass' => 'Class Template',
-    'ougcAwardsControlPanelNewAwardTemplateTypeCustom' => 'Custom Template (Advanced)',
+    'ougcAwardsControlPanelNewAwardTemplateTypeImage' => 'File or URL Icon',
+    'ougcAwardsControlPanelNewAwardTemplateTypeClass' => 'Class Icon',
+    'ougcAwardsControlPanelNewAwardTemplateTypeCustom' => 'Custom Icon (Advanced)',
     'ougcAwardsControlPanelNewAwardAllowRequests' => 'Allow User Requests',
     'ougcAwardsControlPanelNewAwardAllowRequestsDescription' => 'Allow users to request this award.',
     'ougcAwardsControlPanelNewAwardPrivateMessage' => 'Private Message Content',
@@ -435,6 +438,9 @@ Greetings.',
     'ougcAwardsTaskRan' => 'The awards task ran successfully.',
 ];
 
+// Stats
+$l['ougcAwardsStatsViewAll'] = 'View All';
+
 /*
 // Plugin information.
 $l['ougc_awards' => 'OUGC Awards';
@@ -457,7 +463,6 @@ $l['ougc_awards_stats_last' => 'Latest Granted';
 $l['ougc_awards_stats_empty' => 'There are currently no stats to display.';
 $l['ougc_awards_stats_username' => 'Username';
 $l['ougc_awards_stats_total' => 'Total';
-$l['ougc_awards_stats_viewall' => 'View All';
 
 // UserCP
 $l['ougc_awards_usercp_list_visible' => 'Display';

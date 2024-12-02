@@ -55,6 +55,7 @@ use function ougc\Awards\Core\grantUpdate;
 use function ougc\Awards\Core\isModerator;
 use function ougc\Awards\Core\isVisibleAward;
 use function ougc\Awards\Core\isVisibleCategory;
+use function ougc\Awards\Core\logGet;
 use function ougc\Awards\Core\ownerDelete;
 use function ougc\Awards\Core\ownerFind;
 use function ougc\Awards\Core\ownerGetSingle;
@@ -72,9 +73,11 @@ use function ougc\Awards\Core\requestGetPending;
 use function ougc\Awards\Core\requestGetPendingTotal;
 use function ougc\Awards\Core\requestInsert;
 use function ougc\Awards\Core\requestReject;
+use function ougc\Awards\Core\taskDelete;
 use function ougc\Awards\Core\taskGet;
 use function ougc\Awards\Core\taskInsert;
 use function ougc\Awards\Core\taskUpdate;
+use function ougc\Awards\Core\uploadAward;
 use function ougc\Awards\Core\urlHandlerBuild;
 use function ougc\Awards\Core\loadLanguage;
 use function ougc\Awards\Core\urlHandlerSet;
@@ -138,7 +141,7 @@ $currentUserID = (int)$mybb->user['uid'];
 
 $isOwner = !empty($mybb->user['ougc_awards_owner']);
 
-$plugins->run_hooks('ougcAwards_PageStart');
+$plugins->run_hooks('ougc_awards_start');
 
 add_breadcrumb($lang->ougcAwardsPageNavigation, urlHandlerBuild());
 
@@ -175,7 +178,7 @@ switch ($mybb->get_input('action')) {
             $awardID = (int)$grantData['aid'];
         }
 
-        if (!in_array($mybb->get_input('action'), ['newCategory', 'editCategory', 'newAward'], true)) {
+        if (!in_array($mybb->get_input('action'), ['newCategory', 'editCategory', 'newAward'])) {
             if (!($awardData = awardGet($awardID)) || !isVisibleAward($awardID)) {
                 error($lang->ougcAwardsErrorInvalidAward);
             }
@@ -183,13 +186,13 @@ switch ($mybb->get_input('action')) {
             $categoryID = (int)$awardData['cid'];
         }
 
-        if (!in_array($mybb->get_input('action'), ['newCategory', 'newAward', 'editAward'], true)) {
+        if (!in_array($mybb->get_input('action'), ['newCategory', 'newAward', 'editAward'])) {
             if (!($categoryData = categoryGet($categoryID)) || !isVisibleCategory($categoryID)) {
                 error($lang->ougcAwardsErrorInvalidCategory);
             }
         }
 
-        if (!in_array($mybb->get_input('action'), ['newCategory', 'editCategory'], true)) {
+        if (!in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
             $awardName = awardGetInfo(INFORMATION_TYPE_NAME, $awardID);
         }
 
@@ -301,12 +304,19 @@ $requirementCriteria = [
             $inputField = eval(getTemplate('selectField'));
 
             global $lang;
+            global $inputData;
 
-            $inputName = 'additionalgroups';
+            $inputName = $selectName = 'additionalgroups';
 
             $inputLabel = $lang->ougcAwardsControlPanelNewTaskRequirementsAdditionalGroups;
 
             $inputTitle = $lang->ougcAwardsControlPanelNewTaskRequirementsAdditionalGroupsDescription;
+
+            $checked = '';
+
+            if (!empty($inputData['additionalgroups'])) {
+                $checked = ' checked="checked"';
+            }
 
             $typeSelect = eval(getTemplate('radioField'));
 
@@ -455,7 +465,7 @@ $requirementCriteria = [
 
                 $selectedElement = '';
 
-                if ($optionValue === $inputData[$selectName]) {
+                if ($optionValue === (int)$inputData[$selectName]) {
                     $selectedElement = ' selected="selected"';
                 }
 
@@ -523,7 +533,7 @@ $requirementCriteria = [
 
                 $selectedElement = '';
 
-                if ($optionValue === $inputData[$selectName]) {
+                if ($optionValue === (int)$inputData[$selectName]) {
                     $selectedElement = ' selected="selected"';
                 }
 
@@ -878,13 +888,15 @@ $requirementCriteria = [
     ],
 ];
 
-if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editCategory'], true)) {
+if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
     $newCategoryPage = $mybb->get_input('action') === 'newCategory';
 
     $inputData = [];
 
+    $plugins->run_hooks('ougc_awards_edit_category_start');
+
     foreach (['name', 'description', 'allowrequests', 'visible', 'disporder'] as $inputKey) {
-        if (isset($mybb->input[$inputKey])) {
+        if ($mybb->request_method === 'post') {
             $inputData[$inputKey] = $mybb->get_input($inputKey);
         } elseif (isset($categoryData[$inputKey])) {
             $inputData[$inputKey] = $categoryData[$inputKey];
@@ -906,12 +918,14 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
         if (empty($errorMessages)) {
             $categoryData = [
-                'name' => $inputData['name'],
-                'description' => $inputData['description'],
-                'disporder' => $inputData['disporder'],
-                'allowrequests' => $inputData['allowrequests'],
-                'visible' => $inputData['visible'],
+                'name' => $db->escape_string($inputData['name']),
+                'description' => $db->escape_string($inputData['description']),
+                'disporder' => (int)$inputData['disporder'],
+                'allowrequests' => (int)$inputData['allowrequests'],
+                'visible' => (int)$inputData['visible'],
             ];
+
+            $plugins->run_hooks('ougc_awards_edit_category_commit_start');
 
             if ($newCategoryPage) {
                 categoryInsert($categoryData);
@@ -932,7 +946,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     }
 
     foreach (['name', 'description', 'allowrequests', 'visible', 'disporder'] as $inputKey) {
-        if (isset($mybb->input[$inputKey])) {
+        if ($mybb->request_method === 'post') {
             $inputData[$inputKey] = htmlspecialchars_uni($mybb->get_input($inputKey));
         } elseif (isset($categoryData[$inputKey])) {
             $inputData[$inputKey] = htmlspecialchars_uni($categoryData[$inputKey]);
@@ -981,16 +995,26 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
         $buttonText = $lang->ougcAwardsControlPanelNewCategoryButton;
     }
 
+    $additionalRows = [];
+
+    $rowBackground = alt_trow(true);
+
+    $plugins->run_hooks('ougc_awards_edit_category_end');
+
+    $additionalRows = implode(' ', $additionalRows);
+
     $pageContents = eval(getTemplate('controlPanelNewEditCategoryForm'));
-} elseif (isModerator() && in_array($mybb->get_input('action'), ['newAward', 'editAward'], true)) {
+} elseif (isModerator() && in_array($mybb->get_input('action'), ['newAward', 'editAward'])) {
     $newAwardPage = $mybb->get_input('action') === 'newAward';
 
     $categoryID = $mybb->get_input('cid', MyBB::INPUT_INT);
 
     $inputData = [];
 
+    $plugins->run_hooks('ougc_awards_edit_award_start');
+
     foreach (['cid', 'name', 'description', 'image', 'template', 'allowrequests', 'pm', 'type'] as $inputKey) {
-        if (isset($mybb->input[$inputKey])) {
+        if ($mybb->request_method === 'post') {
             $inputData[$inputKey] = $mybb->get_input($inputKey);
         } elseif (isset($awardData[$inputKey])) {
             $inputData[$inputKey] = $awardData[$inputKey];
@@ -1018,17 +1042,29 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
             $errorMessages[] = $lang->ougcAwardsErrorInvalidCategory;
         }
 
+        if (empty($errorMessages) && !empty($_FILES['award_file']['name'])) {
+            require_once MYBB_ROOT . 'inc/functions_upload.php';
+
+            $upload = uploadAward($_FILES['award_file'], $awardID);
+        }
+
         if (empty($errorMessages)) {
             $awardData = [
-                'name' => $inputData['name'],
-                'cid' => $inputData['cid'],
-                'description' => $inputData['description'],
-                'image' => $inputData['image'],
-                'template' => $inputData['template'],
-                'allowrequests' => $inputData['allowrequests'],
-                'pm' => $inputData['pm'],
-                'type' => $inputData['type'],
+                'name' => $db->escape_string($inputData['name']),
+                'cid' => (int)$inputData['cid'],
+                'description' => $db->escape_string($inputData['description']),
+                'image' => $db->escape_string($inputData['image']),
+                'template' => (int)$inputData['template'],
+                'allowrequests' => (int)$inputData['allowrequests'],
+                'pm' => (int)$inputData['pm'],
+                'type' => (int)$inputData['type'],
             ];
+
+            if (!empty($upload['fileName'])) {
+                $awardData['award_file'] = $db->escape_string($upload['fileName']);
+            }
+
+            $plugins->run_hooks('ougc_awards_edit_award_commit_start');
 
             if ($newAwardPage) {
                 awardInsert($awardData);
@@ -1049,13 +1085,25 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     }
 
     foreach (['cid', 'name', 'description', 'image', 'template', 'allowrequests', 'pm', 'type'] as $inputKey) {
-        if (isset($mybb->input[$inputKey])) {
+        if ($mybb->request_method === 'post') {
             $inputData[$inputKey] = htmlspecialchars_uni($mybb->get_input($inputKey));
         } elseif (isset($awardData[$inputKey])) {
             $inputData[$inputKey] = htmlspecialchars_uni($awardData[$inputKey]);
         } else {
             $inputData[$inputKey] = '';
         }
+    }
+
+    $fileUploadRow = '';
+
+    if (!$newAwardPage) {
+        $fileUploadedNote = '';
+
+        if (!empty($awardData['award_file'])) {
+            $fileUploadedNote = $lang->ougcAwardsControlPanelNewAwardImageFileNote;
+        }
+
+        $fileUploadRow = eval(getTemplate('controlPanelNewEditAwardFormUpload'));
     }
 
     $categorySelect = generateSelectCategory($categoryID);
@@ -1116,6 +1164,14 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
         $buttonText = $lang->ougcAwardsControlPanelNewAwardButton;
     }
+
+    $additionalRows = [];
+
+    $rowBackground = alt_trow(true);
+
+    $plugins->run_hooks('ougc_awards_edit_award_end');
+
+    $additionalRows = implode(' ', $additionalRows);
 
     $pageContents = eval(getTemplate('controlPanelNewEditAwardForm'));
 } elseif (isModerator() && $mybb->get_input('action') === 'deleteAward') {
@@ -1214,7 +1270,10 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
                     }
                 }
 
-                redirect(urlHandlerBuild(), $lang->ougcAwardsRedirectGrantRevoked);
+                redirect(
+                    urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID]),
+                    $lang->ougcAwardsRedirectGrantRevoked
+                );
             }
         } elseif (isset($mybb->input['grant'])) {
             $userNames = explode(',', $mybb->get_input('username'));
@@ -1238,10 +1297,11 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
                     break;
                 }
 
+                //_dump($award);
                 if (!grantFind($awardID, (int)$userData['uid'])) {
-                    $errorMessages[] = $lang->ougcAwardsErrorInvalidGrant;
+                    //$errorMessages[] = $lang->ougcAwardsErrorInvalidGrant;
 
-                    break;
+                    //break;
                 }
             }
 
@@ -1259,14 +1319,19 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
             if (empty($errorMessages)) {
                 foreach ($usersCache as $userData) {
-                    if ($grantData = grantFind($awardID, (int)$userData['uid'])) {
-                        grantDelete((int)$grantData['gid']);
+                    grantInsert(
+                        $awardID,
+                        (int)$userData['uid'],
+                        $mybb->get_input('reason')
+                    );
 
-                        logAction();
-                    }
+                    logAction();
                 }
 
-                redirect(urlHandlerBuild(), $lang->ougcAwardsRedirectGrantRevoked);
+                redirect(
+                    urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID]),
+                    $lang->ougcAwardsRedirectGranted
+                );
             }
         }
         $userNames = explode(',', $mybb->get_input('username'));
@@ -1309,8 +1374,10 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
                 logAction();
             }
 
-            redirect(urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID]),
-                $lang->ougcAwardsRedirectGranted);
+            redirect(
+                urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID]),
+                $lang->ougcAwardsRedirectGranted
+            );
         }
     }
 
@@ -1794,7 +1861,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
         $paginationMenu = (string)multipage(
             $totalRequestsCount,
             getSetting('perpage'),
-            $mybb->get_input('page', 1),
+            $mybb->get_input('page', MyBB::INPUT_INT),
             urlHandlerBuild(['action' => 'viewRequests'])
         );
 
@@ -1898,7 +1965,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     $inputData = [];
 
     foreach (['thread', 'reason', 'date'] as $inputKey) {
-        if (isset($mybb->input[$inputKey])) {
+        if ($mybb->request_method === 'post') {
             $inputData[$inputKey] = $mybb->get_input($inputKey);
         } elseif (isset($grantData[$inputKey])) {
             $inputData[$inputKey] = $grantData[$inputKey];
@@ -1934,12 +2001,12 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
         if (empty($errorMessages)) {
             $updateData = [
-                'reason' => $inputData['reason'],
-                'date' => $inputData['date']
+                'reason' => $db->escape_string($inputData['reason']),
+                'date' => (int)$inputData['date']
             ];
 
             if (!empty($threadData['tid'])) {
-                $updateData['thread'] = $threadData['tid'];
+                $updateData['thread'] = (int)$threadData['tid'];
             }
 
             grantUpdate($updateData, $grantID);
@@ -1954,7 +2021,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     }
 
     foreach (['thread', 'reason', 'date'] as $inputKey) {
-        if (isset($mybb->input[$inputKey])) {
+        if ($mybb->request_method === 'post') {
             $inputData[$inputKey] = htmlspecialchars_uni($mybb->get_input($inputKey));
         } elseif (isset($grantData[$inputKey])) {
             $inputData[$inputKey] = htmlspecialchars_uni($grantData[$inputKey]);
@@ -2313,8 +2380,8 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     } elseif ($mybb->request_method === 'post') {
         requestInsert([
             'uid' => $currentUserID,
-            'aid' => $awardID,
-            'message' => $mybb->get_input('message')
+            'aid' => (int)$awardID,
+            'message' => $db->escape_string($mybb->get_input('message'))
         ]);
 
         logAction();
@@ -2341,7 +2408,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
         $awardDescription = htmlspecialchars_uni($awardData['description']);
 
-        $awardImage = $imageClass = awardGetIcon($awardData['aid']);
+        $awardImage = $imageClass = awardGetIcon((int)$awardData['aid']);
 
         $disabledElement = '';
 
@@ -2359,7 +2426,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     echo $modalContents;
 
     exit;
-} elseif (isModerator() && in_array($mybb->get_input('action'), ['newTask', 'editTask'], true)) {
+} elseif (isModerator() && in_array($mybb->get_input('action'), ['newTask', 'editTask'])) {
     $newTaskPage = $mybb->get_input('action') === 'newTask';
 
     $taskData = taskGet(["tid='{$taskID}'"], '*', ['limit' => 1]);
@@ -2397,10 +2464,10 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
             'ruleScripts',
         ] as $inputKey
     ) {
-        if (isset($mybb->input[$inputKey])) {
+        if ($mybb->request_method === 'post') {
             $inputData[$inputKey] = $mybb->get_input($inputKey);
-        } elseif (isset($grantData[$inputKey])) {
-            $inputData[$inputKey] = $grantData[$inputKey];
+        } elseif (isset($taskData[$inputKey])) {
+            $inputData[$inputKey] = $taskData[$inputKey];
         } else {
             $inputData[$inputKey] = '';
         }
@@ -2411,7 +2478,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
             //'newpoints',
         ] as $inputKey
     ) {
-        if (isset($mybb->input[$inputKey])) {
+        if ($mybb->request_method === 'post') {
             $inputData[$inputKey] = $mybb->get_input($inputKey, MyBB::INPUT_FLOAT);
         } elseif (isset($taskData[$inputKey])) {
             $inputData[$inputKey] = (float)$taskData[$inputKey];
@@ -2420,13 +2487,15 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
         }
     }
 
+    //isset($mybb->input['additionalgroups']) || $mybb->input['additionalgroups'] = 0;
+
     foreach (
         [
             'tid',
             'active',
             'logging',
             'thread',
-            'allowmultiple',
+            //'allowmultiple',
             'disporder',
             'additionalgroups',
             'threads',
@@ -2445,7 +2514,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
             //'ougc_customrep_g',
         ] as $inputKey
     ) {
-        if (isset($mybb->input[$inputKey])) {
+        if ($mybb->request_method === 'post') {
             $inputData[$inputKey] = $mybb->get_input($inputKey, MyBB::INPUT_INT);
         } elseif (isset($taskData[$inputKey])) {
             $inputData[$inputKey] = (int)$taskData[$inputKey];
@@ -2454,6 +2523,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
         }
     }
 
+    //_dump($inputData['requirements'], $mybb->input['requirements'], $taskData['requirements']);
     foreach (
         [
             'requirements',
@@ -2464,12 +2534,12 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
             'profilefields',
         ] as $inputKey
     ) {
-        if (isset($mybb->input[$inputKey])) {
+        //isset($mybb->input[$inputKey]) || $mybb->input[$inputKey] = [];
+
+        if ($mybb->request_method === 'post') {
             $inputData[$inputKey] = $mybb->get_input($inputKey, MyBB::INPUT_ARRAY);
         } elseif (isset($taskData[$inputKey])) {
             $inputData[$inputKey] = explode(',', $taskData[$inputKey]);
-        } else {
-            $inputData[$inputKey] = [];
         }
     }
 
@@ -2497,7 +2567,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
                 'give' => $inputData['give'],
                 'reason' => $inputData['reason'],
                 'thread' => $inputData['thread'],
-                'allowmultiple' => $inputData['allowmultiple'],
+                //'allowmultiple' => $inputData['allowmultiple'],
                 'revoke' => $inputData['revoke'],
                 'disporder' => $inputData['disporder'],
                 'usergroups' => $inputData['usergroups'],
@@ -2540,6 +2610,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
                 //'ougc_customrepids_g' => $inputData['ougc_customrepids_g'],
                 'ruleScripts' => $inputData['ruleScripts'],
             ];
+
             if ($newTaskPage) {
                 taskInsert($insertData);
             } else {
@@ -2558,6 +2629,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
         }
     }
 
+    /*
     foreach (
         [
             'name',
@@ -2585,14 +2657,14 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
             'ruleScripts',
         ] as $inputKey
     ) {
-        if (isset($mybb->input[$inputKey])) {
-            $inputData[$inputKey] = htmlspecialchars_uni($mybb->get_input($inputKey));
+        if ($mybb->request_method === 'post') {
+            $inputData[$inputKey] = $mybb->get_input($inputKey);
         } elseif (isset($taskData[$inputKey])) {
-            $inputData[$inputKey] = htmlspecialchars_uni($taskData[$inputKey]);
+            $inputData[$inputKey] = $taskData[$inputKey];
         } else {
             $inputData[$inputKey] = '';
         }
-    }
+    }*/
 
     $selectedElementEnabledYes = $selectedElementEnabledNo = '';
 
@@ -2639,6 +2711,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
     $awardsGrantSelect = generateSelectAwards('give[]', $inputData['give'], ['multiple' => true]);
 
+    /*
     $selectedElementMultipleYes = $selectedElementMultipleNo = '';
 
     switch ($inputData['allowmultiple']) {
@@ -2648,7 +2721,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
         default:
             $selectedElementMultipleNo = 'checked="checked"';
             break;
-    }
+    }*/
 
     $awardsRevokeSelect = generateSelectAwards('revoke[]', $inputData['revoke'], ['multiple' => true]
     );
@@ -2706,7 +2779,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     if ($mybb->request_method === 'post') {
         verify_post_check($mybb->get_input('my_post_key'));
 
-        \ougc\Awards\Core\taskDelete($taskID);
+        taskDelete($taskID);
 
         cacheUpdate();
 
@@ -2809,7 +2882,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
     $logsRows = '';
 
-    foreach (\ougc\Awards\Core\logGet(["tid='{$taskID}'"]) as $logData) {
+    foreach (logGet(["tid='{$taskID}'"]) as $logData) {
         $logID = (int)$logData['lid'];
 
         $userID = (int)$logData['uid'];
@@ -3074,7 +3147,7 @@ $pageContents = eval(getTemplate('controlPanelContents'));
 
 $pageContents = eval(getTemplate('controlPanel'));
 
-$plugins->run_hooks('ougcAwards_PageEnd');
+$plugins->run_hooks('ougc_awards_end');
 
 output_page($pageContents);
 

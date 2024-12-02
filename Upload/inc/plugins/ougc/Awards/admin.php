@@ -32,38 +32,16 @@ namespace ougc\Awards\Admin;
 
 use DirectoryIterator;
 
-use Form;
-
-use FormContainer;
-
-use MyBB;
-
 use function ougc\Awards\Core\allowImports;
-
 use function ougc\Awards\Core\cacheUpdate;
-
 use function ougc\Awards\Core\categoryInsert;
-
 use function ougc\Awards\Core\loadLanguage;
-
 use function ougc\Awards\Core\loadPluginLibrary;
 
-use function ougc\Awards\Core\sanitizeIntegers;
-
-use function ougc\Awards\Core\getTemplate;
-
 use const MYBB_ROOT;
-
-use const ougc\Awards\Core\ADMIN_PERMISSION_ENABLE;
-
-use const ougc\Awards\Core\ADMIN_PERMISSION_DISABLE;
-
 use const ougc\Awards\Core\ADMIN_PERMISSION_DELETE;
-
 use const ougc\Awards\Core\TABLES_DATA;
-
 use const ougc\Awards\Core\FIELDS_DATA;
-
 use const ougc\Awards\ROOT;
 
 const TASK_ENABLE = 1;
@@ -226,7 +204,7 @@ function pluginActivate(): bool
     }
 
     if ($plugins['awards'] <= 1800) {
-        $tmpls = array(
+        $tmpls = [
             'modcp_ougc_awards' => 'ougcawards_modcp',
             'modcp_ougc_awards_manage' => 'ougcawards_modcp_manage',
             'modcp_ougc_awards_nav' => 'ougcawards_modcp_nav',
@@ -248,7 +226,7 @@ function pluginActivate(): bool
             'ougc_awards_page_view' => 'ougcawards_page_view',
             'ougc_awards_page_view_empty' => 'ougcawards_page_view_empty',
             'ougc_awards_page_view_row' => 'ougcawards_page_view_row',
-        );
+        ];
 
         $templateNames = implode("','", $tmpls);
 
@@ -259,11 +237,11 @@ function pluginActivate(): bool
         }
 
         foreach ($tmpls as $oldtitle => $newtitle) {
-            $db->update_query('templates', 'title=\'' . $db->escape_string($oldtitle) . '\' AND sid=\'-2\'', array(
+            $db->update_query('templates', 'title=\'' . $db->escape_string($oldtitle) . '\' AND sid=\'-2\'', [
                 'title' => $db->escape_string($newtitle),
                 'version' => 1,
                 'dateline' => TIME_NOW
-            ));
+            ]);
         }
 
         // Rebuild templates
@@ -280,7 +258,7 @@ function pluginActivate(): bool
             'templates',
             'title IN(\'' . implode(
                 '\', \'',
-                array_keys(array_map(array($db, 'escape_string'), $tmpls))
+                array_keys(array_map([$db, 'escape_string'], $tmpls))
             ) . '\') AND sid=\'-2\''
         );
 
@@ -567,15 +545,54 @@ function dbVerifyColumns(): bool
 {
     global $db;
 
-    foreach (FIELDS_DATA as $tableName => $fieldsData) {
-        foreach ($fieldsData as $fieldName => $fieldDefinition) {
+    foreach (FIELDS_DATA as $tableName => $tableColumns) {
+        foreach ($tableColumns as $fieldName => $fieldData) {
+            if (!isset($fieldData['type'])) {
+                continue;
+            }
+
             if ($db->field_exists($fieldName, $tableName)) {
-                $db->modify_column($tableName, "`{$fieldName}`", $fieldDefinition);
+                $db->modify_column($tableName, "`{$fieldName}`", dbBuildFieldDefinition($fieldData));
             } else {
-                $db->add_column($tableName, $fieldName, $fieldDefinition);
+                $db->add_column($tableName, $fieldName, dbBuildFieldDefinition($fieldData));
             }
         }
     }
 
     return true;
+}
+
+function dbBuildFieldDefinition(array $fieldData): string
+{
+    $fieldDefinition = '';
+
+    $fieldDefinition .= $fieldData['type'];
+
+    if (isset($fieldData['size'])) {
+        $fieldDefinition .= "({$fieldData['size']})";
+    }
+
+    if (isset($fieldData['unsigned'])) {
+        if ($fieldData['unsigned'] === true) {
+            $fieldDefinition .= ' UNSIGNED';
+        } else {
+            $fieldDefinition .= ' SIGNED';
+        }
+    }
+
+    if (!isset($fieldData['null'])) {
+        $fieldDefinition .= ' NOT';
+    }
+
+    $fieldDefinition .= ' NULL';
+
+    if (isset($fieldData['auto_increment'])) {
+        $fieldDefinition .= ' AUTO_INCREMENT';
+    }
+
+    if (isset($fieldData['default'])) {
+        $fieldDefinition .= " DEFAULT '{$fieldData['default']}'";
+    }
+
+    return $fieldDefinition;
 }
