@@ -2,7 +2,7 @@
 
 /***************************************************************************
  *
- *    OUGC Awards plugin (/inc/tasks/ougc_awards.php)
+ *    ougc Awards plugin (/inc/tasks/ougc_awards.php)
  *    Author: Omar Gonzalez
  *    Copyright: © 2012 Omar Gonzalez
  *
@@ -31,7 +31,7 @@ declare(strict_types=1);
 use function ougc\Awards\Core\loadLanguage;
 use function ougc\Awards\Core\executeTask;
 
-function task_ougc_awards(array $task)
+function task_ougc_awards(array $task): bool
 {
     global $lang;
 
@@ -40,4 +40,6 @@ function task_ougc_awards(array $task)
     executeTask();
 
     add_task_log($task, $lang->ougcAwardsTaskRan);
+
+    return true;
 }

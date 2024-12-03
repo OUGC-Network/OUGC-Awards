@@ -2,7 +2,7 @@
 
 /***************************************************************************
  *
- *    OUGC Awards plugin (/inc/plugins/ougc/Awards/hooks/shared.php)
+ *    ougc Awards plugin (/inc/plugins/ougc/Awards/hooks/shared.php)
  *    Author: Omar Gonzalez
  *    Copyright: © 2012 Omar Gonzalez
  *

@@ -2,7 +2,7 @@
 
 /***************************************************************************
  *
- *    OUGC Awards plugin (/inc/plugins/ougc/Awards/hooks/admin.php)
+ *    ougc Awards plugin (/inc/plugins/ougc/Awards/hooks/admin.php)
  *    Author: Omar Gonzalez
  *    Copyright: © 2012 Omar Gonzalez
  *
@@ -229,7 +229,7 @@ function admin_config_plugins_begin()
             $cache_awards[$award[$keys['original_id']]] = $insert_award;
         }
 
-        $mybb->settings['ougc_awards_sendpm'] = $mybb->settings['enablepms'] = false;
+        $mybb->settings['enablepms'] = false;
 
         $query = $db->simple_select($tables['users']);
         while ($award = $db->fetch_array($query)) {

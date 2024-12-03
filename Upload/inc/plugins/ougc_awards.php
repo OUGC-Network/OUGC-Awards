@@ -2,7 +2,7 @@
 
 /***************************************************************************
  *
- *    OUGC Awards plugin (/inc/plugins/ougc_awards.php)
+ *    ougc Awards plugin (/inc/plugins/ougc_awards.php)
  *    Author: Omar Gonzalez
  *    Copyright: © 2012 Omar Gonzalez
  *
@@ -28,20 +28,20 @@
 
 declare(strict_types=1);
 
+use function ougc\Awards\Admin\pluginUninstall;
 use function ougc\Awards\Core\addHooks;
 use function ougc\Awards\Core\awardGet;
 use function ougc\Awards\Core\awardGetIcon;
-use function ougc\Awards\Core\awardGetInfo;
 use function ougc\Awards\Core\cacheUpdate;
 use function ougc\Awards\Admin\pluginInfo;
 use function ougc\Awards\Admin\pluginActivate;
 use function ougc\Awards\Admin\pluginDeactivate;
 use function ougc\Awards\Admin\pluginIsInstalled;
 
+use function ougc\Awards\Core\getTemplate;
 use function ougc\Awards\Core\loadLanguage;
 
-use const ougc\Awards\Core\INFORMATION_TYPE_NAME;
-use const ougc\Awards\Core\INFORMATION_TYPE_TEMPLATE;
+use const ougc\Awards\Core\AWARD_TEMPLATE_TYPE_CLASS;
 use const ougc\Awards\ROOT;
 
 defined('IN_MYBB') || die('This file cannot be accessed directly.');
@@ -50,6 +50,9 @@ defined('IN_MYBB') || die('This file cannot be accessed directly.');
 define('ougc\Awards\Core\SETTINGS', [
     //'key' => '',
     'allowImports' => false,
+    'showInPosts' => 2,
+    'showInPostsPresets' => 2,
+    'allowedGroupsPresets' => -1,
 ]);
 
 define('ougc\Awards\Core\DEBUG', true);
@@ -96,6 +99,11 @@ function ougc_awards_is_installed(): bool
     return pluginIsInstalled();
 }
 
+function ougc_awards_uninstall(): bool
+{
+    return pluginUninstall();
+}
+
 function update_ougc_awards()
 {
     cacheUpdate();
@@ -118,23 +126,19 @@ if (class_exists('MybbStuff_MyAlerts_Formatter_AbstractFormatter')) {
          */
         public function formatAlert(MybbStuff_MyAlerts_Entity_Alert $alert, array $outputAlert)
         {
-            global $templates;
-
             $Details = $alert->toArray();
+
             $ExtraDetails = $alert->getExtraDetails();
-            $award = awardGet($Details['object_id']);
 
-            if ($name = awardGetInfo(
-                INFORMATION_TYPE_NAME,
-                $award['aid']
-            )) {
-                $award['name'] = $name;
-            }
+            $awardData = awardGet((int)$Details['object_id']);
 
-            $award['image'] = awardGetIcon($award['aid']);
-            $award['fimage'] = eval(
-            $templates->render(
-                awardGetInfo(INFORMATION_TYPE_TEMPLATE, $award['aid'])
+            $awardName = htmlspecialchars_uni($awardData['name']);
+
+            $awardImage = $awardClass = awardGetIcon((int)$Details['object_id']);
+
+            $awardImage = eval(
+            getTemplate(
+                $awardData['template'] === AWARD_TEMPLATE_TYPE_CLASS ? 'awardImageClass' : 'awardImage'
             )
             );
 
@@ -146,8 +150,8 @@ if (class_exists('MybbStuff_MyAlerts_Formatter_AbstractFormatter')) {
                 $this->lang->ougc_awards_myalerts,
                 $outputAlert['username'],
                 $outputAlert['from_user'],
-                $award['name'],
-                $award['fimage']
+                $awardData['name'],
+                $awardImage
             );
         }
 

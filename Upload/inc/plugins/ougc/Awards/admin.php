@@ -2,7 +2,7 @@
 
 /***************************************************************************
  *
- *    OUGC Awards plugin (/inc/plugins/ougc/Awards/admin.php)
+ *    ougc Awards plugin (/inc/plugins/ougc/Awards/admin.php)
  *    Author: Omar Gonzalez
  *    Copyright: © 2012 Omar Gonzalez
  *
@@ -91,7 +91,6 @@ function pluginActivate(): bool
 
     loadPluginLibrary();
 
-    // Add settings group
     $settingsContents = file_get_contents(ROOT . '/settings.json');
 
     $settingsData = json_decode($settingsContents, true);
@@ -108,6 +107,7 @@ function pluginActivate(): bool
         }
 
         $settingData['title'] = $lang->{"setting_ougc_awards_{$settingKey}"};
+
         $settingData['description'] = $lang->{"setting_ougc_awards_{$settingKey}_desc"};
     }
 
@@ -121,7 +121,7 @@ function pluginActivate(): bool
     $templates = [];
 
     if (file_exists($templateDirectory = ROOT . '/templates')) {
-        $templatesDirIterator = new DirectoryIterator($templateDirectory = ROOT . '/templates');
+        $templatesDirIterator = new DirectoryIterator($templateDirectory);
 
         foreach ($templatesDirIterator as $template) {
             if (!$template->isFile()) {
@@ -139,7 +139,7 @@ function pluginActivate(): bool
     }
 
     if ($templates) {
-        $PL->templates('ougcawards', 'OUGC Awards', $templates);
+        $PL->templates('ougcawards', 'ougc Awards', $templates);
     }
 
     global $db, $mybb;
@@ -185,9 +185,6 @@ function pluginActivate(): bool
     enableTask();
 
     change_admin_permission('tools', 'ougc_awards', ADMIN_PERMISSION_DELETE);
-
-    if ($plugins['awards'] <= 1807) {
-    }
 
     if ($plugins['awards'] <= 1803) {
         $dbQuery = $db->simple_select('ougc_awards', 'aid');
@@ -237,11 +234,11 @@ function pluginActivate(): bool
         }
 
         foreach ($tmpls as $oldtitle => $newtitle) {
-            $db->update_query('templates', 'title=\'' . $db->escape_string($oldtitle) . '\' AND sid=\'-2\'', [
+            $db->update_query('templates', [
                 'title' => $db->escape_string($newtitle),
                 'version' => 1,
                 'dateline' => TIME_NOW
-            ]);
+            ], 'title=\'' . $db->escape_string($oldtitle) . '\' AND sid=\'-2\'');
         }
 
         // Rebuild templates
@@ -284,13 +281,15 @@ function pluginDeactivate(): bool
     return true;
 }
 
-function pluginInstall()
+function pluginInstall(): bool
 {
     dbVerifyTables();
 
     dbVerifyColumns();
 
     enableTask();
+
+    return true;
 }
 
 function pluginIsInstalled(): bool
@@ -312,13 +311,12 @@ function pluginIsInstalled(): bool
     return $isInstalled;
 }
 
-function pluginUninstall()
+function pluginUninstall(): bool
 {
     global $db, $PL, $cache;
 
     loadPluginLibrary();
 
-    // Drop DB entries
     foreach (dbTables() as $tableName => $tableData) {
         if ($db->table_exists($tableName)) {
             $db->drop_table($tableName);
@@ -366,10 +364,11 @@ function pluginUninstall()
     } else {
         $cache->delete('ougc_plugins');
     }
+
+    return true;
 }
 
-// Install/update task file
-function enableTask(int $action = TASK_ENABLE)
+function enableTask(int $action = TASK_ENABLE): bool
 {
     global $db, $lang;
 
@@ -378,7 +377,7 @@ function enableTask(int $action = TASK_ENABLE)
     if ($action === TASK_DELETE) {
         $db->delete_query('tasks', "file='ougc_awards'");
 
-        return;
+        return true;
     }
 
     $query = $db->simple_select('tasks', '*', "file='ougc_awards'", ['limit' => 1]);
@@ -409,16 +408,22 @@ function enableTask(int $action = TASK_ENABLE)
 
         $db->insert_query('tasks', $new_task);
     }
+
+    return true;
 }
 
-function disableTask()
+function disableTask(): bool
 {
     enableTask(TASK_DEACTIVATE);
+
+    return true;
 }
 
-function deleteTask()
+function deleteTask(): bool
 {
     enableTask(TASK_DELETE);
+
+    return true;
 }
 
 function dbTables(): array

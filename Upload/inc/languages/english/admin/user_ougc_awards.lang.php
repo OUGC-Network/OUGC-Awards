@@ -2,7 +2,7 @@
 
 /***************************************************************************
  *
- *    OUGC Awards plugin (/inc/anguages/english/admin/user_ougc_awards.lang.php)
+ *    ougc Awards plugin (/inc/anguages/english/admin/user_ougc_awards.lang.php)
  *    Author: Omar Gonzalez
  *    Copyright: © 2012 Omar Gonzalez
  *
@@ -27,7 +27,7 @@
  ****************************************************************************/
 
 // Plugin API
-$l['ougcAwards'] = 'OUGC Awards';
+$l['ougcAwards'] = 'ougc Awards';
 $l['ougcAwardsDescription'] = 'Manage a powerful awards system for your community.';
 
 // Plugin API
@@ -44,10 +44,8 @@ $l['ougc_awards_import_end'] = 'Awards Imported Successfully.';
 $l['ougc_awards_import_error'] = 'There was an error trying to import the selected awards. The "{1}" table doesn\'t seems to exists.';
 
 // Settings
-$l['setting_ougc_awards_postbit'] = 'Maximum Awards in Posts';
-$l['setting_ougc_awards_postbit_desc'] = 'Maximum number of awards to be shown in posts. -1 for unlimited. 0 to disable.';
-$l['setting_ougc_awards_postbit_maxperline'] = 'Maximum Awards Per Line';
-$l['setting_ougc_awards_postbit_maxperline_desc'] = 'Maximum number of awards to be shown in the same line in posts before adding a break tag. Leave 0 to disable.';
+$l['setting_ougc_awards_showInPosts'] = 'Maximum Awards in Posts';
+$l['setting_ougc_awards_showInPosts_desc'] = 'Maximum number of awards to be shown in posts.';
 $l['setting_ougc_awards_profile'] = 'Maximum Awards in Profile';
 $l['setting_ougc_awards_profile_desc'] = 'Maximum number of awards to be shown in profiles. -1 for unlimited. 0 to disable.';
 $l['setting_ougc_awards_modcp'] = 'Enable ModCP Panel';
@@ -60,20 +58,18 @@ $l['setting_ougc_awards_perpage'] = 'Items Per Page';
 $l['setting_ougc_awards_perpage_desc'] = 'Maximum number of items to show per page or within listings.';
 $l['setting_ougc_awards_sendpm'] = 'Send PM';
 $l['setting_ougc_awards_sendpm_desc'] = 'Do you want to send an PM to users when receiving an award?';
-$l['setting_ougc_awards_welcomeblock'] = 'Display Welcome Block List';
-$l['setting_ougc_awards_welcomeblock_desc'] = 'Enabling this feature, a full list of earned awards will be displayed inside the header user welcome block.';
 $l['setting_ougc_awards_enablestatspage'] = 'Enable Stats';
 $l['setting_ougc_awards_enablestatspage_desc'] = 'Do you want to enable the top and last granted users in the stats page?';
 $l['setting_ougc_awards_myalerts'] = 'MyAlerts Integration';
 $l['setting_ougc_awards_myalerts_desc'] = 'Do you want to send an alert to users when receiving an award';
 $l['setting_ougc_awards_sort_visible_default'] = 'Visible as Default Sort Status';
 $l['setting_ougc_awards_sort_visible_default_desc'] = 'Select the visible status of awards when granting awards to users. If set to <code>No</code>, users will need to set their awards as visible in the sorting page from withing the UserCP.';
-$l['setting_ougc_awards_presets_groups'] = 'Presets Allowed Groups';
-$l['setting_ougc_awards_presets_groups_desc'] = 'Select which groups are allowed to use and create presets.';
+$l['setting_ougc_awards_allowedGroupsPresets'] = 'Presets Allowed Groups';
+$l['setting_ougc_awards_allowedGroupsPresets_desc'] = 'Select which groups are allowed to use and create presets.';
 $l['setting_ougc_awards_presets_maximum'] = 'Maximum Presets';
 $l['setting_ougc_awards_presets_maximum_desc'] = 'Select the maximum amount of presets can create.';
-$l['setting_ougc_awards_presets_post'] = 'Maximum Presets in Posts';
-$l['setting_ougc_awards_presets_post_desc'] = 'Type the maximum preset awards to display in posts.';
+$l['setting_ougc_awards_showInPostsPresets'] = 'Maximum Presets in Posts';
+$l['setting_ougc_awards_showInPostsPresets_desc'] = 'Type the maximum preset awards to display in posts.';
 $l['setting_ougc_awards_presets_profile'] = 'Maximum Preset Awards in Profiles';
 $l['setting_ougc_awards_presets_profile_desc'] = 'Type the maximum preset awards to display in profiles.';
 

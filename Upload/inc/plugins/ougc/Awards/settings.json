@@ -1,11 +1,7 @@
 {
-  "postbit": {
+  "showInPosts": {
     "optionscode": "numeric",
     "value": 4
-  },
-  "postbit_maxperline": {
-    "optionscode": "numeric",
-    "value": 0
   },
   "profile": {
     "optionscode": "numeric",
@@ -31,10 +27,6 @@
     "optionscode": "yesno",
     "value": 1
   },
-  "welcomeblock": {
-    "optionscode": "yesno",
-    "value": 1
-  },
   "sendpm": {
     "optionscode": "yesno",
     "value": 1
@@ -47,7 +39,7 @@
     "optionscode": "yesno",
     "value": 1
   },
-  "presets_groups": {
+  "allowedGroupsPresets": {
     "optionscode": "groupselect",
     "value": -1
   },
@@ -55,7 +47,7 @@
     "optionscode": "numeric",
     "value": 5
   },
-  "presets_post": {
+  "showInPostsPresets": {
     "optionscode": "numeric",
     "value": 10
   },
@@ -87,4 +79,4 @@
     "optionscode": "text",
     "value": "50"
   }
-}Maximum file size (in kilobytes) of uploaded avatars. Set to 0 to disable the limitation.
+}

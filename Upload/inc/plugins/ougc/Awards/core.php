@@ -2,7 +2,7 @@
 
 /***************************************************************************
  *
- *    OUGC Awards plugin (/inc/plugins/ougc/Awards/core.php)
+ *    ougc Awards plugin (/inc/plugins/ougc/Awards/core.php)
  *    Author: Omar Gonzalez
  *    Copyright: © 2012 Omar Gonzalez
  *
@@ -40,20 +40,12 @@ use stdClass;
 
 use function ougc\Awards\Admin\pluginInfo;
 
+use function ougc\Awards\Hooks\Forum\myalerts_register_client_alert_formatters;
+
 use const ougc\Awards\ROOT;
 use const TIME_NOW;
 
-const URL = 'index.php?module=user-ougc_awards';
-
-const INFORMATION_TYPE_TEMPLATE = 1;
-
-const INFORMATION_TYPE_PRIVATE_MESSAGE = 2;
-
-const INFORMATION_TYPE_REASON = 3;
-
-const INFORMATION_TYPE_NAME = 4;
-
-const INFORMATION_TYPE_DESCRIPTION = 5;
+const URL = 'awards.php';
 
 const ADMIN_PERMISSION_ENABLE = 1;
 
@@ -438,7 +430,7 @@ const TABLES_DATA = [
         ],
         'onlinetype' => [
             'type' => 'VARCHAR',
-            'size' => 5,
+            'size' => 10,
             'default' => ''
         ],
         'reputation' => [
@@ -674,8 +666,6 @@ function loadLanguage(bool $isDataHandler = false): bool
         } else {
             $lang->load('ougc_awards', $isDataHandler);
         }
-
-        $lang->load('ougc_awards_extra_vals', true, true);
     }
 
     return true;
@@ -785,16 +775,16 @@ function getSetting(string $settingKey = '')
 {
     global $mybb;
 
-    return isset(SETTINGS[$settingKey]) ? SETTINGS[$settingKey] : (
-    isset($mybb->settings['ougc_awards_' . $settingKey]) ? $mybb->settings['ougc_awards_' . $settingKey] : false
+    return SETTINGS[$settingKey] ?? (
+        $mybb->settings['ougc_awards_' . $settingKey] ?? false
     );
 }
 
 function executeTask(): bool
 {
-    global $mybb, $db, $lang, $plugins;
+    global $mybb, $db, $plugins;
 
-    loadLanguage();
+    loadLanguage(true);
 
     $query = $db->simple_select('ougc_awards_tasks', '*', 'active=1');
 
@@ -835,9 +825,6 @@ function executeTask(): bool
                 case 'hours':
                     $regdate = $award_task['registered'] * 60 * 60;
                     break;
-                case 'days':
-                    $regdate = $award_task['registered'] * 60 * 60 * 24;
-                    break;
                 case 'weeks':
                     $regdate = $award_task['registered'] * 60 * 60 * 24 * 7;
                     break;
@@ -858,9 +845,6 @@ function executeTask(): bool
             switch ($award_task['onlinetype']) {
                 case 'hours':
                     $timeonline = $award_task['online'] * 60 * 60;
-                    break;
-                case 'days':
-                    $timeonline = $award_task['online'] * 60 * 60 * 24;
                     break;
                 case 'weeks':
                     $timeonline = $award_task['online'] * 60 * 60 * 24 * 7;
@@ -920,7 +904,7 @@ function executeTask(): bool
         }
 
         if (in_array('previousawards', $requirements) && !empty($award_task['previousawards'])) {
-            $awards_cache = $mybb->cache->read('ougc_awards');
+            $awards_cache = awardsCacheGet();
             $aids = implode("','", array_keys($awards_cache['awards']));
             foreach (array_map('intval', explode(',', $award_task['previousawards'])) as $aid) {
                 $left_join[] = "LEFT JOIN (
@@ -939,6 +923,7 @@ function executeTask(): bool
             }
         }
 
+        /*
         if (in_array(
                 'mydownloads',
                 $requirements
@@ -1001,6 +986,7 @@ function executeTask(): bool
 			) ocg ON (ocg.uid=u.uid)";
             $where_clause[] = "ocg.ougc_custom_reputation_gived{$award_task['ougc_customreptype_g']}'{$award_task['ougc_customrep_g']}'";
         }
+        */
 
         $log_inserts = [];
 
@@ -1065,7 +1051,7 @@ function executeTask(): bool
                             $award_task['thread'],
                             $award_task['tid']
                         ); // reason shouldn't be supplied.
-                        $log = $result > 0 ?: false;
+                        $log = $result > 0 || false;
                     }
                 }
             }
@@ -1104,26 +1090,22 @@ function allowImports(): bool
     return getSetting('allowImports') && pluginIsInstalled();
 }
 
-function getUser(int $userID)
+function getUser(int $userID): array
 {
     global $db;
-
-    $userData = [];
 
     $dbQuery = $db->simple_select('users', '*', "uid='{$userID}'");
 
     if ($db->num_rows($dbQuery)) {
-        return $db->fetch_array($dbQuery);
+        return (array)$db->fetch_array($dbQuery);
     }
 
-    return $userData;
+    return [];
 }
 
-function getUserByUserName(string $userName)
+function getUserByUserName(string $userName): array
 {
     global $db;
-
-    $userData = [];
 
     $dbQuery = $db->simple_select(
         'users',
@@ -1133,33 +1115,15 @@ function getUserByUserName(string $userName)
     );
 
     if ($db->num_rows($dbQuery)) {
-        return $db->fetch_array($dbQuery);
+        return (array)$db->fetch_array($dbQuery);
     }
 
-    return $userData;
+    return [];
 }
 
-function presetInsert(array $presetData, int $presetID = 0, bool $updatePreset = false): int
+function presetInsert(array $insertData, int $presetID = 0, bool $updatePreset = false): int
 {
     global $db;
-
-    $insertData = [];
-
-    if (isset($presetData['uid'])) {
-        $insertData['uid'] = (int)$presetData['uid'];
-    }
-
-    if (isset($presetData['name'])) {
-        $insertData['name'] = $db->escape_string($presetData['name']);
-    }
-
-    if (isset($presetData['hidden'])) {
-        $insertData['hidden'] = $db->escape_string($presetData['hidden']);
-    }
-
-    if (isset($presetData['visible'])) {
-        $insertData['visible'] = $db->escape_string($presetData['visible']);
-    }
 
     if ($updatePreset) {
         return (int)$db->update_query('ougc_awards_presets', $insertData, "pid='{$presetID}'");
@@ -1168,9 +1132,9 @@ function presetInsert(array $presetData, int $presetID = 0, bool $updatePreset =
     return (int)$db->insert_query('ougc_awards_presets', $insertData);
 }
 
-function presetUpdate(array $presetData, int $presetID): int
+function presetUpdate(array $updateData, int $presetID): int
 {
-    return presetInsert($presetData, $presetID, true);
+    return presetInsert($updateData, $presetID, true);
 }
 
 function presetGet(array $whereClauses = [], string $queryFields = '*', array $queryOptions = []): array
@@ -1252,7 +1216,8 @@ function rebuildOwners(): bool
 
     $dbQuery = $db->simple_select('ougc_awards_owners', 'uid');
 
-    while ($userIDs[] = (int)$db->fetch_field($dbQuery, 'uid')) {
+    while ($userID = $db->fetch_field($dbQuery, 'uid')) {
+        $userIDs[] = (int)$userID;
     }
 
     $userIDs = implode("','", array_filter($userIDs));
@@ -1295,7 +1260,7 @@ function ownerGetUser(
 
     if ($db->num_rows($dbQuery)) {
         if (isset($queryOptions['limit']) && $queryOptions['limit'] === 1) {
-            $usersData = $db->fetch_array($dbQuery);
+            return $db->fetch_array($dbQuery);
         } else {
             while ($userData = $db->fetch_array($dbQuery)) {
                 $usersData[] = $userData;
@@ -1490,90 +1455,6 @@ function awardGetIcon(int $awardID): string
     );
 }
 
-function awardGetInfo(
-    int $informationType = INFORMATION_TYPE_TEMPLATE,
-    int $awardID = 0,
-    int $grantID = 0,
-    int $requestID = 0,
-    int $taskID = 0
-): string {
-    global $lang;
-
-    loadLanguage(true);
-
-    $returnString = '';
-
-    switch ($informationType) {
-        case INFORMATION_TYPE_TEMPLATE:
-
-            $awardData = awardGet($awardID);
-
-            switch ((int)$awardData['template']) {
-                case AWARD_TEMPLATE_TYPE_CUSTOM;
-                    global $templates;
-
-                    if (isset($templates->cache["ougcawards_award_image_cat{$awardData['cid']}"])) {
-                        return "award_image_cat{$awardData['cid']}";
-                    }
-
-                    if (isset($templates->cache["ougcawards_award_image{$awardID}"])) {
-                        return "award_image{$awardID}";
-                    }
-                    break;
-                case AWARD_TEMPLATE_TYPE_CLASS;
-                    return 'awardImageClass';
-            }
-
-            return 'awardImage';
-        case INFORMATION_TYPE_PRIVATE_MESSAGE:
-            if (!empty($lang->ougcAwardsPrivateMessagesOverwrite)) {
-                $returnString = $lang->ougcAwardsPrivateMessagesOverwrite;
-            }
-
-            break;
-        case INFORMATION_TYPE_REASON:
-            if (!empty($lang->{"ougcAwardsAwardReason{$awardID}"})) {
-                return $lang->{"ougcAwardsAwardReason{$awardID}"};
-            } elseif ($taskData = taskGet(["tid='{$taskID}'"])) {
-                if (!empty($lang->{"ougcAwardsTaskReason{$taskID}"})) {
-                    return $lang->{"ougcAwardsTaskReason{$taskID}"};
-                } else {
-                    return $taskData['reason'];
-                }
-            } elseif ($grantData = awardGetUser(["gid='{$grantID}'"], '*', ['limit' => 1])) {
-                return $grantData['reason'];
-            }
-
-            break;
-        case INFORMATION_TYPE_NAME:
-            if (!empty($lang->{"ougcAwardsAwardName{$awardID}"})) {
-                return $lang->{"ougcAwardsAwardName{$awardID}"};
-            } elseif ($awardData = awardGet($awardID)) {
-                return $awardData['name'];
-            }
-
-            break;
-        case INFORMATION_TYPE_DESCRIPTION:
-            $lang_val = "ougcAwardsDescriptionAward{$awardID}";
-
-            if (!empty($lang->{$lang_val})) {
-                $returnString = $lang->{$lang_val};
-            }
-
-            global $cache;
-
-            $awardData = awardGet($awardID);
-
-            if (!empty($awardData['description'])) {
-                $returnString = $awardData['description'];
-            }
-
-            break;
-    }
-
-    return '';
-}
-
 function awardGetUser(
     array $whereClauses = [],
     string $queryFields = '*',
@@ -1655,17 +1536,9 @@ function grantInsert(
 
     $grantID = $db->insert_query('ougc_awards_users', $insertData);
 
-    if ($privateMessage = awardGetInfo(INFORMATION_TYPE_PRIVATE_MESSAGE, $awardID)) {
-        $awardData['pm'] = $privateMessage;
-    }
-
-    if ($awardName = awardGetInfo(INFORMATION_TYPE_NAME, $awardID)) {
-        $awardData['name'] = $awardName;
-    }
-
     global $lang;
 
-    loadLanguage(true);
+    loadLanguage();
 
     sendPrivateMessage([
         'subject' => $lang->sprintf(
@@ -1759,9 +1632,9 @@ function requestInsert(array $requestData, int $requestID = 0, bool $updateReque
     return (int)$db->insert_query('ougc_awards_requests', $insertData);
 }
 
-function requestUpdate(array $updateData, int $requestID)
+function requestUpdate(array $updateData, int $requestID): int
 {
-    requestInsert($updateData, $requestID, true);
+    return requestInsert($updateData, $requestID, true);
 }
 
 function requestGet(array $whereClauses = []): array
@@ -1818,11 +1691,11 @@ function requestGetPendingTotal(array $whereClauses = []): int
     return 0;
 }
 
-function requestReject(int $requestID)
+function requestReject(int $requestID): bool
 {
     global $lang, $mybb;
 
-    loadLanguage(true);
+    loadLanguage();
 
     $requestData = requestGet(["rid='{$requestID}'"]);
 
@@ -1850,6 +1723,8 @@ function requestReject(int $requestID)
     sendAlert($awardID, $userID, 'reject_request');
 
     requestUpdate(['status' => 1, 'muid' => $mybb->user['uid']], $requestID);
+
+    return true;
 }
 
 function requestApprove(int $requestID): bool
@@ -2000,9 +1875,9 @@ function taskInsert(array $taskData, int $taskID = 0, bool $updateTask = false):
     }
 }
 
-function taskUpdate(array $taskData, int $taskID)
+function taskUpdate(array $taskData, int $taskID): int
 {
-    taskInsert($taskData, $taskID, true);
+    return taskInsert($taskData, $taskID, true);
 }
 
 function taskDelete(int $taskID): bool
@@ -2076,7 +1951,7 @@ function sendAlert(int $awardID, int $userID, string $alertTypeKey = 'give_award
 {
     global $lang, $mybb, $alertType, $db;
 
-    loadLanguage(true);
+    loadLanguage();
 
     if (!(getSetting('myalerts') && $mybb->cache->cache['plugins']['active']['myalerts'] && class_exists(
             'MybbStuff_MyAlerts_AlertTypeManager'
@@ -2359,19 +2234,9 @@ function generateSelectGrant(int $awardID, int $userID, int $selectedID): string
 
         $grantDate = my_date('relative', $grantData['date']);
 
-        if (!($grantReason = awardGetInfo(
-            INFORMATION_TYPE_REASON,
-            $awardID,
-            $grantID,
-            $requestID,
-            $taskID
-        ))) {
-            if (!($grantReason = $grantData['reason'])) {
-                $grantReason = $lang->ougcAwardsNoReason;
-            }
-        }
+        $grantReason = $grantData['reason'];
 
-        $grantReason = $grantData['reason'] = htmlspecialchars_uni($grantReason);
+        parseMessage($grantReason);
 
         $selectCode .= "<option value=\"{$grantData['gid']}\"{$selectedElement}>" . $grantDate . ' (' . htmlspecialchars_uni(
                 $grantData['reason']
@@ -2594,13 +2459,9 @@ function parseUserAwards(
 
         $categoryDescription = htmlspecialchars_uni($categoryData['description']);
 
-        if (!($awardName = awardGetInfo(INFORMATION_TYPE_NAME, $awardID))) {
-            $awardName = $awardData['name'];
-        }
+        $awardName = htmlspecialchars_uni($awardData['name']);
 
-        if (!($awardDescription = awardGetInfo(INFORMATION_TYPE_DESCRIPTION, $awardID))) {
-            $awardDescription = $awardData['description'];
-        }
+        $awardDescription = htmlspecialchars_uni($awardData['description']);
 
         $grantID = (int)$grantData['gid'];
 
@@ -2608,27 +2469,11 @@ function parseUserAwards(
 
         $taskID = (int)$grantData['tid'];
 
-        if (!($awardName = awardGetInfo(INFORMATION_TYPE_NAME, $awardID))) {
-            $awardName = $awardData['name'];
-        }
+        $awardName = htmlspecialchars_uni($awardData['name']);
 
-        if (!($awardDescription = awardGetInfo(INFORMATION_TYPE_DESCRIPTION, $awardID))) {
-            $awardDescription = $awardData['description'];
-        }
+        $awardDescription = htmlspecialchars_uni($awardData['description']);
 
-        if (!($grantReason = awardGetInfo(
-            INFORMATION_TYPE_REASON,
-            $awardID,
-            $grantID,
-            $requestID,
-            $taskID
-        ))) {
-            if (!($grantReason = $grantData['reason'])) {
-                $grantReason = $lang->ougcAwardsNoReason;
-            }
-        }
-
-        $grantReason = $awardData['reason'] = htmlspecialchars_uni($grantReason);
+        $grantReason = $grantData['reason'];
 
         parseMessage($grantReason);
 
@@ -2658,9 +2503,17 @@ function parseUserAwards(
             $threadLink = eval(getTemplate("{$templateName}Link"));
         }
 
-        $awardImage = awardGetIcon($awardID);
+        $awardImage = $awardClass = awardGetIcon($awardID);
 
-        $awardImage = eval(getTemplate(awardGetInfo(INFORMATION_TYPE_TEMPLATE, $awardID)));
+        $awardImage = eval(
+        getTemplate(
+            $awardData['template'] === AWARD_TEMPLATE_TYPE_CLASS ? 'awardImageClass' : 'awardImage'
+        )
+        );
+
+        $awardUrl = urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID]);
+
+        $awardImage = eval(getTemplate('awardWrapper', false));
 
         $grantDate = $lang->sprintf(
             $lang->ougcAwardsDate,
@@ -2677,7 +2530,7 @@ function parseUserAwards(
 }
 
 // Most of this was taken from @Starpaul20's Move Post plugin (https://github.com/PaulBender/Move-Posts)
-function getThreadByUrl(string $threadUrl)
+function getThreadByUrl(string $threadUrl): array
 {
     global $db, $mybb;
 
@@ -2704,9 +2557,9 @@ function getThreadByUrl(string $threadUrl)
         $threadID = $db->fetch_field($query, 'id');
     }
 
-    $realurl = explode('#', $threadUrl);
+    $real_url = explode('#', $threadUrl);
 
-    $threadUrl = $realurl[0];
+    $threadUrl = $real_url[0];
 
     if (substr($threadUrl, -4) == 'html') {
         preg_match('#thread-([0-9]+)?#i', $threadUrl, $threadmatch);
@@ -2738,15 +2591,17 @@ function getThreadByUrl(string $threadUrl)
         }
     }
 
-    if ($parameters['pid'] && !$parameters['tid']) {
+    $threadID = 0;
+
+    if (!empty($parameters['pid']) && empty($parameters['tid'])) {
         $post = get_post($parameters['pid']);
 
         $threadID = $post['tid'];
-    } elseif ($parameters['tid']) {
+    } elseif (!empty($parameters['tid'])) {
         $threadID = $parameters['tid'];
     }
 
-    return get_thread($threadID);
+    return (array)get_thread($threadID);
 }
 
 function isModerator(): bool
@@ -2768,29 +2623,27 @@ function isVisibleAward(int $awardID): bool
     return !empty($awardData['visible']) || isModerator();
 }
 
-function myAlertsInitiate()
+function myAlertsInitiate(): bool
 {
     if (function_exists('myalerts_info')) {
         if (version_compare(myalerts_info()['version'], '2.0.4') <= 0) {
-            yourcoolplugin_register_myalerts_formatter();
+            myalerts_register_client_alert_formatters();
         }
     }
+
+    return true;
 }
 
-function uploadAward(array $awardFile = [], int $awardID)
+function uploadAward(array $awardFile, int $awardID): array
 {
-    global $mybb;
-
-    $ret = [];
-
     if (!is_uploaded_file($awardFile['tmp_name'])) {
-        return FILE_UPLOAD_ERROR_FAILED;
+        return ['error' => FILE_UPLOAD_ERROR_FAILED];
     }
 
     $fileExtension = get_extension(my_strtolower($awardFile['name']));
 
     if (!preg_match('#^(gif|jpg|jpeg|jpe|bmp|png)$#i', $fileExtension)) {
-        return FILE_UPLOAD_ERROR_INVALID_TYPE;
+        return ['error' => FILE_UPLOAD_ERROR_INVALID_TYPE];
     }
 
     $uploadPath = getSetting('uploadPath');
@@ -2804,13 +2657,13 @@ function uploadAward(array $awardFile = [], int $awardID)
     if (!empty($fileUpload['error'])) {
         delete_uploaded_file($fullFilePath);
 
-        return FILE_UPLOAD_ERROR_FAILED;
+        return ['error' => FILE_UPLOAD_ERROR_FAILED];
     }
 
     if (!file_exists($fullFilePath)) {
         delete_uploaded_file($fullFilePath);
 
-        return FILE_UPLOAD_ERROR_FAILED;
+        return ['error' => FILE_UPLOAD_ERROR_FAILED];
     }
 
     $imageDimensions = getimagesize($fullFilePath);
@@ -2818,7 +2671,7 @@ function uploadAward(array $awardFile = [], int $awardID)
     if (!is_array($imageDimensions)) {
         delete_uploaded_file($fullFilePath);
 
-        return FILE_UPLOAD_ERROR_FAILED;
+        return ['error' => FILE_UPLOAD_ERROR_FAILED];
     }
 
     if (getSetting('uploadDimensions')) {
@@ -2838,7 +2691,7 @@ function uploadAward(array $awardFile = [], int $awardID)
             if (empty($thumbnail['filename'])) {
                 delete_uploaded_file($fullFilePath);
 
-                return FILE_UPLOAD_ERROR_RESIZE;
+                return ['error' => FILE_UPLOAD_ERROR_RESIZE];
             } else {
                 copy_file_to_cdn("{$uploadPath}/{$thumbnail['filename']}");
 
@@ -2876,13 +2729,13 @@ function uploadAward(array $awardFile = [], int $awardID)
     if ((int)$imageDimensions[2] !== $imageType || empty($imageType)) {
         delete_uploaded_file($fullFilePath);
 
-        return FILE_UPLOAD_ERROR_FAILED;
+        return ['error' => FILE_UPLOAD_ERROR_FAILED];
     }
 
     if (getSetting('uploadSize') > 0 && $awardFile['size'] > (getSetting('uploadSize') * 1024)) {
         delete_uploaded_file($fullFilePath);
 
-        return FILE_UPLOAD_ERROR_UPLOAD_SIZE;
+        return ['error' => FILE_UPLOAD_ERROR_UPLOAD_SIZE];
     }
 
     return [
@@ -2890,4 +2743,11 @@ function uploadAward(array $awardFile = [], int $awardID)
         'fileWidth' => (int)$imageDimensions[0],
         'fileHeight' => (int)$imageDimensions[1]
     ];
+}
+
+function awardsCacheGet(): array
+{
+    global $mybb;
+
+    return (array)$mybb->cache->read('ougc_awards');
 }

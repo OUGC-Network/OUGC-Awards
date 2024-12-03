@@ -2,7 +2,7 @@
 
 /***************************************************************************
  *
- *    OUGC Awards plugin (/inc/anguages/english/ougc_awards.lang.php)
+ *    ougc Awards plugin (/inc/anguages/english/ougc_awards.lang.php)
  *    Author: Omar Gonzalez
  *    Copyright: © 2012-2020 Omar Gonzalez
  *
@@ -31,7 +31,6 @@ $l = [
 
     'ougcAwardsPageNavigation' => 'Awards',
     'ougcAwardsNoReason' => 'No reason specified.',
-    'ougcAwardsDate' => '{1} <i>at</i> {2}',
     'ougcAwardsGlobalMenu' => 'Awards',
     'ougcAwardsWelcomeLinkText' => 'View My Awards',
 
@@ -436,6 +435,8 @@ Custom Icon (Advanced): A custom template for this award.
 Greetings.',
 
     'ougcAwardsTaskRan' => 'The awards task ran successfully.',
+
+    'ougcAwardsPostPresetsTitle' => 'Awards',
 ];
 
 // Stats
@@ -443,7 +444,7 @@ $l['ougcAwardsStatsViewAll'] = 'View All';
 
 /*
 // Plugin information.
-$l['ougc_awards' => 'OUGC Awards';
+$l['ougc_awards' => 'ougc Awards';
 
 // ModCP
 $l['ougc_awards_usercp_nav' => 'Awards';

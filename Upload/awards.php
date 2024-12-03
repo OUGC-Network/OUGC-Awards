@@ -2,7 +2,7 @@
 
 /***************************************************************************
  *
- *    OUGC Awards plugin (/awards.php)
+ *    ougc Awards plugin (/awards.php)
  *    Author: Omar Gonzalez
  *    Copyright: © 2012-2020 Omar Gonzalez
  *
@@ -29,7 +29,6 @@
 use function ougc\Awards\Core\awardDelete;
 use function ougc\Awards\Core\awardGet;
 use function ougc\Awards\Core\awardGetIcon;
-use function ougc\Awards\Core\awardGetInfo;
 use function ougc\Awards\Core\awardGetUser;
 use function ougc\Awards\Core\awardInsert;
 use function ougc\Awards\Core\awardsGetCache;
@@ -61,6 +60,7 @@ use function ougc\Awards\Core\ownerFind;
 use function ougc\Awards\Core\ownerGetSingle;
 use function ougc\Awards\Core\ownerGetUser;
 use function ougc\Awards\Core\ownerInsert;
+use function ougc\Awards\Core\parseMessage;
 use function ougc\Awards\Core\parseUserAwards;
 use function ougc\Awards\Core\getUser;
 use function ougc\Awards\Core\logAction;
@@ -92,15 +92,10 @@ use const ougc\Awards\Core\AWARD_TEMPLATE_TYPE_CUSTOM;
 use const ougc\Awards\Core\GRANT_STATUS_POSTS;
 use const ougc\Awards\Core\GRANT_STATUS_PROFILE;
 use const ougc\Awards\Core\GRANT_STATUS_VISIBLE;
-use const ougc\Awards\Core\INFORMATION_TYPE_DESCRIPTION;
-use const ougc\Awards\Core\INFORMATION_TYPE_NAME;
-use const ougc\Awards\Core\INFORMATION_TYPE_REASON;
-use const ougc\Awards\Core\INFORMATION_TYPE_TEMPLATE;
 use const ougc\Awards\Core\REQUEST_STATUS_ACCEPTED;
 use const ougc\Awards\Core\REQUEST_STATUS_OPEN;
 use const ougc\Awards\Core\REQUEST_STATUS_PENDING;
 use const ougc\Awards\Core\REQUEST_STATUS_REJECTED;
-use const ougc\Awards\Core\TASK_ALLOW_MULTIPLE;
 use const ougc\Awards\Core\TASK_STATUS_ENABLED;
 
 const IN_MYBB = true;
@@ -193,7 +188,9 @@ switch ($mybb->get_input('action')) {
         }
 
         if (!in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
-            $awardName = awardGetInfo(INFORMATION_TYPE_NAME, $awardID);
+            $awardData = awardGet($awardID);
+
+            $awardName = htmlspecialchars_uni($awardData['name']);
         }
 
         if (!empty($categoryData['name'])) {
@@ -780,7 +777,7 @@ $requirementCriteria = [
 
             return generateSelectAwards(
                 "{$inputName}[]",
-                $inputData[$inputName],
+                (array)$inputData[$inputName],
                 ['multiple' => true]
             );
         }
@@ -795,7 +792,7 @@ $requirementCriteria = [
 
             return generateSelectProfileFields(
                 "{$inputName}[]",
-                $inputData[$inputName],
+                (array)$inputData[$inputName],
                 ['multiple' => true, 'id' => $inputName]
             );
         }
@@ -888,7 +885,11 @@ $requirementCriteria = [
     ],
 ];
 
-if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
+if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
+    if (!isModerator()) {
+        error_no_permission();
+    }
+
     $newCategoryPage = $mybb->get_input('action') === 'newCategory';
 
     $inputData = [];
@@ -1004,7 +1005,11 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     $additionalRows = implode(' ', $additionalRows);
 
     $pageContents = eval(getTemplate('controlPanelNewEditCategoryForm'));
-} elseif (isModerator() && in_array($mybb->get_input('action'), ['newAward', 'editAward'])) {
+} elseif (in_array($mybb->get_input('action'), ['newAward', 'editAward'])) {
+    if (!isModerator()) {
+        error_no_permission();
+    }
+
     $newAwardPage = $mybb->get_input('action') === 'newAward';
 
     $categoryID = $mybb->get_input('cid', MyBB::INPUT_INT);
@@ -1174,7 +1179,11 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     $additionalRows = implode(' ', $additionalRows);
 
     $pageContents = eval(getTemplate('controlPanelNewEditAwardForm'));
-} elseif (isModerator() && $mybb->get_input('action') === 'deleteAward') {
+} elseif ($mybb->get_input('action') === 'deleteAward') {
+    if (!isModerator()) {
+        error_no_permission();
+    }
+
     if ($mybb->request_method === 'post') {
         verify_post_check($mybb->get_input('my_post_key'));
 
@@ -1477,10 +1486,6 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
         $taskID = (int)$grantData['tid'];
 
-        $grantReason = awardGetInfo(INFORMATION_TYPE_REASON, $awardID, $grantID, $requestID, $taskID);
-
-        $grantReason = $grantData['reason'] = htmlspecialchars_uni($grantReason);
-
         $userName = $userNameFormatted = $userProfileLink = '';
 
         if (!empty($usersCache[$grantData['uid']])) {
@@ -1492,6 +1497,10 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
             $userProfileLink = build_profile_link($userNameFormatted, $userData['uid']);
         }
+
+        $grantReason = $grantData['reason'];
+
+        parseMessage($grantReason);
 
         $threadLink = '';
 
@@ -1715,7 +1724,11 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     $inputUserName = htmlspecialchars_uni($mybb->get_input('username'));
 
     $pageContents = eval(getTemplate('controlPanelOwners'));
-} elseif (isModerator() && $mybb->get_input('action') === 'deleteOwner') {
+} elseif ($mybb->get_input('action') === 'deleteOwner') {
+    if (!isModerator()) {
+        error_no_permission();
+    }
+
     if ($mybb->request_method === 'post') {
         verify_post_check($mybb->get_input('my_post_key'));
 
@@ -1904,17 +1917,19 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
             $requestID = (int)$requestData['rid'];
 
-            if (!($awardName = awardGetInfo(INFORMATION_TYPE_NAME, $awardID))) {
-                $awardName = $awardData['name'];
-            }
-
-            $awardName = htmlspecialchars_uni($awardName);
+            $awardName = htmlspecialchars_uni($requestData['name']);
 
             $requestMessage = htmlspecialchars_uni($requestData['message']);
 
             $awardImage = $awardClass = awardGetIcon($awardID);
 
-            $awardImage = eval(getTemplate(awardGetInfo(INFORMATION_TYPE_TEMPLATE, $awardID), false));
+            $awardImage = eval(
+            getTemplate(
+                $awardData['template'] === AWARD_TEMPLATE_TYPE_CLASS ? 'awardImageClass' : 'awardImage'
+            )
+            );
+
+            $awardUrl = urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID]);
 
             $awardImage = eval(getTemplate('awardWrapper', false));
 
@@ -1961,7 +1976,11 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     $formUrl = urlHandlerBuild(['action' => 'viewRequests']);
 
     $pageContents = eval(getTemplate('controlPanelRequests'));
-} elseif (isModerator() && $mybb->get_input('action') === 'editGrant') {
+} elseif ($mybb->get_input('action') === 'editGrant') {
+    if (!isModerator()) {
+        error_no_permission();
+    }
+
     $inputData = [];
 
     foreach (['thread', 'reason', 'date'] as $inputKey) {
@@ -2034,7 +2053,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
     $pageContents = eval(getTemplate('controlPanelGrantEdit'));
 } elseif ($mybb->get_input('action') === 'viewPresets') {
-    if (!is_member(getSetting('presets_groups'))) {
+    if (!is_member(getSetting('allowedGroupsPresets'))) {
         error_no_permission();
     }
 
@@ -2059,7 +2078,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
             }
 
             $presetID = presetInsert([
-                'name' => $mybb->get_input('presetName'),
+                'name' => $db->escape_string($mybb->get_input('presetName')),
                 'uid' => $currentUserID
             ]);
 
@@ -2170,15 +2189,13 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
             $awardID = (int)$awardData['aid'];
 
-            if (!($awardName = awardGetInfo(INFORMATION_TYPE_NAME, $awardID))) {
-                $awardName = $awardData['name'];
-            }
-
-            $awardName = htmlspecialchars_uni($awardName);
-
             $awardImage = $awardClass = awardGetIcon($awardID);
 
-            $awardImage = eval(getTemplate(awardGetInfo(INFORMATION_TYPE_TEMPLATE, $awardID), false));
+            $awardImage = eval(
+            getTemplate(
+                $awardData['template'] === AWARD_TEMPLATE_TYPE_CLASS ? 'awardImageClass' : 'awardImage'
+            )
+            );
 
             if (isset($presetVisibleAwards[$grantID])) {
                 $visibleAwards .= eval(getTemplate('controlPanelPresetsAward', false));
@@ -2414,7 +2431,15 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
         $buttonContent = eval(getTemplate('pageRequestButton'));
 
-        $awardImage = eval(getTemplate(awardGetInfo(INFORMATION_TYPE_TEMPLATE, $awardID), false));
+        $awardImage = $awardClass = awardGetIcon($awardID);
+
+        $awardImage = eval(
+        getTemplate(
+            $awardData['template'] === AWARD_TEMPLATE_TYPE_CLASS ? 'awardImageClass' : 'awardImage'
+        )
+        );
+
+        $awardUrl = urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID]);
 
         $awardImage = eval(getTemplate('awardWrapper', false));
 
@@ -2426,7 +2451,11 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     echo $modalContents;
 
     exit;
-} elseif (isModerator() && in_array($mybb->get_input('action'), ['newTask', 'editTask'])) {
+} elseif (in_array($mybb->get_input('action'), ['newTask', 'editTask'])) {
+    if (!isModerator()) {
+        error_no_permission();
+    }
+
     $newTaskPage = $mybb->get_input('action') === 'newTask';
 
     $taskData = taskGet(["tid='{$taskID}'"], '*', ['limit' => 1]);
@@ -2487,8 +2516,6 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
         }
     }
 
-    //isset($mybb->input['additionalgroups']) || $mybb->input['additionalgroups'] = 0;
-
     foreach (
         [
             'tid',
@@ -2523,7 +2550,6 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
         }
     }
 
-    //_dump($inputData['requirements'], $mybb->input['requirements'], $taskData['requirements']);
     foreach (
         [
             'requirements',
@@ -2534,23 +2560,23 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
             'profilefields',
         ] as $inputKey
     ) {
-        //isset($mybb->input[$inputKey]) || $mybb->input[$inputKey] = [];
-
         if ($mybb->request_method === 'post') {
             $inputData[$inputKey] = $mybb->get_input($inputKey, MyBB::INPUT_ARRAY);
         } elseif (isset($taskData[$inputKey])) {
             $inputData[$inputKey] = explode(',', $taskData[$inputKey]);
+        } else {
+            $inputData[$inputKey] = [];
         }
     }
 
     if ($mybb->request_method === 'post') {
         verify_post_check($mybb->get_input('my_post_key'));
 
-        if (my_strlen($inputData['name']) > 100) {
+        if (my_strlen($inputData['name']) > 100 || my_strlen($inputData['name']) < 1) {
             $errorMessages[] = $lang->ougcAwardsErrorInvalidTaskName;
         }
 
-        if (my_strlen($inputData['description']) > 255) {
+        if (my_strlen($inputData['description']) > 255 || my_strlen($inputData['description']) < 1) {
             $errorMessages[] = $lang->ougcAwardsErrorInvalidTaskDescription;
         }
 
@@ -2611,6 +2637,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
                 'ruleScripts' => $inputData['ruleScripts'],
             ];
 
+            _dump($insertData['onlinetype']);
             if ($newTaskPage) {
                 taskInsert($insertData);
             } else {
@@ -2709,7 +2736,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
 
     $requirementOptions = eval(getTemplate('selectField'));
 
-    $awardsGrantSelect = generateSelectAwards('give[]', $inputData['give'], ['multiple' => true]);
+    $awardsGrantSelect = generateSelectAwards('give[]', (array)$inputData['give'], ['multiple' => true]);
 
     /*
     $selectedElementMultipleYes = $selectedElementMultipleNo = '';
@@ -2723,7 +2750,7 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
             break;
     }*/
 
-    $awardsRevokeSelect = generateSelectAwards('revoke[]', $inputData['revoke'], ['multiple' => true]
+    $awardsRevokeSelect = generateSelectAwards('revoke[]', (array)$inputData['revoke'], ['multiple' => true]
     );
 
     $pageTitle = $lang->ougcAwardsControlPanelEditTaskTitle;
@@ -2769,7 +2796,11 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
     }
 
     $pageContents = eval(getTemplate('controlPanelNewEditTaskForm'));
-} elseif (isModerator() && $mybb->get_input('action') === 'deleteTask') {
+} elseif ($mybb->get_input('action') === 'deleteTask') {
+    if (!isModerator()) {
+        error_no_permission();
+    }
+
     $taskData = taskGet(["tid='{$taskID}'"], '*', ['limit' => 1]);
 
     if (empty($taskData['tid'])) {
@@ -2824,21 +2855,38 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
         $taskGrantAwardIDs = implode("','", array_map('intval', explode(',', $taskData['give'])));
 
         foreach (awardsGetCache(["aid IN ('{$taskGrantAwardIDs}')"]) as $awardID => $awardData) {
-            $awardName = awardGetInfo(INFORMATION_TYPE_NAME, $awardID);
+            $awardName = htmlspecialchars_uni($awardData['name']);
 
             $awardImage = $awardClass = awardGetIcon($awardID);
 
-            $awardImage = eval(getTemplate(awardGetInfo(INFORMATION_TYPE_TEMPLATE, $awardID), false));
+            $awardImage = eval(
+            getTemplate(
+                $awardData['template'] === AWARD_TEMPLATE_TYPE_CLASS ? 'awardImageClass' : 'awardImage'
+            )
+            );
 
-            $taskGrantAwards .= eval(getTemplate('awardWrapper', false));
+            $awardUrl = urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID]);
+
+            $awardImage = eval(getTemplate('awardWrapper', false));
+
+            $taskGrantAwards .= $awardImage;
         }
+
 
         $taskRevokeAwardIDs = implode("','", array_map('intval', explode(',', $taskData['revoke'])));
 
         foreach (awardsGetCache(["aid IN ('{$taskRevokeAwardIDs}')"]) as $awardID => $awardData) {
             $awardImage = $awardClass = awardGetIcon($awardID);
 
-            $awardImage = eval(getTemplate(awardGetInfo(INFORMATION_TYPE_TEMPLATE, $awardID), false));
+            $awardImage = eval(
+            getTemplate(
+                $awardData['template'] === AWARD_TEMPLATE_TYPE_CLASS ? 'awardImageClass' : 'awardImage'
+            )
+            );
+
+            $awardUrl = urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID]);
+
+            $awardImage = eval(getTemplate('awardWrapper', false));
 
             $taskRevokeAwards .= eval(getTemplate('awardWrapper', false));
         }
@@ -2904,13 +2952,21 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
         $logGrantAwardIDs = implode("','", array_map('intval', explode(',', $logData['gave'])));
 
         foreach (awardsGetCache(["aid IN ('{$logGrantAwardIDs}')"]) as $awardID => $awardData) {
-            $awardName = awardGetInfo(INFORMATION_TYPE_NAME, $awardID);
+            $awardName = htmlspecialchars_uni($awardData['name']);
 
             $awardImage = $awardClass = awardGetIcon($awardID);
 
-            $awardImage = eval(getTemplate(awardGetInfo(INFORMATION_TYPE_TEMPLATE, $awardID), false));
+            $awardImage = eval(
+            getTemplate(
+                $awardData['template'] === AWARD_TEMPLATE_TYPE_CLASS ? 'awardImageClass' : 'awardImage'
+            )
+            );
 
-            $logGrantAwards .= eval(getTemplate('awardWrapper', false));
+            $awardUrl = urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID]);
+
+            $awardImage = eval(getTemplate('awardWrapper', false));
+
+            $logGrantAwards .= $awardImage;
         }
 
         $taskRevokeAwardIDs = implode("','", array_map('intval', explode(',', $logData['revoked'])));
@@ -2918,9 +2974,17 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
         foreach (awardsGetCache(["aid IN ('{$taskRevokeAwardIDs}')"]) as $awardID => $awardData) {
             $awardImage = $awardClass = awardGetIcon($awardID);
 
-            $awardImage = eval(getTemplate(awardGetInfo(INFORMATION_TYPE_TEMPLATE, $awardID), false));
+            $awardImage = eval(
+            getTemplate(
+                $awardData['template'] === AWARD_TEMPLATE_TYPE_CLASS ? 'awardImageClass' : 'awardImage'
+            )
+            );
 
-            $logRevokeAwards .= eval(getTemplate('awardWrapper', false));
+            $awardUrl = urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID]);
+
+            $awardImage = eval(getTemplate('awardWrapper', false));
+
+            $logRevokeAwards .= $awardImage;
         }
 
         $logDate = my_date('relative', (int)$logData['date']);
@@ -3026,23 +3090,21 @@ if (isModerator() && in_array($mybb->get_input('action'), ['newCategory', 'editC
                 //--$colSpanRowCount;
             }
 
-            if (!($awardName = awardGetInfo(INFORMATION_TYPE_NAME, $awardID))) {
-                $awardName = $awardData['name'];
-            }
+            $awardName = htmlspecialchars_uni($awardData['name']);
 
-            $awardName = htmlspecialchars_uni($awardName);
-
-            if (!($awardDescription = awardGetInfo(INFORMATION_TYPE_DESCRIPTION, $awardID))) {
-                $awardDescription = $awardData['description'];
-            }
-
-            $awardDescription = htmlspecialchars_uni($awardDescription);
+            $awardDescription = htmlspecialchars_uni($awardData['description']);
 
             $awardUrl = urlHandlerBuild(['viewAward' => $awardID]);
 
             $awardImage = $awardClass = awardGetIcon($awardID);
 
-            $awardImage = eval(getTemplate(awardGetInfo(INFORMATION_TYPE_TEMPLATE, $awardID), false));
+            $awardImage = eval(
+            getTemplate(
+                $awardData['template'] === AWARD_TEMPLATE_TYPE_CLASS ? 'awardImageClass' : 'awardImage'
+            )
+            );
+
+            $awardUrl = urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID]);
 
             $awardImage = eval(getTemplate('awardWrapper', false));
 

@@ -2,7 +2,7 @@
 
 /***************************************************************************
  *
- *    OUGC Awards plugin (/inc/anguages/english/ougc_awards_extra_vals.lang.php)
+ *    ougc Awards plugin (/inc/anguages/english/ougc_awards_extra_vals.lang.php)
  *    Author: Omar Gonzalez
  *    Copyright: © 2012-2020 Omar Gonzalez
  *
