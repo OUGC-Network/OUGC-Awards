@@ -29,9 +29,8 @@
     </table>
     {$buttons}
 </form>
-<br class="clear"/>
+<br/>
 {$paginationMenu}
-
 <form action="{$pageUrl}" method="get">
     <input type="hidden" name="action" value="viewRequests"/>
     <input type="hidden" name="awardID" value="{$awardID}"/>
@@ -49,7 +48,7 @@
                 <select name="filterOptions[status]">
                     <option value="1">{$lang->ougcAwardsControlPanelRequestsFilterStatusOpen}</option>
                     <option value="0"{$filterOptionsSelected['statusAccepted']}>{$lang->ougcAwardsControlPanelRequestsFilterStatusAccepted}</option>
-                    <option value="-1"{$filterOptionsSelected['statusRejected']}>{$lang->ougcAwardsControlPanelRequestsFilterStatusRejected}</option>
+                    <option value="2"{$filterOptionsSelected['statusRejected']}>{$lang->ougcAwardsControlPanelRequestsFilterStatusRejected}</option>
                 </select>
             </td>
         </tr>
@@ -59,3 +58,4 @@
         <input type="submit" class="button" name="accept" value="{$lang->go}"/>
     </div>
 </form>
+<br />

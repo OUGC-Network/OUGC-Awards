@@ -79,7 +79,7 @@ const GRANT_STATUS_POSTS = 2;
 
 const GRANT_STATUS_VISIBLE = 1;
 
-const REQUEST_STATUS_REJECTED = -1;
+const REQUEST_STATUS_REJECTED = 2;
 
 const REQUEST_STATUS_ACCEPTED = 0;
 
@@ -1382,6 +1382,8 @@ function awardUpdate(array $updateData, int $awardID = 0): int
 
 function awardDelete(int $awardID): bool
 {
+    require_once MYBB_ROOT . 'inc/functions_upload.php';
+
     global $db;
 
     $dbQuery = $db->simple_select('ougc_awards_users', 'gid', "aid='{$awardID}'");
@@ -1401,7 +1403,7 @@ function awardDelete(int $awardID): bool
     $dir = opendir(getSetting('uploadPath'));
 
     if ($dir) {
-        while ($file = @readdir($dir)) {
+        while ($file = readdir($dir)) {
             if (preg_match('#award_' . $awardID . '\.#', $file) && is_file(
                     getSetting('uploadPath') . '/' . $file
                 )) {
@@ -1623,13 +1625,11 @@ function requestInsert(array $requestData, int $requestID = 0, bool $updateReque
 {
     global $db;
 
-    $insertData = [];
-
     if ($updateRequest) {
-        return (int)$db->update_query('ougc_awards_requests', $insertData, "rid='{$requestID}'");
+        return (int)$db->update_query('ougc_awards_requests', $requestData, "rid='{$requestID}'");
     }
 
-    return (int)$db->insert_query('ougc_awards_requests', $insertData);
+    return (int)$db->insert_query('ougc_awards_requests', $requestData);
 }
 
 function requestUpdate(array $updateData, int $requestID): int
@@ -1722,7 +1722,7 @@ function requestReject(int $requestID): bool
 
     sendAlert($awardID, $userID, 'reject_request');
 
-    requestUpdate(['status' => 1, 'muid' => $mybb->user['uid']], $requestID);
+    requestUpdate(['status' => REQUEST_STATUS_REJECTED, 'muid' => $mybb->user['uid']], $requestID);
 
     return true;
 }
@@ -1743,7 +1743,7 @@ function requestApprove(int $requestID): bool
     );
 
     requestUpdate([
-        'status' => 0,
+        'status' => REQUEST_STATUS_ACCEPTED,
         'muid' => $mybb->user['uid']
     ], $requestID);
 
@@ -1784,7 +1784,7 @@ function taskInsert(array $taskData, int $taskID = 0, bool $updateTask = false):
         ] as $k
     ) {
         if (isset($taskData[$k])) {
-            $insertData[$k] = $insertData[$k] = $db->escape_string($taskData[$k]);
+            $insertData[$k] = $db->escape_string($taskData[$k]);
         }
     }
 
@@ -2035,7 +2035,7 @@ function cacheUpdate(): bool
 {
     global $db, $mybb;
 
-    $limit = (int)$mybb->settings['statslimit'];
+    $statsLimit = min($mybb->settings['statslimit'], getSetting('statsLatestGrants'));
 
     $cacheData = [
         'time' => TIME_NOW,
@@ -2054,89 +2054,95 @@ function cacheUpdate(): bool
         ['order_by' => 'disporder']
     );
 
-    while ($category = $db->fetch_array($query)) {
-        $cacheData['categories'][(int)$category['cid']] = [
-            'name' => (string)$category['name'],
-            'description' => (string)$category['description'],
-            'allowrequests' => (int)$category['allowrequests']
+    while ($categoryData = $db->fetch_array($query)) {
+        $cacheData['categories'][(int)$categoryData['cid']] = [
+            'name' => (string)$categoryData['name'],
+            'description' => (string)$categoryData['description'],
+            'allowrequests' => (int)$categoryData['allowrequests']
         ];
     }
 
-    if ($cids = array_keys($cacheData['categories'])) {
-        $wherecids = "cid IN ('" . implode("','", $cids) . "')";
+    if ($categoryIDs = array_keys($cacheData['categories'])) {
+        $whereClauses = [
+            "visible='1'",
+            "cid IN ('" . implode("','", $categoryIDs) . "')"
+        ];
+
         $query = $db->simple_select(
             'ougc_awards',
             'aid, cid, name, template, description, image, allowrequests, type, disporder, visible',
-            "visible='1' AND {$wherecids}",
+            implode(' AND ', $whereClauses),
             ['order_by' => 'disporder']
         );
 
-        while ($award = $db->fetch_array($query)) {
-            $cacheData['awards'][(int)$award['aid']] = [
-                'cid' => (int)$award['cid'],
-                'name' => (string)$award['name'],
-                'template' => (int)$award['template'],
-                'description' => (string)$award['description'],
-                'image' => (string)$award['image'],
-                'allowrequests' => (int)$award['allowrequests'],
-                'type' => (int)$award['type'],
-                'disporder' => (int)$award['disporder'],
-                'visible' => (int)$award['visible']
+        while ($awardData = $db->fetch_array($query)) {
+            $cacheData['awards'][(int)$awardData['aid']] = [
+                'cid' => (int)$awardData['cid'],
+                'name' => (string)$awardData['name'],
+                'template' => (int)$awardData['template'],
+                'description' => (string)$awardData['description'],
+                'image' => (string)$awardData['image'],
+                'allowrequests' => (int)$awardData['allowrequests'],
+                'type' => (int)$awardData['type'],
+                'disporder' => (int)$awardData['disporder'],
+                'visible' => (int)$awardData['visible']
             ];
         }
     }
 
-    $awardIDs = implode("','", array_keys($cacheData['awards']));
+    if ($awardIDs = array_keys($cacheData['awards'])) {
+        $requestStatusOpen = REQUEST_STATUS_OPEN;
 
-    $requestStatusOpen = REQUEST_STATUS_OPEN;
+        $awardIDs = implode("','", $awardIDs);
 
-    $whereClauses = ["aid IN ('{$awardIDs}')", 'status' => "status='{$requestStatusOpen}'"];
+        $whereClauses = [
+            "aid IN ('{$awardIDs}')",
+            'status' => "status='{$requestStatusOpen}'"
+        ];
 
-    $totalRequestsCount = requestGetPending(
-        $whereClauses,
-        'COUNT(rid) AS totalRequests',
-        ['limit' => 1]
-    );
+        $totalRequestsCount = requestGetPending(
+            $whereClauses,
+            'COUNT(rid) AS totalRequests',
+            ['limit' => 1]
+        );
 
-    if (!empty($totalRequestsCount['totalRequests'])) {
-        $cacheData['requests'] = ['pending' => (int)$totalRequestsCount['totalRequests']];
-    }
+        if (!empty($totalRequestsCount['totalRequests'])) {
+            $cacheData['requests'] = ['pending' => (int)$totalRequestsCount['totalRequests']];
+        }
 
-    if ($aids = array_keys($cacheData['awards'])) {
-        $where = "aid IN ('" . implode("','", $aids) . "')";
+        unset($whereClauses['status']);
 
-        $query = $db->simple_select('ougc_awards_requests', 'COUNT(rid) AS pending', "status='1' AND {$where}");
-        $pending = $db->fetch_field($query, 'pending');
+        $whereClauses = implode(' AND ', $whereClauses);
 
         $query = $db->query(
-            '
+            "
 				SELECT u.uid, a.awards
-				FROM ' . $db->table_prefix . 'users u
+				FROM {$db->table_prefix}users u
 				LEFT JOIN (
 					SELECT ua.uid, COUNT(ua.aid) AS awards
-					FROM ' . $db->table_prefix . 'ougc_awards_users ua
-					LEFT JOIN ' . $db->table_prefix . "ougc_awards aw ON (aw.aid=ua.aid)
-					WHERE ua.{$where} AND aw.{$wherecids} 
+					FROM {$db->table_prefix}ougc_awards_users ua
+					WHERE ua.{$whereClauses}
 					GROUP BY ua.uid
 				) a ON (u.uid=a.uid)
 				WHERE a.awards!=''
 				ORDER BY a.awards DESC
-				LIMIT 0, {$limit}
+				LIMIT 0, {$statsLimit}
 			;"
         );
-        while ($user = $db->fetch_array($query)) {
-            $cacheData['top'][(int)$user['uid']] = (int)$user['awards'];
+
+        while ($userData = $db->fetch_array($query)) {
+            $cacheData['top'][(int)$userData['uid']] = (int)$userData['awards'];
         }
 
         $query = $db->simple_select(
             'ougc_awards_users',
             'uid, date',
-            $where,
-            ['order_by' => 'date', 'order_dir' => 'desc', 'limit' => $limit]
+            $whereClauses,
+            ['order_by' => 'date', 'order_dir' => 'desc', 'limit' => $statsLimit]
         );
 
-        while ($user = $db->fetch_array($query)) {
-            $cacheData['last'][(int)$user['date']] = (int)$user['uid'];
+        while ($userData = $db->fetch_array($query)) {
+            $cacheData['last'][(int)$userData['date']] = (int)$userData['uid'];
         }
     }
 
@@ -2515,11 +2521,7 @@ function parseUserAwards(
 
         $awardImage = eval(getTemplate('awardWrapper', false));
 
-        $grantDate = $lang->sprintf(
-            $lang->ougcAwardsDate,
-            my_date($mybb->settings['dateformat'], $grantData['date']),
-            my_date($mybb->settings['timeformat'], $grantData['date'])
-        );
+        $grantDate = my_date('normal', $grantData['date']);
 
         $formattedContent .= eval(getTemplate($templateName));
 
@@ -2636,6 +2638,8 @@ function myAlertsInitiate(): bool
 
 function uploadAward(array $awardFile, int $awardID): array
 {
+    require_once MYBB_ROOT . 'inc/functions_upload.php';
+
     if (!is_uploaded_file($awardFile['tmp_name'])) {
         return ['error' => FILE_UPLOAD_ERROR_FAILED];
     }

@@ -3,7 +3,7 @@
     "optionscode": "numeric",
     "value": 4
   },
-  "profile": {
+  "showInProfile": {
     "optionscode": "numeric",
     "value": 4
   },
@@ -14,10 +14,6 @@
   "modcp": {
     "optionscode": "yesno",
     "value": 1
-  },
-  "modgroups": {
-    "optionscode": "groupselect",
-    "value": "3,4,6"
   },
   "pagegroups": {
     "optionscode": "groupselect",
@@ -51,7 +47,7 @@
     "optionscode": "numeric",
     "value": 10
   },
-  "presets_profile": {
+  "showInProfilePresets": {
     "optionscode": "numeric",
     "value": 10
   },
@@ -62,10 +58,6 @@
   "groupsModerators": {
     "optionscode": "groupselect",
     "value": 4
-  },
-  "pageAction": {
-    "optionscode": "text",
-    "value": "awards"
   },
   "uploadPath": {
     "optionscode": "text",

@@ -46,12 +46,12 @@ $l['ougc_awards_import_error'] = 'There was an error trying to import the select
 // Settings
 $l['setting_ougc_awards_showInPosts'] = 'Maximum Awards in Posts';
 $l['setting_ougc_awards_showInPosts_desc'] = 'Maximum number of awards to be shown in posts.';
-$l['setting_ougc_awards_profile'] = 'Maximum Awards in Profile';
-$l['setting_ougc_awards_profile_desc'] = 'Maximum number of awards to be shown in profiles. -1 for unlimited. 0 to disable.';
+$l['setting_ougc_awards_showInProfile'] = 'Maximum Awards in Profile';
+$l['setting_ougc_awards_showInProfile_desc'] = 'Maximum number of awards to be shown in profiles.';
 $l['setting_ougc_awards_modcp'] = 'Enable ModCP Panel';
 $l['setting_ougc_awards_modcp_desc'] = 'Allows moderators to manage awards from the moderator control panel.';
-$l['setting_ougc_awards_modgroups'] = 'Moderator Groups';
-$l['setting_ougc_awards_modgroups_desc'] = 'Allowed groups to moderate this feature.';
+$l['setting_ougc_awards_groupsModerators'] = 'Moderator Groups';
+$l['setting_ougc_awards_groupsModerators_desc'] = 'Allowed groups to manage awards.';
 $l['setting_ougc_awards_pagegroups'] = 'Awards Page Allowed Groups';
 $l['setting_ougc_awards_pagegroups_desc'] = 'Allowed groups to view the awards page.';
 $l['setting_ougc_awards_perpage'] = 'Items Per Page';
@@ -70,8 +70,8 @@ $l['setting_ougc_awards_presets_maximum'] = 'Maximum Presets';
 $l['setting_ougc_awards_presets_maximum_desc'] = 'Select the maximum amount of presets can create.';
 $l['setting_ougc_awards_showInPostsPresets'] = 'Maximum Presets in Posts';
 $l['setting_ougc_awards_showInPostsPresets_desc'] = 'Type the maximum preset awards to display in posts.';
-$l['setting_ougc_awards_presets_profile'] = 'Maximum Preset Awards in Profiles';
-$l['setting_ougc_awards_presets_profile_desc'] = 'Type the maximum preset awards to display in profiles.';
+$l['setting_ougc_awards_showInProfilePresets'] = 'Maximum Preset Awards in Profiles';
+$l['setting_ougc_awards_showInProfilePresets_desc'] = 'Type the maximum preset awards to display in profiles.';
 
 // ACP Module: Tabs
 $l['ougc_awards_acp_nav'] = 'Manage Awards';

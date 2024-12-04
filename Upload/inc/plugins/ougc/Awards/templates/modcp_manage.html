@@ -22,12 +22,12 @@
         <input type="submit" class="button" value="{$lang->ougc_awards_modcp_give}"/>
     </div>
 </form>
+<br/>
 <link rel="stylesheet" href="{$mybb->asset_url}/jscripts/select2/select2.css">
 <script type="text/javascript" src="{$mybb->asset_url}/jscripts/select2/select2.min.js"></script>
 <script type="text/javascript">
     <!--
-    if(use_xmlhttprequest == "1")
-    {
+    if (use_xmlhttprequest == "1") {
         MyBB.select2();
         $("#username").select2({
             placeholder: "{$lang->search_user}",
@@ -47,7 +47,7 @@
                     return {results: data};
                 }
             },
-            initSelection: function(element, callback) {
+            initSelection: function (element, callback) {
                 var value = $(element).val();
                 if (value !== "") {
                     callback({
@@ -56,12 +56,12 @@
                     });
                 }
             },
-           // Allow the user entered text to be selected as well
-           createSearchChoice:function(term, data) {
-                if ( $(data).filter( function() {
-                    return this.text.localeCompare(term)===0;
-                }).length===0) {
-                    return {id:term, text:term};
+            // Allow the user entered text to be selected as well
+            createSearchChoice: function (term, data) {
+                if ($(data).filter(function () {
+                    return this.text.localeCompare(term) === 0;
+                }).length === 0) {
+                    return {id: term, text: term};
                 }
             },
         });

@@ -92,6 +92,7 @@ $l = [
     'ougcAwardsControlPanelDescription' => 'Description',
     'ougcAwardsControlPanelEmpty' => 'There are currently no awards to display.',
     'ougcAwardsControlPanelAwardEditCategory' => 'Edit',
+    'ougcAwardsControlPanelAwardDeleteCategory' => 'Delete',
     'ougcAwardsControlPanelEnabled' => 'Enabled',
     'ougcAwardsControlPanelDisplayOrder' => 'Display Order',
     'ougcAwardsControlPanelOptions' => 'Options',
@@ -158,11 +159,19 @@ Custom Icon (Advanced): A custom template for this award.
     'ougcAwardsControlPanelDeleteAwardTitle' => 'Delete Award',
     'ougcAwardsControlPanelDeleteAwardTableTitle' => 'Delete Award',
     'ougcAwardsControlPanelDeleteAwardTableDescription' => 'Are you sure you want to delete the selected award?',
-    'ougcAwardsControlPanelDeleteAwardDetailTotalAwards' => 'Total award records',
     'ougcAwardsControlPanelDeleteAwardDetailTotalGranted' => 'Total award grant records',
     'ougcAwardsControlPanelDeleteAwardDetailTotalOwners' => 'Total owner records',
     'ougcAwardsControlPanelDeleteAwardDetailTotalRequests' => 'Total request records',
     'ougcAwardsControlPanelDeleteAwardButton' => 'Delete Award',
+
+    'ougcAwardsControlPanelDeleteCategoryTitle' => 'Delete Category',
+    'ougcAwardsControlPanelDeleteCategoryTableTitle' => 'Delete Category',
+    'ougcAwardsControlPanelDeleteCategoryTableDescription' => 'Are you sure you want to delete the selected category?',
+    'ougcAwardsControlPanelDeleteCategoryDetailTotalAwards' => 'Total award records',
+    'ougcAwardsControlPanelDeleteCategoryDetailTotalGranted' => 'Total award grant records',
+    'ougcAwardsControlPanelDeleteCategoryDetailTotalOwners' => 'Total owner records',
+    'ougcAwardsControlPanelDeleteCategoryDetailTotalRequests' => 'Total request records',
+    'ougcAwardsControlPanelDeleteCategoryButton' => 'Delete Category',
 
     'ougcAwardsControlPanelUsersEmpty' => 'There are currently no users to display.',
 
@@ -410,6 +419,7 @@ Custom Icon (Advanced): A custom template for this award.
 
     'ougcAwardsRedirectCategoryCreated' => 'The category was created successfully.<br />You will now be redirected back.',
     'ougcAwardsRedirectCategoryUpdated' => 'The category was updated successfully.<br />You will now be redirected back.',
+    'ougcAwardsRedirectCategoryDeleted' => 'The category was deleted successfully.<br />You will now be redirected back.',
     'ougcAwardsRedirectAwardCreated' => 'The award was created successfully.<br />You will now be redirected back.',
     'ougcAwardsRedirectAwardUpdated' => 'The award was updated successfully.<br />You will now be redirected back.',
     'ougcAwardsRedirectAwardDeleted' => 'The award was deleted successfully.<br />You will now be redirected back.',
@@ -437,6 +447,21 @@ Greetings.',
     'ougcAwardsTaskRan' => 'The awards task ran successfully.',
 
     'ougcAwardsPostPresetsTitle' => 'Awards',
+    'ougcAwardsProfilePresetsTitle' => 'Awards',
+    'ougcAwardsProfileTitle' => 'Awards',
+    'ougcAwardsWhoIsOnlineViewing' => 'Viewing <a href="{1}/awards.php">Awards Page</a>',
+
+    'ougcAwardsStatsMostTitle' => 'Most Granted Users',
+    'ougc_awards_stats_last' => 'Latest Granted',
+    'ougc_awards_stats_empty' => 'There are currently no stats to display.',
+    'ougcAwardsStatsUser' => 'User',
+    'ougcAwardsStatsTotal' => 'Total',
+
+    'ougcAwardsGlobalNotificationRequests' => '<strong>Award Request:</strong> <a href="{1}/{2}">There is one award request pending for review.</a>',
+    'ougcAwardsGlobalNotificationRequestsPlural' => '<strong>Award Request:</strong> <a href="{1}/{2}">There are {3} award requests pending for review.</a>',
+
+    'ougcAwardsProfileEmpty' => 'There are currently no awards to display.',
+    'ougcAwardsViewUserEmpty' => 'There are currently no awards to display.',
 ];
 
 // Stats
@@ -448,22 +473,13 @@ $l['ougc_awards' => 'ougc Awards';
 
 // ModCP
 $l['ougc_awards_usercp_nav' => 'Awards';
-$l['ougc_awards_modcp_list_desc' => 'Grant or revoke awards from this quick access panel.';
 
 // Profile
 $l['ougcAwardsProfileTitle' => '{1}'s awards.";
-$l['ougcAwardsProfilePresetsAwards' => 'awards";
 
 // View all
 $l['ougcAwardsViewUser' => 'View User Awards';
 $l['ougcAwardsViewUserTitle' => '{1}'s Awards";
-
-// Stats
-$l['ougc_awards_stats_most' => 'Most Granted Users';
-$l['ougc_awards_stats_last' => 'Latest Granted';
-$l['ougc_awards_stats_empty' => 'There are currently no stats to display.';
-$l['ougc_awards_stats_username' => 'Username';
-$l['ougc_awards_stats_total' => 'Total';
 
 // UserCP
 $l['ougc_awards_usercp_list_visible' => 'Display';
@@ -471,21 +487,12 @@ $l['ougc_awards_usercp_list_disporder' => 'Display Order';
 $l['ougc_awards_usercp_list_reason' => 'Reason';
 $l['ougc_awards_usercp_list_from' => 'From User';
 
-// Global
-$l['ougc_awards_page_pending_requests_moderator' => '<a href="{1}/{2}?action=awards&amp;manage=requests"><strong>Moderator Notice:</strong> There is one award request pending for review.</a>';
-$l['ougc_awards_page_pending_requests_moderator_plural' => '<a href="{1}/{2}?action=awards&amp;manage=requests"><strong>Moderator Notice:</strong> There are {3} award requests pending for review.</a>';
-
-// WOL
-$l['ougc_awards_wol' => 'Viewing <a href="{1}/awards.php">Awards Page</a>';
-
 // MyAlerts
 $l['ougc_awards_myalerts' => '{1}, you were granted the {3} award by {2}.';// {4} outputs the award formatted image
-$l['myalerts_setting_ougc_awards' => 'Receive alerts related to awards?';
 
 // Presets
 $l['ougc_awards_presets_title' => 'Presets';
 $l['ougc_awards_presets_button' => 'View Presets';
-$l['ougc_awards_presets_postbit' => 'awards';
 
 
 */

@@ -1,21 +1,24 @@
 <table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
     <tr>
-        <td class="thead" colspan="{$columSpan}" title="{$categoryDescription}">
+        <td class="thead" colspan="{$theadColumSpan}" title="{$categoryDescription}">
             {$editCategoryUrl}
             <strong>{$categoryName}</strong>
         </td>
     </tr>
     <tr>
-        <td class="tcat smalltext" colspan="2">
+        <td class="tcat smalltext" colspan="2" width="20%">
             <strong>{$lang->ougcAwardsControlPanelAward}</strong>
         </td>
-        <td class="tcat smalltext"><strong>{$lang->ougcAwardsControlPanelDescription}</strong></td>
-        {$moderationColumnRequest}
-        {$moderationColumnEnabled}
-        {$moderationColumnDisplayOrder}
+        <td class="tcat smalltext">
+            <strong>{$lang->ougcAwardsControlPanelDescription}</strong>
+        </td>
         {$moderationColumnOptions}
+        {$moderationColumnRequest}
+        {$moderationColumnExtra}
+        {$moderationColumnDisplayOrder}
+        {$moderationColumnEnabled}
     </tr>
     {$awardsList}
 </table>
-<br class="clear"/>
+<br/>
 {$updateButton}

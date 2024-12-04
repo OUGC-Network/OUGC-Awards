@@ -1,11 +1,12 @@
 <tr>
-    <td class="{$alternativeBackground}" align="center">{$awardImage}</td>
+    <td class="{$alternativeBackground}" align="center" width="5%">{$awardImage}</td>
     <td class="{$alternativeBackground}"><a
             href="{$mybb->settings['bburl']}/{$awardUrl}">{$awardName}</a>
     </td>
-    <td class="{$alternativeBackground}">{$awardDescription}</td>
-    {$rowColumnRequest}
-    {$rowColumnEnabled}
-    {$rowColumnDisplayOrder}
+    <td class="{$alternativeBackground}" colspan="{$descriptionColumSpan}">{$awardDescription}</td>
     {$rowColumnOptions}
+    {$rowColumnRequest}
+    {$rowColumnExtra}
+    {$rowColumnDisplayOrder}
+    {$rowColumnEnabled}
 </tr>

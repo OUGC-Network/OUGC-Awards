@@ -40,6 +40,7 @@ use function ougc\Awards\Core\loadPluginLibrary;
 
 use const MYBB_ROOT;
 use const ougc\Awards\Core\ADMIN_PERMISSION_DELETE;
+use const ougc\Awards\Core\REQUEST_STATUS_REJECTED;
 use const ougc\Awards\Core\TABLES_DATA;
 use const ougc\Awards\Core\FIELDS_DATA;
 use const ougc\Awards\ROOT;
@@ -63,7 +64,7 @@ function pluginInfo(): array
     }
 
     return [
-        'name' => 'OUGC Awards',
+        'name' => 'ougc Awards',
         'description' => $descriptionText,
         'website' => 'https://ougc.network',
         'author' => 'Omar G.',
@@ -177,6 +178,8 @@ function pluginActivate(): bool
     }
 
     /*~*~* RUN UPDATES START *~*~*/
+
+    $db->update_query('ougc_awards_requests ', ['status' => REQUEST_STATUS_REJECTED], 'status="-1"');
 
     dbVerifyTables();
 

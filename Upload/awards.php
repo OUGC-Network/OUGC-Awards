@@ -31,12 +31,14 @@ use function ougc\Awards\Core\awardGet;
 use function ougc\Awards\Core\awardGetIcon;
 use function ougc\Awards\Core\awardGetUser;
 use function ougc\Awards\Core\awardInsert;
+use function ougc\Awards\Core\awardsCacheGet;
 use function ougc\Awards\Core\awardsGetCache;
 use function ougc\Awards\Core\awardUpdate;
 use function ougc\Awards\Core\cacheUpdate;
 use function ougc\Awards\Core\canManageUsers;
 use function ougc\Awards\Core\canRequestAwards;
 use function ougc\Awards\Core\canViewMainPage;
+use function ougc\Awards\Core\categoryDelete;
 use function ougc\Awards\Core\categoryGet;
 use function ougc\Awards\Core\categoryGetCache;
 use function ougc\Awards\Core\categoryInsert;
@@ -190,7 +192,9 @@ switch ($mybb->get_input('action')) {
         if (!in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
             $awardData = awardGet($awardID);
 
-            $awardName = htmlspecialchars_uni($awardData['name']);
+            if (!empty($awardData)) {
+                $awardName = htmlspecialchars_uni($awardData['name']);
+            }
         }
 
         if (!empty($categoryData['name'])) {
@@ -1005,6 +1009,62 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
     $additionalRows = implode(' ', $additionalRows);
 
     $pageContents = eval(getTemplate('controlPanelNewEditCategoryForm'));
+} elseif ($mybb->get_input('action') === 'deleteCategory') {
+    if (!isModerator()) {
+        error_no_permission();
+    }
+
+    if ($mybb->request_method === 'post') {
+        verify_post_check($mybb->get_input('my_post_key'));
+
+        categoryDelete($categoryID);
+
+        cacheUpdate();
+
+        logAction();
+
+        redirect(urlHandlerBuild(), $lang->ougcAwardsRedirectCategoryDeleted);
+    }
+
+    $categoryAwardsObjects = awardsGetCache(["cid='{$categoryID}'"], '*', ['order_by' => 'disporder']);
+
+    $awardIDs = array_column($categoryAwardsObjects, 'aid');
+
+    $awardsTotal = count($awardIDs);
+
+    $awardIDs = implode("','", $awardIDs);
+
+    $pendingRequestTotal = my_number_format(
+        requestGetPendingTotal(
+            ["aid IN ('{$awardIDs}')"]
+        )
+    );
+
+    $grantedTotal = grantGetSingle(["aid IN ('{$awardIDs}')"], 'COUNT(*) AS grantedTotal');
+
+    if (!empty($grantedTotal['grantedTotal'])) {
+        $grantedTotal = my_number_format($grantedTotal['grantedTotal']);
+    } else {
+        $grantedTotal = 0;
+    }
+
+    $ownersTotal = ownerGetSingle(["aid IN ('{$awardIDs}')"], 'COUNT(*) AS ownersTotal');
+
+    if (!empty($ownersTotal['ownersTotal'])) {
+        $ownersTotal = my_number_format($ownersTotal['ownersTotal']);
+    } else {
+        $ownersTotal = 0;
+    }
+
+    $pageTitle = $lang->ougcAwardsControlPanelDeleteCategoryTitle;
+
+    $confirmationTitle = $lang->ougcAwardsControlPanelDeleteCategoryTableTitle;
+
+    $confirmationButtonText = $lang->ougcAwardsControlPanelDeleteCategoryButton;
+
+    $confirmationContent = eval(getTemplate('controlPanelConfirmationDeleteCategory'));
+
+    $pageContents = eval(getTemplate('controlPanelConfirmation'));
 } elseif (in_array($mybb->get_input('action'), ['newAward', 'editAward'])) {
     if (!isModerator()) {
         error_no_permission();
@@ -1048,8 +1108,6 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
         }
 
         if (empty($errorMessages) && !empty($_FILES['award_file']['name'])) {
-            require_once MYBB_ROOT . 'inc/functions_upload.php';
-
             $upload = uploadAward($_FILES['award_file'], $awardID);
         }
 
@@ -1061,7 +1119,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
                 'image' => $db->escape_string($inputData['image']),
                 'template' => (int)$inputData['template'],
                 'allowrequests' => (int)$inputData['allowrequests'],
-                'pm' => (int)$inputData['pm'],
+                'pm' => $db->escape_string($inputData['pm']),
                 'type' => (int)$inputData['type'],
             ];
 
@@ -1528,11 +1586,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
             $threadLink = eval(getTemplate('controlPanelUsersRowLink'));
         }
 
-        $grantDate = $lang->sprintf(
-            $lang->ougcAwardsDate,
-            my_date($mybb->settings['dateformat'], $grantData['date']),
-            my_date($mybb->settings['timeformat'], $grantData['date'])
-        );
+        $grantDate = my_date('normal', $grantData['date']);
 
         $editUrl = urlHandlerBuild(['action' => 'editGrant', 'grantID' => $grantID]);
 
@@ -1553,10 +1607,10 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     $formUrl = urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID]);
 
-    $columSpan = 4;
+    $theadColumSpan = 4;
 
     if (isModerator()) {
-        ++$columSpan;
+        ++$theadColumSpan;
 
         $inputUserName = htmlspecialchars_uni($mybb->get_input('username'));
 
@@ -1573,6 +1627,10 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     $pageContents = eval(getTemplate('controlPanelUsers'));
 } elseif ($mybb->get_input('action') === 'viewOwners') {
+    if (!isModerator()) {
+        error_no_permission();
+    }
+
     if ($mybb->request_method === 'post') {
         $userNames = explode(',', $mybb->get_input('username'));
 
@@ -1700,11 +1758,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
             $userProfileLink = build_profile_link($userNameFormatted, $userData['uid']);
         }
 
-        $ownerDate = $lang->sprintf(
-            $lang->ougcAwardsDate,
-            my_date($mybb->settings['dateformat'], $ownerData['date']),
-            my_date($mybb->settings['timeformat'], $ownerData['date'])
-        );
+        $ownerDate = my_date('normal', $ownerData['date']);
 
         $deleteUrl = urlHandlerBuild(['action' => 'deleteOwner', 'ownerID' => $ownerID]);
 
@@ -1752,10 +1806,20 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     $pageContents = eval(getTemplate('controlPanelConfirmation'));
 } elseif ($mybb->get_input('action') == 'viewRequests') {
+    if (!isModerator() && !$isOwner) {
+        error_no_permission();
+    }
+
+    $statusPending = REQUEST_STATUS_PENDING;
+
     $whereClauses = [
         "aid='{$awardID}'",
-        'status' => "status='" . REQUEST_STATUS_PENDING . "'"
+        'status' => "status='{$statusPending}'"
     ];
+
+    if (!isModerator() && $isOwner) {
+        $whereClauses['uid'] = "uid='{$currentUserID}'";
+    }
 
     $filterOptions = $mybb->get_input('filterOptions', MyBB::INPUT_ARRAY);
 
@@ -1770,12 +1834,16 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
         switch ($filterOptions['status']) {
             case REQUEST_STATUS_ACCEPTED:
+                $statusAccepted = REQUEST_STATUS_ACCEPTED;
+
                 $filterOptionsSelected['statusAccepted'] = ' selected="selected"';
-                $whereClauses['status'] = "status='" . REQUEST_STATUS_ACCEPTED . "'";
+                $whereClauses['status'] = "status='{$statusAccepted}'";
                 break;
             case REQUEST_STATUS_REJECTED:
+                $statusPending = REQUEST_STATUS_REJECTED;
+
                 $filterOptionsSelected['statusRejected'] = ' selected="selected"';
-                $whereClauses['status'] = "status='" . REQUEST_STATUS_REJECTED . "'";
+                $whereClauses['status'] = "status='{$statusPending}'";
                 break;
         }
     }
@@ -1917,7 +1985,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
             $requestID = (int)$requestData['rid'];
 
-            $awardName = htmlspecialchars_uni($requestData['name']);
+            $awardName = htmlspecialchars_uni($awardData['name']);
 
             $requestMessage = htmlspecialchars_uni($requestData['message']);
 
@@ -2231,8 +2299,8 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
         $queryLimit = (int)getSetting('perpage');
 
-        if ($queryLimit < 1 && $queryLimit !== -1) {
-            $queryLimit = 0;
+        if ($queryLimit < 1) {
+            $queryLimit = 10;
         }
 
         $categoryIDs = $awardIDs = [];
@@ -2280,7 +2348,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
         $currentPage = 1;
 
-        if ($queryLimit && $totalGrantedCount && $queryLimit !== -1) {
+        if ($queryLimit && $totalGrantedCount) {
             $currentPage = $mybb->get_input('page', MyBB::INPUT_INT);
 
             if ($currentPage > 0) {
@@ -2311,11 +2379,9 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
             'order_dir' => 'desc'
         ];
 
-        if ($queryLimit !== -1) {
-            $queryOptions['limit'] = $queryLimit;
+        $queryOptions['limit'] = $queryLimit;
 
-            $queryOptions['limit_start'] = $startPage;
-        }
+        $queryOptions['limit_start'] = $startPage;
 
         $grantCacheData = awardGetUser(
             $whereClauses,
@@ -2360,7 +2426,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     exit;
 } elseif ($mybb->get_input('action') === 'requestAward') {
-    if (!canRequestAwards($awardID)) {
+    if (!canRequestAwards($awardID, $categoryID)) {
         $errorMessages[] = $lang->ougcAwardsRequestErrorNoPermission;
     }
 
@@ -2829,6 +2895,10 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     $pageContents = eval(getTemplate('controlPanelConfirmation'));
 } elseif ($mybb->get_input('action') === 'manageTasks') {
+    if (!isModerator()) {
+        error_no_permission();
+    }
+
     $alternativeBackground = alt_trow(true);
 
     $taskRows = '';
@@ -2920,6 +2990,10 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     $pageContents = eval(getTemplate('controlPanelTasks'));
 } elseif ($mybb->get_input('action') === 'taskLogs') {
+    if (!isModerator()) {
+        error_no_permission();
+    }
+
     $taskData = taskGet(["tid='{$taskID}'"], '*', ['limit' => 1]);
 
     if (empty($taskData['tid'])) {
@@ -3030,29 +3104,41 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
         redirect(urlHandlerBuild(), $lang->ougcAwardsRedirectCategoryUpdated);
     }
 
-    $pageContents = $moderationColumnRequest = $moderationColumnEnabled = $moderationColumnDisplayOrder = $moderationColumnOptions = '';
+    $pageContents = '';
 
-    $columSpan = 3;
+    $ownerObjects = ownerGetUser(["uid='{$currentUserID}'"]);
 
-    if (isModerator()) {
-        $columSpan += 3;
-
-        $moderationColumnEnabled = eval(getTemplate('controlPanelListColumnEnabled'));
-
-        $moderationColumnDisplayOrder = eval(getTemplate('controlPanelListColumnDisplayOrder'));
-
-        $moderationColumnOptions = eval(getTemplate('controlPanelListColumnOptions'));
-    }
-
-    $columOptionsRequest = false;
+    $ownerAwardIDs = array_map('intval', array_column($ownerObjects, 'aid'));
 
     foreach (categoryGetCache([], '*', ['order_by' => 'disporder']) as $categoryData) {
+        $moderationColumnRequest = $moderationColumnEnabled = $moderationColumnDisplayOrder = $moderationColumnOptions = '';
+
+        $theadColumSpan = 3;
+
+        if (isModerator()) {
+            $theadColumSpan += 2;
+
+            $moderationColumnEnabled = eval(getTemplate('controlPanelListColumnEnabled'));
+
+            $moderationColumnDisplayOrder = eval(getTemplate('controlPanelListColumnDisplayOrder'));
+        }
+
         $categoryID = (int)$categoryData['cid'];
 
-        if (isModerator() || canRequestAwards(0, $categoryID)) {
-            ++$columSpan;
+        if (canRequestAwards(0, $categoryID)) {
+            ++$theadColumSpan;
 
             $moderationColumnRequest = eval(getTemplate('controlPanelListColumnRequest'));
+        }
+
+        $categoryAwardsObjects = awardsGetCache(["cid='{$categoryID}'"], '*', ['order_by' => 'disporder']);
+
+        $isAwardOwner = array_intersect(array_column($categoryAwardsObjects, 'aid'), $ownerAwardIDs);
+
+        if (isModerator() || $isAwardOwner) {
+            ++$theadColumSpan;
+
+            $moderationColumnOptions = eval(getTemplate('controlPanelListColumnOptions'));
         }
 
         $requestColumn = '';
@@ -3063,28 +3149,24 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
         $categoryDescription = $categoryData['description'];
 
-        $ownerObjects = ownerGetUser(["uid='{$currentUserID}'"]);
-
-        if (isset($ownerObjects['aid'])) {
-        }
-
-        $ownerAwardIDs = array_map('intval', array_column($ownerObjects, 'aid'));
-
         $alternativeBackground = alt_trow(true);
 
-        foreach (
-            awardsGetCache(["cid='{$categoryID}'"], '*', ['order_by' => 'disporder']
-            ) as $awardID => $awardData
-        ) {
+        foreach ($categoryAwardsObjects as $awardID => $awardData) {
             if (!isModerator() && !in_array($awardID, $ownerAwardIDs)) {
-                continue;
+                //continue;
+            }
+
+            $descriptionColumSpan = 1;
+
+            if (!isModerator() && $isAwardOwner && !in_array($awardID, $isAwardOwner)) {
+                ++$descriptionColumSpan;
             }
 
             //$requestColumnRow = '';
 
             //$colSpanRowCount = 2;
 
-            if (canRequestAwards($awardID)) {
+            if (canRequestAwards($awardID, $categoryID)) {
                 //$requestColumnRow = eval(getTemplate('page_list_award_request'));
 
                 //--$colSpanRowCount;
@@ -3126,7 +3208,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
                 $checkedElement = 'checked="checked"';
             }
 
-            $rowColumnEnabled = $rowColumnDisplayOrder = $rowColumnOptions = $rowColumnOptionsRequest = '';
+            $rowColumnEnabled = $rowColumnDisplayOrder = $rowColumnOptions = $rowColumnRequest = '';
 
             if (isModerator()) {
                 $rowColumnEnabled = eval(getTemplate('controlPanelListRowEnabled'));
@@ -3134,40 +3216,51 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
                 $rowColumnDisplayOrder = eval(getTemplate('controlPanelListRowDisplayOrder'));
 
                 $rowColumnOptions = eval(getTemplate('controlPanelListRowOptions'));
+            } elseif (in_array($awardID, $ownerAwardIDs)) {
+                $rowColumnOptions = eval(getTemplate('controlPanelListRowOptions'));
             }
 
             $requestButton = '';
 
-            if (canRequestAwards($awardID)) {
+            if (canRequestAwards($awardID, $categoryID)) {
                 $requestButton = eval(getTemplate('controlPanelListRowRequestButton'));
-            }
 
-            if ($moderationColumnRequest) {
                 $rowColumnRequest = eval(getTemplate('controlPanelListRowRequest'));
             }
+
+            $rowColumnExtra = [];
+
+            $plugins->run_hooks('ougc_awards_main_category_award_end');
+
+            $rowColumnExtra = implode(' ', $rowColumnExtra);
 
             $awardsList .= eval(getTemplate('controlPanelListRow'));
 
             $alternativeBackground = alt_trow();
         }
 
+        $moderationColumnExtra = [];
+
+        $plugins->run_hooks('ougc_awards_main_category_end');
+
+        //$categoryID === 1 || _dump($awardsList);
         if (!$awardsList) {
             $awardsList = eval(getTemplate('controlPanelListRowEmpty'));
         }
 
-        $plugins->run_hooks('ougc_awards_end');
-
         $editCategoryUrl = $updateButton = '';
 
         if (isModerator()) {
-            $columSpan += 3;
-
             $editCategoryUrl = urlHandlerBuild(['action' => 'editCategory', 'categoryID' => $categoryID]);
+
+            $deleteCategoryUrl = urlHandlerBuild(['action' => 'deleteCategory', 'categoryID' => $categoryID]);
 
             $editCategoryUrl = eval(getTemplate('controlPanelListButtonEditCategory'));
 
             $updateButton = eval(getTemplate('controlPanelListButtonUpdateCategory'));
         }
+
+        $moderationColumnExtra = implode(' ', $moderationColumnExtra);
 
         $pageContents .= eval(getTemplate('controlPanelList'));
     }
