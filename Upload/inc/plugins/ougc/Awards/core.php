@@ -69,8 +69,6 @@ const TASK_STATUS_ENABLED = 1;
 
 const TASK_ALLOW_MULTIPLE = 1;
 
-const REQUEST_STATUS_PENDING = 1;
-
 const GRANT_STATUS_EVERYWHERE = 0;
 
 const GRANT_STATUS_PROFILE = 1;
@@ -83,7 +81,7 @@ const REQUEST_STATUS_REJECTED = 2;
 
 const REQUEST_STATUS_ACCEPTED = 0;
 
-const REQUEST_STATUS_OPEN = 1;
+const REQUEST_STATUS_PENDING = 1;
 
 const TABLES_DATA = [
     'ougc_awards_categories' => [
@@ -242,6 +240,29 @@ const TABLES_DATA = [
         ],
         //'visible' => ['uidaid' => 'uid,aid', 'aiduid' => 'aid,uid']
     ],
+    'ougc_awards_category_owners' => [
+        'ownerID' => [
+            'type' => 'INT',
+            'unsigned' => true,
+            'auto_increment' => true,
+            'primary_key' => true
+        ],
+        'userID' => [
+            'type' => 'INT',
+            'unsigned' => true,
+            'default' => 0
+        ],
+        'categoryID' => [
+            'type' => 'INT',
+            'unsigned' => true,
+            'default' => 0
+        ],
+        'ownerDate' => [
+            'type' => 'INT',
+            'unsigned' => true,
+            'default' => 0
+        ],
+    ],
     'ougc_awards_owners' => [
         'oid' => [
             'type' => 'INT',
@@ -342,11 +363,11 @@ const TABLES_DATA = [
             'unsigned' => true,
             'default' => 0
         ],
-        /*'allowmultiple' => [
+        'allowmultiple' => [
             'type' => 'SMALLINT',
             'unsigned' => true,
             'default' => 0
-        ],*/
+        ],
         'revoke' => [
             'type' => 'TEXT',
             'null' => true,
@@ -608,6 +629,11 @@ const FIELDS_DATA = [
         'ougc_awards' => [
             'type' => 'TEXT',
             'null' => true
+        ],
+        'ougc_awards_category_owner' => [
+            'type' => 'TINYINT',
+            'unsigned' => true,
+            'default' => 0
         ],
         'ougc_awards_owner' => [
             'type' => 'TINYINT',
@@ -1009,9 +1035,10 @@ function executeTask(): bool
 
         while ($user = $db->fetch_array($query2)) {
             $log = false;
+
             $gave_cache = $revoke_cache = $aids = $gave_list = $revoke_list = [];
 
-            if (/*($award_task['give'] && !$award_task['allowmultiple']) || */ $award_task['revoke']) {
+            if (($award_task['give'] && !$award_task['allowmultiple']) || $award_task['revoke']) {
                 $q1 = $db->simple_select(
                     'ougc_awards_users',
                     'gid, aid',
@@ -1020,6 +1047,7 @@ function executeTask(): bool
                         explode(',', $award_task['revoke'] . ',' . $award_task['give'])
                     ) . "')"
                 );
+
                 while ($gave = $db->fetch_array($q1)) {
                     if (my_strpos(',' . $award_task['give'] . ',', ',' . $gave['aid'] . ',') !== false) {
                         $gave_cache[] = $gave['aid'];
@@ -1032,13 +1060,13 @@ function executeTask(): bool
 
             if ($award_task['give']) {
                 $aids = array_flip(explode(',', $award_task['give']));
-                /*if (!$award_task['allowmultiple']) {
+                if (!$award_task['allowmultiple']) {
                     foreach ($gave_cache as $aid) {
                         if (isset($aids[$aid])) {
                             unset($aids[$aid]);
                         }
                     }
-                }*/
+                }
 
                 if (!empty($aids)) {
                     foreach ($aids as $aid => $i) {
@@ -1242,7 +1270,6 @@ function ownerGetSingle(array $whereClauses = [], string $queryFields = '*'): ar
     return [];
 }
 
-
 function ownerGetUser(
     array $whereClauses = [],
     string $queryFields = '*',
@@ -1276,6 +1303,131 @@ function ownerFind(int $awardID, int $userID): array
     global $db;
 
     $query = $db->simple_select('ougc_awards_owners', '*', "aid='{$awardID}' AND uid='{$userID}'");
+
+    if ($db->num_rows($query)) {
+        return $db->fetch_array($query);
+    }
+
+    return [];
+}
+
+function ownerCategoryInsert(int $categoryID, int $userID): bool
+{
+    global $db, $plugins;
+
+    $hookArguments = [
+        'categoryID' => &$categoryID,
+        'userID' => &$userID
+    ];
+
+    $plugins->run_hooks('ougc_awards_insert_category_owner', $hookArguments);
+
+    $insertData = [
+        'categoryID' => $categoryID,
+        'userID' => $userID,
+        'ownerDate' => TIME_NOW
+    ];
+
+    $db->insert_query('ougc_awards_category_owners', $insertData);
+
+    $db->update_query('users', ['ougc_awards_category_owner' => 1], "uid='{$userID}'");
+
+    return true;
+}
+
+function ownerCategoryDelete(int $ownerID): bool
+{
+    global $db, $plugins;
+
+    $hookArguments = [
+        'ownerID' => &$ownerID
+    ];
+
+    $plugins->run_hooks('ougc_awards_revoke_category_owner', $hookArguments);
+
+    $db->delete_query('ougc_awards_category_owners', "ownerID='{$ownerID}'");
+
+    rebuildOwnersCategories();
+
+    return true;
+}
+
+function rebuildOwnersCategories(): bool
+{
+    global $db;
+
+    $userIDs = [];
+
+    $dbQuery = $db->simple_select('ougc_awards_category_owners', 'uid');
+
+    while ($userID = $db->fetch_field($dbQuery, 'uid')) {
+        $userIDs[] = (int)$userID;
+    }
+
+    $userIDs = implode("','", array_filter($userIDs));
+
+    $db->update_query('users', ['ougc_awards_category_owner' => 0], "uid NOT IN ('{$userIDs}')");
+
+    $db->update_query('users', ['ougc_awards_category_owner' => 1], "uid IN ('{$userIDs}')");
+
+    return true;
+}
+
+function ownerCategoryGetSingle(array $whereClauses = [], string $queryFields = '*'): array
+{
+    global $db;
+
+    $dbQuery = $db->simple_select('ougc_awards_category_owners', $queryFields, implode(' AND ', $whereClauses));
+
+    if ($db->num_rows($dbQuery)) {
+        return $db->fetch_array($dbQuery);
+    }
+
+    return [];
+}
+
+function ownerCategoryGetUser(
+    array $whereClauses = [],
+    string $queryFields = '*',
+    array $queryOptions = []
+): array {
+    global $db;
+
+    $usersData = [];
+
+    if (isset($queryOptions['limit'])) {
+        $queryOptions['limit'] = (int)$queryOptions['limit'];
+    }
+
+    $dbQuery = $db->simple_select(
+        'ougc_awards_category_owners',
+        $queryFields,
+        implode(' AND ', $whereClauses),
+        $queryOptions
+    );
+
+    if ($db->num_rows($dbQuery)) {
+        if (isset($queryOptions['limit']) && $queryOptions['limit'] === 1) {
+            return $db->fetch_array($dbQuery);
+        } else {
+            while ($userData = $db->fetch_array($dbQuery)) {
+                $usersData[] = $userData;
+            }
+        }
+    }
+
+    return $usersData;
+}
+
+function ownerCategoryFind(int $categoryID, int $userID): array
+{
+    global $db;
+
+    $query = $db->simple_select(
+        'ougc_awards_category_owners',
+        '*',
+        "categoryID='{$categoryID}' AND userID='{$userID}'"
+    );
 
     if ($db->num_rows($query)) {
         return $db->fetch_array($query);
@@ -1804,7 +1956,7 @@ function taskInsert(array $taskData, int $taskID = 0, bool $updateTask = false):
             'active',
             'logging',
             'thread',
-            //'allowmultiple',
+            'allowmultiple',
             'disporder',
             'additionalgroups',
             'threads',
@@ -2091,7 +2243,7 @@ function cacheUpdate(): bool
     }
 
     if ($awardIDs = array_keys($cacheData['awards'])) {
-        $requestStatusOpen = REQUEST_STATUS_OPEN;
+        $requestStatusOpen = REQUEST_STATUS_PENDING;
 
         $awardIDs = implode("','", $awardIDs);
 
@@ -2258,7 +2410,7 @@ function generateSelectCategory(int $selectedID): string
 {
     global $db, $mybb;
 
-    $selectName = 'cid';
+    $selectName = 'categoryID';
 
     $dbQuery = $db->simple_select('ougc_awards_categories', '*', '', ['order_by' => 'disporder']);
 
@@ -2362,7 +2514,7 @@ function canRequestAwards(int $awardID = 0, int $categoryID = 0): bool
 
         $categoryID = (int)$awardData['cid'];
 
-        if (empty($awardData['visible']) || empty($awardData['allowrequests'])) {
+        if (empty($awardData['allowrequests'])) {
             return false;
         }
     }
@@ -2370,7 +2522,7 @@ function canRequestAwards(int $awardID = 0, int $categoryID = 0): bool
     if (!empty($categoryID)) {
         $categoryData = categoryGet($categoryID);
 
-        if (empty($categoryData['visible']) || empty($categoryData['allowrequests'])) {
+        if (empty($categoryData['allowrequests'])) {
             return false;
         }
     }
@@ -2613,16 +2765,26 @@ function isModerator(): bool
 
 function isVisibleCategory(int $categoryID): bool
 {
-    $categoryData = awardGet($categoryID);
+    global $mybb;
+
+    $categoryData = categoryGet($categoryID);
+
+    $currentUserID = (int)$mybb->user['uid'];
 
     return !empty($categoryData['visible']) || isModerator();
 }
 
 function isVisibleAward(int $awardID): bool
 {
+    global $mybb;
+
     $awardData = awardGet($awardID);
 
-    return !empty($awardData['visible']) || isModerator();
+    $categoryID = (int)$awardData['cid'];
+
+    $currentUserID = (int)$mybb->user['uid'];
+
+    return !empty($awardData['visible']) || isModerator() || ownerCategoryFind($categoryID, $currentUserID);
 }
 
 function myAlertsInitiate(): bool

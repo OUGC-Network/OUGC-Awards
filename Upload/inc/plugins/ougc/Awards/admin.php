@@ -166,7 +166,6 @@ function pluginActivate(): bool
         $alertTypeManager->add($alertType);
     }
 
-    // Insert/update version into cache
     $plugins = $cache->read('ougc_plugins');
 
     if (!$plugins) {

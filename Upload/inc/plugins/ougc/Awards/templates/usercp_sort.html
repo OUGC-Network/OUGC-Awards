@@ -1,24 +1,23 @@
 <form action="{$url}" method="post">
-<input type="hidden" name="manage" value="{$mybb->input['manage']}" />
-	<table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
-	<tr>
-		<td class="thead" colspan="7">
-			<strong>{$category['name']}</strong>
-		</td>
-	</tr>
-	<tr>
-		<td class="tcat" width="16%" colspan="2">{$lang->ougc_awards_page_list_name}</td>
-		<td class="tcat" width="34%">{$lang->ougc_awards_usercp_list_reason}</td>
-		<td class="tcat" width="15%" align="center">{$lang->ougc_awards_usercp_list_from}</td>
-		<td class="tcat" width="15%" align="center">{$lang->ougc_awards_page_view_date}</td>
-		<td class="tcat" width="10%" align="center">{$lang->ougc_awards_usercp_list_visible}</td>
-		<td class="tcat" width="10%" align="center">{$lang->ougc_awards_usercp_list_disporder}</td>
-	</tr>
-	{$awardlist}
-</table>
-<br />
-<div align="center">
-	{$gobutton}
-</div>
+    <table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
+        <tr>
+            <td class="thead" colspan="7">
+                <strong>{$category['name']}</strong>
+            </td>
+        </tr>
+        <tr>
+            <td class="tcat" width="16%" colspan="2">{$lang->ougc_awards_page_list_name}</td>
+            <td class="tcat" width="34%">{$lang->ougc_awards_usercp_list_reason}</td>
+            <td class="tcat" width="15%" align="center">{$lang->ougc_awards_usercp_list_from}</td>
+            <td class="tcat" width="15%" align="center">{$lang->ougc_awards_page_view_date}</td>
+            <td class="tcat" width="10%" align="center">{$lang->ougc_awards_usercp_list_visible}</td>
+            <td class="tcat" width="10%" align="center">{$lang->ougc_awards_usercp_list_disporder}</td>
+        </tr>
+        {$awardlist}
+    </table>
+    <br/>
+    <div align="center">
+        {$gobutton}
+    </div>
 </form>
-<br />
+<br/>

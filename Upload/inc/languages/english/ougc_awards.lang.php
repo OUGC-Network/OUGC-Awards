@@ -89,8 +89,11 @@ $l = [
 
     'ougcAwardsControlPanelTitle' => 'Awards',
     'ougcAwardsControlPanelAward' => 'Award',
+    'ougcAwardsControlPanelName' => 'Name',
     'ougcAwardsControlPanelDescription' => 'Description',
     'ougcAwardsControlPanelEmpty' => 'There are currently no awards to display.',
+    'ougcAwardsControlPanelAwardViewOwners' => 'View Owners',
+    'ougcAwardsControlPanelAwardNewAward' => 'New Award',
     'ougcAwardsControlPanelAwardEditCategory' => 'Edit',
     'ougcAwardsControlPanelAwardDeleteCategory' => 'Delete',
     'ougcAwardsControlPanelEnabled' => 'Enabled',
@@ -184,6 +187,16 @@ Custom Icon (Advanced): A custom template for this award.
     'ougcAwardsControlPanelUsersTableOptions' => 'Options',
     'ougcAwardsControlPanelUsersTableOptionsEditGrant' => 'Edit Grant',
 
+    'ougcAwardsControlPanelCategoryOwnersEmpty' => 'There are currently no users to display.',
+
+    'ougcAwardsControlPanelCategoryOwnersTitle' => 'Category Owners',
+    'ougcAwardsControlPanelCategoryOwnersTableTitle' => 'Category Owners',
+
+    'ougcAwardsControlPanelCategoryOwnersForm' => 'Assign Owner',
+    'ougcAwardsControlPanelCategoryOwnersFormDescription' => 'Use the form below to assign new owners to this category.',
+    'ougcAwardsControlPanelCategoryOwnersFormUsernames' => 'Usernames',
+    'ougcAwardsControlPanelCategoryOwnersFormButton' => 'Assign Owner',
+
     'ougcAwardsControlPanelOwnersEmpty' => 'There are currently no users to display.',
 
     'ougcAwardsControlPanelOwnersTitle' => 'Owners',
@@ -220,6 +233,10 @@ Custom Icon (Advanced): A custom template for this award.
     'ougcAwardsControlPanelEditGrantTableDate' => 'Grant Date',
     'ougcAwardsControlPanelEditGrantTableDateDescription' => 'Modify the grant time stamp.',
     'ougcAwardsControlPanelEditGrantButton' => 'Update Grant',
+
+    'ougcAwardsControlPanelDeleteCategoryOwnersTitle' => 'Delete Category Owner',
+    'ougcAwardsControlPanelDeleteCategoryOwnersDescription' => 'Are you sure you want to delete the selected owner?',
+    'ougcAwardsControlPanelDeleteCategoryOwnersButton' => 'Delete Category Owner',
 
     'ougcAwardsControlPanelDeleteOwnersTitle' => 'Delete Owner',
     'ougcAwardsControlPanelDeleteOwnersDescription' => 'Are you sure you want to delete the selected owner?',
@@ -279,6 +296,7 @@ Custom Icon (Advanced): A custom template for this award.
 
     'ougcAwardsControlPanelButtonManageTasks' => 'Manage Tasks',
     'ougcAwardsControlPanelButtonNewTask' => 'New Task',
+    'ougcAwardsControlPanelButtonManagePresets' => 'Manage Presets',
 
     'ougcAwardsControlPanelNewTaskTitle' => 'New Task',
     'ougcAwardsControlPanelNewTaskTableTitle' => 'New Task',
@@ -399,6 +417,7 @@ Custom Icon (Advanced): A custom template for this award.
     'ougcAwardsErrorInvalidTask' => 'The selected task does not exist.',
     'ougcAwardsErrorInvalidOwner' => 'The selected award owner does not exist.',
     'ougcAwardsErrorInvalidUsers' => 'Some selected users do not exist.',
+    'ougcAwardsErrorDuplicatedCategoryOwner' => 'Some selected users are already assigned as owners for this category.',
     'ougcAwardsErrorDuplicatedOwner' => 'Some selected users are already assigned as owners for this award.',
     'ougcAwardsErrorPendingRequest' => 'You already have an open request for this award.',
     'ougcAwardsErrorInvalidGrant' => 'The selected award grant does not exist.',
@@ -423,7 +442,9 @@ Custom Icon (Advanced): A custom template for this award.
     'ougcAwardsRedirectAwardCreated' => 'The award was created successfully.<br />You will now be redirected back.',
     'ougcAwardsRedirectAwardUpdated' => 'The award was updated successfully.<br />You will now be redirected back.',
     'ougcAwardsRedirectAwardDeleted' => 'The award was deleted successfully.<br />You will now be redirected back.',
+    'ougcAwardsRedirectCategoryOwnerAssigned' => 'The category owner was assigned successfully.<br />You will now be redirected back.',
     'ougcAwardsRedirectOwnerAssigned' => 'The award owner was assigned successfully.<br />You will now be redirected back.',
+    'ougcAwardsRedirectCategoryOwnerRevoked' => 'The category owner was revoked successfully.<br />You will now be redirected back.',
     'ougcAwardsRedirectOwnerRevoked' => 'The award owner was revoked successfully.<br />You will now be redirected back.',
     'ougcAwardsRedirectGranted' => 'The award was granted successfully.<br />You will now be redirected back.',
     'ougcAwardsRedirectGrantedUpdated' => 'The award grant was updated successfully.<br />You will now be redirected back.',

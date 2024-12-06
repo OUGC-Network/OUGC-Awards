@@ -1,6 +1,6 @@
 <form action="{$pageUrl}" method="post" enctype="multipart/form-data">
     <input type="hidden" name="my_post_key" value="{$mybb->post_code}"/>
-    <input type="hidden" name="action" value="{$mybb->get_input('action')}"/>
+    <input type="hidden" name="action" value="{$mybb->input['action']}"/>
     <input type="hidden" name="categoryID" value="{$categoryID}"/>
     <table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
         <tr>
@@ -75,7 +75,7 @@
             </td>
             <td class="trow1" style="vertical-align: middle;">
                 <input type="number" name="disporder" value="{$inputData['disporder']}" class="textbox" size="5"
-                       maxlength="4" style="text-align: center;"/>
+                       maxlength="4" style="text-align: center;" min="0"/>
             </td>
         </tr>
         {$additionalRows}
