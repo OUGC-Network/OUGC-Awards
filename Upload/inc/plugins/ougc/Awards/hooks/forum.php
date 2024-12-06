@@ -740,7 +740,7 @@ function member_profile_end(): bool
     }
 
     if ($totalGrantedCount > $maximumAwardsInProfile) {
-        $memprofile['ougc_awards_view_all'] = eval(getTemplate('postBitViewAll'));
+        $memprofile['ougc_awards_view_all'] = eval(getTemplate('profileViewAll'));
     }
 
     return true;

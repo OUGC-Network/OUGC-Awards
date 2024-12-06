@@ -59,6 +59,7 @@ use function ougc\Awards\Core\isVisibleCategory;
 use function ougc\Awards\Core\logGet;
 use function ougc\Awards\Core\ownerCategoryDelete;
 use function ougc\Awards\Core\ownerCategoryFind;
+use function ougc\Awards\Core\ownerCategoryGetSingle;
 use function ougc\Awards\Core\ownerCategoryGetUser;
 use function ougc\Awards\Core\ownerCategoryInsert;
 use function ougc\Awards\Core\ownerDelete;
@@ -1089,6 +1090,14 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
         $grantedTotal = 0;
     }
 
+    $ownersCategoryTotal = ownerCategoryGetSingle(["categoryID='{$categoryID}'"], 'COUNT(*) AS ownersTotal');
+
+    if (!empty($ownersCategoryTotal['ownersTotal'])) {
+        $ownersCategoryTotal = my_number_format($ownersCategoryTotal['ownersTotal']);
+    } else {
+        $ownersCategoryTotal = 0;
+    }
+
     $ownersTotal = ownerGetSingle(["aid IN ('{$awardIDs}')"], 'COUNT(*) AS ownersTotal');
 
     if (!empty($ownersTotal['ownersTotal'])) {
@@ -1338,48 +1347,241 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
     $confirmationContent = eval(getTemplate('controlPanelConfirmationDeleteAward'));
 
     $pageContents = eval(getTemplate('controlPanelConfirmation'));
-} elseif ($mybb->get_input('action') === 'viewUsers') {
+} elseif ($mybb->get_input('action') === 'myAwards') {
     if ($mybb->request_method === 'post') {
-        if (isset($mybb->input['revoke'])) {
-            $userNames = explode(',', $mybb->get_input('username'));
+        $displayOrders = $mybb->get_input('displayOrder', MyBB::INPUT_ARRAY);
 
-            $usersCache = [];
+        $visibleStatuses = $mybb->get_input('visibleStatus', MyBB::INPUT_ARRAY);
 
-            foreach ($userNames as $userName) {
-                if ($userData = getUserByUserName($userName)) {
-                    $usersCache[] = $userData;
-                } else {
-                    $errorMessages[] = $lang->ougcAwardsErrorInvalidUsers;
+        $updateGrandIDs = array_unique(array_merge(array_keys($displayOrders), array_keys($visibleStatuses)));
 
-                    break;
+        foreach ($updateGrandIDs as $grantID) {
+            $updateData = ['disporder' => (int)$displayOrders[$grantID]];
+
+            if (isset($visibleStatuses[$grantID])) {
+                $updateData['visible'] = \ougc\Awards\Core\GRANT_STATUS_VISIBLE;
+            } else {
+                $updateData['visible'] = \ougc\Awards\Core\GRANT_STATUS_NOT_VISIBLE;
+            }
+
+            $plugins->run_hooks('ougc_awards_my_awards_update_end');
+
+            grantUpdate($updateData, $grantID);
+        }
+
+        redirect(
+            urlHandlerBuild(['action' => 'myAwards']),
+            $lang->ougcAwardsRedirectMyAwardsUpdated
+        );
+    }
+
+    $totalGrantedCount = awardGetUser(
+        ["uid='{$currentUserID}'"],
+        'COUNT(gid) AS totalGranted',
+        ['limit' => 1]
+    );
+
+    if (empty($totalGrantedCount['totalGranted'])) {
+        $totalGrantedCount = 0;
+    } else {
+        $totalGrantedCount = (int)$totalGrantedCount['totalGranted'];
+    }
+
+    if ($mybb->get_input('page', MyBB::INPUT_INT) > 0) {
+        $startPage = ($mybb->get_input('page', MyBB::INPUT_INT) - 1) * (int)getSetting('perpage');
+
+        $totalPages = ceil($totalGrantedCount / (int)getSetting('perpage'));
+
+        if ($mybb->get_input('page', MyBB::INPUT_INT) > $totalPages) {
+            $startPage = 0;
+
+            $mybb->input['page'] = 1;
+        }
+    } else {
+        $startPage = 0;
+
+        $mybb->input['page'] = 1;
+    }
+
+    $userIDs = $threadsCache = [];
+
+    $grantCacheData = awardGetUser(
+        ["uid='{$currentUserID}'"],
+        '*',
+        [
+            'limit' => (int)getSetting('perpage'),
+            'limit_start' => $startPage,
+            'order_by' => 'date',
+            'order_dir' => 'desc'
+        ]
+    );
+
+    foreach ($grantCacheData as $grantData) {
+        if (!empty($grantData['uid'])) {
+            $userIDs[] = (int)$grantData['uid'];
+        }
+    }
+
+    $paginationMenu = (string)multipage(
+        $totalGrantedCount,
+        (int)getSetting('perpage'),
+        $mybb->get_input('page', MyBB::INPUT_INT),
+        urlHandlerBuild(['action' => 'myAwards'])
+    );
+
+    $threadIDs = array_filter(array_map('intval', array_column($grantCacheData, 'thread')));
+
+    if ($threadIDs) {
+        $threadIDs = implode("','", $threadIDs);
+
+        $dbQuery = $db->simple_select(
+            'threads',
+            'tid, subject, prefix',
+            "visible>0  AND closed NOT LIKE 'moved|%' AND tid IN ('{$threadIDs}')"
+        );
+
+        while ($threadData = $db->fetch_array($dbQuery)) {
+            $threadsCache[(int)$threadData['tid']] = $threadData;
+        }
+    }
+
+    $grantedList = '';
+
+    $alternativeBackground = alt_trow(true);
+
+    $rowColumnSpan = 7;
+
+    foreach ($grantCacheData as $grantData) {
+        $grantID = (int)$grantData['gid'];
+
+        $awardID = (int)$grantData['aid'];
+
+        $awardData = awardGet($awardID);
+
+        $awardName = htmlspecialchars_uni($awardData['name']);
+
+        $awardImage = $awardClass = awardGetIcon($awardID);
+
+        $awardImage = eval(
+        getTemplate(
+            $awardData['template'] === AWARD_TEMPLATE_TYPE_CLASS ? 'awardImageClass' : 'awardImage'
+        )
+        );
+
+        $awardUrl = urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID]);
+
+        $awardImage = eval(getTemplate('awardWrapper', false));
+
+        $grantReason = $grantData['reason'];
+
+        parseMessage($grantReason);
+
+        $threadLink = '';
+
+        if (!empty($threadsCache[$grantData['thread']])) {
+            $threadData = $threadsCache[$grantData['thread']];
+
+            $threadData['threadPrefix'] = $threadData['threadPrefixDisplay'] = '';
+
+            if ($threadData['prefix']) {
+                $prefixData = build_prefixes($threadData['prefix']);
+
+                if (!empty($prefixData['prefix'])) {
+                    $threadData['threadPrefix'] = $prefixData['prefix'] . '&nbsp;';
+
+                    $threadData['threadPrefixDisplay'] = $prefixData['displaystyle'] . '&nbsp;';
                 }
             }
 
+            $threadSubject = htmlspecialchars_uni(
+                $parser->parse_badwords($threadData['subject'])
+            );
+
+            $threadLink = get_thread_link($threadData['tid']);
+
+            $threadLink = eval(getTemplate('controlPanelMyAwardsRowLink'));
+        }
+
+        $grantDate = my_date('normal', $grantData['date']);
+
+        $displayOrder = (int)$grantData['disporder'];
+
+        $checkedElement = '';
+
+        $visibleStatus = (int)$grantData['visible'];
+
+        if ($visibleStatus) {
+            $checkedElement = 'checked="checked"';
+        }
+
+        $rowColumnsExtra = [];
+
+        $plugins->run_hooks('ougc_awards_my_awards_row_end');
+
+        $rowColumnsExtra = implode(' ', $rowColumnsExtra);
+
+        $grantedList .= eval(getTemplate('controlPanelMyAwardsRow'));
+
+        $alternativeBackground = alt_trow();
+    }
+
+    $rowHeadColumnsExtra = [];
+
+    $plugins->run_hooks('ougc_awards_my_awards_end');
+
+    $rowHeadColumnsExtra = implode(' ', $rowHeadColumnsExtra);
+
+    if (!$grantedList) {
+        $grantedList = eval(getTemplate('controlPanelMyAwardsEmpty'));
+    }
+
+    $pageTitle = $lang->ougcAwardsControlPanelUsersTitle;
+
+    $formUrl = urlHandlerBuild(['action' => 'myAwards', 'awardID' => $awardID]);
+
+    $columnHeader = $grantForm = $revokeForm = '';
+
+    if (is_member(getSetting('allowedGroupsPresets'))) {
+        $buttonUrl = urlHandlerBuild(['action' => 'viewPresets']);
+
+        $buttonText = $lang->ougcAwardsControlPanelButtonManagePresets;
+
+        $actionButtons[] = eval(getTemplate('controlPanelButtons'));
+    }
+
+    $pageContents = eval(getTemplate('controlPanelMyAwards'));
+} elseif ($mybb->get_input('action') === 'viewUsers') {
+    if ($mybb->request_method === 'post') {
+        $userNames = explode(',', $mybb->get_input('username'));
+
+        $usersCache = [];
+
+        foreach ($userNames as $userName) {
+            if ($userData = getUserByUserName($userName)) {
+                $usersCache[] = $userData;
+            } else {
+                $errorMessages[] = $lang->ougcAwardsErrorInvalidUsers;
+
+                break;
+            }
+        }
+
+        foreach ($usersCache as $userData) {
+            if (!canManageUsers((int)$userData['uid'])) {
+                $errorMessages[] = $lang->ougcAwardsErrorNoUsersPermission;
+
+                break;
+            }
+        }
+
+        if (isset($mybb->input['revoke'])) {
             foreach ($usersCache as $userData) {
-                if (!canManageUsers((int)$userData['uid'])) {
-                    $errorMessages[] = $lang->ougcAwardsErrorNoUsersPermission;
-
-                    break;
-                }
-
                 if (!grantFind($awardID, (int)$userData['uid'])) {
                     $errorMessages[] = $lang->ougcAwardsErrorInvalidGrant;
 
                     break;
                 }
             }
-
-            /*
-            if (!$mybb->get_input('gid')) {
-                $show_gived_list = true;
-            }
-
-            if (!($gived = grantFind($award['aid'], $user['uid']))) {
-                $errors = inline_error($lang->ougcAwardsErrorInvalidGrant);
-            } elseif (!($gived = grantGetSingle($mybb->get_input('gid', MyBB::INPUT_INT)))) {
-                $errors = inline_error($lang->ougcAwardsErrorInvalidGrant);
-            } else {
-            */
 
             if (empty($errorMessages)) {
                 foreach ($usersCache as $userData) {
@@ -1396,46 +1598,6 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
                 );
             }
         } elseif (isset($mybb->input['grant'])) {
-            $userNames = explode(',', $mybb->get_input('username'));
-
-            $usersCache = [];
-
-            foreach ($userNames as $userName) {
-                if ($userData = getUserByUserName($userName)) {
-                    $usersCache[] = $userData;
-                } else {
-                    $errorMessages[] = $lang->ougcAwardsErrorInvalidUsers;
-
-                    break;
-                }
-            }
-
-            foreach ($usersCache as $userData) {
-                if (!canManageUsers((int)$userData['uid'])) {
-                    $errorMessages[] = $lang->ougcAwardsErrorNoUsersPermission;
-
-                    break;
-                }
-
-                if (!grantFind($awardID, (int)$userData['uid'])) {
-                    //$errorMessages[] = $lang->ougcAwardsErrorInvalidGrant;
-
-                    //break;
-                }
-            }
-
-            /*
-            if (!$mybb->get_input('gid')) {
-                $show_gived_list = true;
-            }
-
-            if (!($gived = grantFind($award['aid'], $user['uid']))) {
-                $errors = inline_error($lang->ougcAwardsErrorInvalidGrant);
-            } elseif (!($gived = grantGetSingle($mybb->get_input('gid', MyBB::INPUT_INT)))) {
-                $errors = inline_error($lang->ougcAwardsErrorInvalidGrant);
-            } else {
-            */
-
             if (empty($errorMessages)) {
                 foreach ($usersCache as $userData) {
                     grantInsert(
@@ -1453,7 +1615,6 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
                 );
             }
         }
-        $userNames = explode(',', $mybb->get_input('username'));
 
         $usersCache = [];
 
@@ -1544,7 +1705,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
         }
 
         if (!empty($grantData['thread'])) {
-            $userIDs[] = (int)$grantData['thread'];
+            //$userIDs[] = (int)$grantData['thread'];
         }
     }
 
@@ -2098,7 +2259,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
             $selectedRequestIDs = implode("','", array_map('intval', array_keys($selectedRequestIDs)));
 
             $pendingRequestsCache = requestGetPending(
-                ["rid IN ('{$selectedRequestIDs}')", "status='{$statusPending}'"],
+                ["rid IN ('{$selectedRequestIDs}')", "status='{$statusPending}'"]
             );
 
             foreach ($pendingRequestsCache as $requestData) {
@@ -2493,10 +2654,14 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
             $presetVisibleAwards = array_flip(array_filter((array)my_unserialize($currentPresetData['visible'])));
         }
 
-        foreach ($grantCacheData as $awardData) {
-            $grantID = (int)$awardData['gid'];
+        foreach ($grantCacheData as $grantData) {
+            $grantID = (int)$grantData['gid'];
 
-            $awardID = (int)$awardData['aid'];
+            $awardID = (int)$grantData['aid'];
+
+            $awardData = awardGet($awardID);
+
+            $awardName = htmlspecialchars_uni($awardData['name']);
 
             $awardImage = $awardClass = awardGetIcon($awardID);
 
@@ -3544,13 +3709,14 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
         $actionButtons[] = eval(getTemplate('controlPanelButtons'));
     }
 
-    if (is_member(getSetting('allowedGroupsPresets'))) {
-        $buttonUrl = urlHandlerBuild(['action' => 'viewPresets']);
+    $actionButtons[] =
+        (function () use ($lang): string {
+            $buttonUrl = urlHandlerBuild(['action' => 'myAwards']);
 
-        $buttonText = $lang->ougcAwardsControlPanelButtonManagePresets;
+            $buttonText = $lang->ougcAwardsControlPanelButtonManageMyAwards;
 
-        $actionButtons[] = eval(getTemplate('controlPanelButtons'));
-    }
+            return eval(getTemplate('controlPanelButtons'));
+        })();
 
     $pageTitle = $lang->ougcAwardsControlPanelTitle;
 }

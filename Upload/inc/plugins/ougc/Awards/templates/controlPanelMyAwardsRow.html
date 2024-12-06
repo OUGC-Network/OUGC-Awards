@@ -1,0 +1,17 @@
+<tr>
+    <td class="{$alternativeBackground}" align="center">{$awardImage}</td>
+    <td class="{$alternativeBackground}">{$awardName}</td>
+    <td class="{$alternativeBackground}">{$grantReason}</td>
+    <td class="{$alternativeBackground}">{$threadLink}</td>
+    <td class="{$alternativeBackground}" align="center">{$grantDate}</td>
+    <td class="{$alternativeBackground}" align="center">
+        <input type="number" name="displayOrder[{$grantID}]" value="{$displayOrder}" class="textbox" size="5"
+               maxlength="4"
+               style="text-align: center;" form="controlPanelMyAwardsForm" min="0"/>
+    </td>
+    <td class="{$alternativeBackground}" align="center">
+        <input type="checkbox" name="visibleStatus[{$grantID}]" value="1" class="checkbox" {$checkedElement}
+               form="controlPanelMyAwardsForm"/>
+    </td>
+    {$rowColumnsExtra}
+</tr>

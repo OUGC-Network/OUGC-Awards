@@ -172,20 +172,33 @@ Custom Icon (Advanced): A custom template for this award.
     'ougcAwardsControlPanelDeleteCategoryTableDescription' => 'Are you sure you want to delete the selected category?',
     'ougcAwardsControlPanelDeleteCategoryDetailTotalAwards' => 'Total award records',
     'ougcAwardsControlPanelDeleteCategoryDetailTotalGranted' => 'Total award grant records',
+    'ougcAwardsControlPanelDeleteCategoryDetailTotalCategoryOwners' => 'Total category owner records',
     'ougcAwardsControlPanelDeleteCategoryDetailTotalOwners' => 'Total owner records',
     'ougcAwardsControlPanelDeleteCategoryDetailTotalRequests' => 'Total request records',
     'ougcAwardsControlPanelDeleteCategoryButton' => 'Delete Category',
 
     'ougcAwardsControlPanelUsersEmpty' => 'There are currently no users to display.',
 
-    'ougcAwardsControlPanelUsersTitle' => 'Award Users',
-    'ougcAwardsControlPanelUsersTableTitle' => 'Award Users',
+    'ougcAwardsControlPanelUsersTitle' => 'Granted Users',
+    'ougcAwardsControlPanelUsersTableTitle' => 'Granted Users',
     'ougcAwardsControlPanelUsersTableUsername' => 'Username',
     'ougcAwardsControlPanelUsersTableReason' => 'Reason',
     'ougcAwardsControlPanelUsersTableThread' => 'Thread',
     'ougcAwardsControlPanelUsersTableDate' => 'Date',
     'ougcAwardsControlPanelUsersTableOptions' => 'Options',
     'ougcAwardsControlPanelUsersTableOptionsEditGrant' => 'Edit Grant',
+
+    'ougcAwardsControlPanelMyAwardsEmpty' => 'There are currently no awards to display.',
+
+    'ougcAwardsControlPanelMyAwardsTitle' => 'My Awards',
+    'ougcAwardsControlPanelMyAwardsTableTitle' => 'My Awards',
+    'ougcAwardsControlPanelMyAwardsTableAward' => 'Award',
+    'ougcAwardsControlPanelMyAwardsTableName' => 'Name',
+    'ougcAwardsControlPanelMyAwardsTableReason' => 'Reason',
+    'ougcAwardsControlPanelMyAwardsTableThread' => 'Thread',
+    'ougcAwardsControlPanelMyAwardsTableDate' => 'Date',
+    'ougcAwardsControlPanelMyAwardsTableDisplay' => 'Display',
+    'ougcAwardsControlPanelMyAwardsTableDisplayOrder' => 'Display Order',
 
     'ougcAwardsControlPanelCategoryOwnersEmpty' => 'There are currently no users to display.',
 
@@ -296,6 +309,7 @@ Custom Icon (Advanced): A custom template for this award.
 
     'ougcAwardsControlPanelButtonManageTasks' => 'Manage Tasks',
     'ougcAwardsControlPanelButtonNewTask' => 'New Task',
+    'ougcAwardsControlPanelButtonManageMyAwards' => 'My Awards',
     'ougcAwardsControlPanelButtonManagePresets' => 'Manage Presets',
 
     'ougcAwardsControlPanelNewTaskTitle' => 'New Task',
@@ -436,6 +450,7 @@ Custom Icon (Advanced): A custom template for this award.
 
     'ougcAwardsErrorNoUsersPermission' => 'You have no permission to edit the selected user.',
 
+    'ougcAwardsRedirectMyAwardsUpdated' => 'Your awards were updated successfully.<br />You will now be redirected back.',
     'ougcAwardsRedirectCategoryCreated' => 'The category was created successfully.<br />You will now be redirected back.',
     'ougcAwardsRedirectCategoryUpdated' => 'The category was updated successfully.<br />You will now be redirected back.',
     'ougcAwardsRedirectCategoryDeleted' => 'The category was deleted successfully.<br />You will now be redirected back.',
