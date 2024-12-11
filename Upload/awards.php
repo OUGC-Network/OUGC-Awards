@@ -96,12 +96,14 @@ use const ougc\Awards\Core\AWARD_STATUS_DISABLED;
 use const ougc\Awards\Core\AWARD_STATUS_ENABLED;
 use const ougc\Awards\Core\AWARD_TEMPLATE_TYPE_CLASS;
 use const ougc\Awards\Core\AWARD_TEMPLATE_TYPE_CUSTOM;
+use const ougc\Awards\Core\GRANT_STATUS_NOT_VISIBLE;
 use const ougc\Awards\Core\GRANT_STATUS_POSTS;
 use const ougc\Awards\Core\GRANT_STATUS_PROFILE;
 use const ougc\Awards\Core\GRANT_STATUS_VISIBLE;
 use const ougc\Awards\Core\REQUEST_STATUS_ACCEPTED;
 use const ougc\Awards\Core\REQUEST_STATUS_PENDING;
 use const ougc\Awards\Core\REQUEST_STATUS_REJECTED;
+use const ougc\Awards\Core\TASK_ALLOW_MULTIPLE;
 use const ougc\Awards\Core\TASK_STATUS_ENABLED;
 
 const IN_MYBB = true;
@@ -273,13 +275,11 @@ switch ($mybb->get_input('action')) {
         add_breadcrumb($lang->ougcAwardsControlPanelCategoryOwnersTitle);
         break;
     case 'deleteCategoryOwner':
+    case 'deleteOwner':
         add_breadcrumb($lang->ougcAwardsControlPanelDeleteOwnersTitle);
         break;
     case 'viewOwners':
         add_breadcrumb($lang->ougcAwardsControlPanelOwnersTitle);
-        break;
-    case 'deleteOwner':
-        add_breadcrumb($lang->ougcAwardsControlPanelDeleteOwnersTitle);
         break;
     case 'viewRequests':
         add_breadcrumb($lang->ougcAwardsControlPanelRequests);
@@ -308,6 +308,9 @@ switch ($mybb->get_input('action')) {
         add_breadcrumb($lang->ougcAwardsControlPanelTasksTitle);
 
         add_breadcrumb($lang->ougcAwardsControlPanelEditTaskTitle);
+        break;
+    case 'myAwards':
+        add_breadcrumb($lang->ougcAwardsControlPanelMyAwardsTitle);
         break;
 }
 
@@ -493,7 +496,9 @@ $requirementCriteria = [
 
             $typeSelect = eval(getTemplate('selectField'));
 
-            $selectName = "{$inputName}forums";
+            $selectName = "{$inputName}forums[]";
+
+            $multipleOption = 'multiple="multiple"';
 
             $selectOptions = '';
 
@@ -506,14 +511,12 @@ $requirementCriteria = [
 
                 $selectedElement = '';
 
-                if ($optionValue === (int)$inputData[$selectName]) {
+                if (in_array($optionValue, $inputData["{$inputName}forums"])) {
                     $selectedElement = ' selected="selected"';
                 }
 
                 $selectOptions .= eval(getTemplate('selectFieldOption'));
             }
-
-            $onChange = $multipleOption = '';
 
             $forumSelect = eval(getTemplate('selectField'));
 
@@ -561,7 +564,9 @@ $requirementCriteria = [
 
             $typeSelect = eval(getTemplate('selectField'));
 
-            $selectName = "{$inputName}forums";
+            $selectName = "{$inputName}forums[]";
+
+            $multipleOption = 'multiple="multiple"';
 
             $selectOptions = '';
 
@@ -574,14 +579,12 @@ $requirementCriteria = [
 
                 $selectedElement = '';
 
-                if ($optionValue === (int)$inputData[$selectName]) {
+                if (in_array($optionValue, $inputData["{$inputName}forums"])) {
                     $selectedElement = ' selected="selected"';
                 }
 
                 $selectOptions .= eval(getTemplate('selectFieldOption'));
             }
-
-            $onChange = $multipleOption = '';
 
             $forumSelect = eval(getTemplate('selectField'));
 
@@ -1359,9 +1362,9 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
             $updateData = ['disporder' => (int)$displayOrders[$grantID]];
 
             if (isset($visibleStatuses[$grantID])) {
-                $updateData['visible'] = \ougc\Awards\Core\GRANT_STATUS_VISIBLE;
+                $updateData['visible'] = GRANT_STATUS_VISIBLE;
             } else {
-                $updateData['visible'] = \ougc\Awards\Core\GRANT_STATUS_NOT_VISIBLE;
+                $updateData['visible'] = GRANT_STATUS_NOT_VISIBLE;
             }
 
             $plugins->run_hooks('ougc_awards_my_awards_update_end');
@@ -1411,7 +1414,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
         [
             'limit' => (int)getSetting('perpage'),
             'limit_start' => $startPage,
-            'order_by' => 'date',
+            'order_by' => 'disporder asc, date',
             'order_dir' => 'desc'
         ]
     );
@@ -2944,9 +2947,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
             'threadstype',
             'poststype',
             'fthreadstype',
-            'fthreadsforums',
             'fpoststype',
-            'fpostsforums',
             'registeredtype',
             'onlinetype',
             'reputationtype',
@@ -3026,6 +3027,8 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
             'give',
             'revoke',
             'usergroups',
+            'fthreadsforums',
+            'fpostsforums',
             'previousawards',
             'profilefields',
         ] as $inputKey
@@ -3107,7 +3110,6 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
                 'ruleScripts' => $inputData['ruleScripts'],
             ];
 
-            _dump($insertData['onlinetype']);
             if ($newTaskPage) {
                 taskInsert($insertData);
             } else {

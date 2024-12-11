@@ -816,12 +816,12 @@ function executeTask(): bool
 
     $query = $db->simple_select('ougc_awards_tasks', '*', 'active=1');
 
-    while ($award_task = $db->fetch_array($query)) {
-        $award_task['tid'] = (int)$award_task['tid'];
+    while ($task_data = $db->fetch_array($query)) {
+        $task_data['tid'] = (int)$task_data['tid'];
 
         $where_clause = $left_join = [];
 
-        $requirements = explode(',', $award_task['requirements']);
+        $requirements = explode(',', $task_data['requirements']);
 
         foreach (
             [
@@ -833,67 +833,67 @@ function executeTask(): bool
             ] as $k => $c
         ) {
             $t = $k . 'type';
-            if (in_array($k, $requirements) && (int)$award_task[$k] >= 0 && !empty($award_task[$t])) {
-                $where_clause[] = "u.{$c}{$award_task[$t]}'{$award_task[$k]}'";
+            if (in_array($k, $requirements) && (int)$task_data[$k] >= 0 && !empty($task_data[$t])) {
+                $where_clause[] = "u.{$c}{$task_data[$t]}'{$task_data[$k]}'";
             }
         }
 
         foreach (['reputation' => 'reputation'] as $k => $c) {
             $t = $k . 'type';
-            if (in_array($k, $requirements) && !empty($award_task[$t])) {
-                $where_clause[] = "u.{$c}{$award_task[$t]}'{$award_task[$k]}'";
+            if (in_array($k, $requirements) && !empty($task_data[$t])) {
+                $where_clause[] = "u.{$c}{$task_data[$t]}'{$task_data[$k]}'";
             }
         }
 
         if (in_array(
                 'registered',
                 $requirements
-            ) && (int)$award_task['registered'] >= 0 && !empty($award_task['registeredtype'])) {
-            switch ($award_task['registeredtype']) {
+            ) && (int)$task_data['registered'] >= 0 && !empty($task_data['registeredtype'])) {
+            switch ($task_data['registeredtype']) {
                 case 'hours':
-                    $regdate = $award_task['registered'] * 60 * 60;
+                    $regdate = $task_data['registered'] * 60 * 60;
                     break;
                 case 'weeks':
-                    $regdate = $award_task['registered'] * 60 * 60 * 24 * 7;
+                    $regdate = $task_data['registered'] * 60 * 60 * 24 * 7;
                     break;
                 case 'months':
-                    $regdate = $award_task['registered'] * 60 * 60 * 24 * 30;
+                    $regdate = $task_data['registered'] * 60 * 60 * 24 * 30;
                     break;
                 case 'years':
-                    $regdate = $award_task['registered'] * 60 * 60 * 24 * 365;
+                    $regdate = $task_data['registered'] * 60 * 60 * 24 * 365;
                     break;
                 default:
-                    $regdate = $award_task['registered'] * 60 * 60 * 24;
+                    $regdate = $task_data['registered'] * 60 * 60 * 24;
                     break;
             }
             $where_clause[] = "u.regdate<='" . (TIME_NOW - $regdate) . "'";
         }
 
-        if (in_array('online', $requirements) && (int)$award_task['online'] >= 0 && !empty($award_task['onlinetype'])) {
-            switch ($award_task['onlinetype']) {
+        if (in_array('online', $requirements) && (int)$task_data['online'] >= 0 && !empty($task_data['onlinetype'])) {
+            switch ($task_data['onlinetype']) {
                 case 'hours':
-                    $timeonline = $award_task['online'] * 60 * 60;
+                    $timeonline = $task_data['online'] * 60 * 60;
                     break;
                 case 'weeks':
-                    $timeonline = $award_task['online'] * 60 * 60 * 24 * 7;
+                    $timeonline = $task_data['online'] * 60 * 60 * 24 * 7;
                     break;
                 case 'months':
-                    $timeonline = $award_task['online'] * 60 * 60 * 24 * 30;
+                    $timeonline = $task_data['online'] * 60 * 60 * 24 * 30;
                     break;
                 case 'years':
-                    $timeonline = $award_task['online'] * 60 * 60 * 24 * 365;
+                    $timeonline = $task_data['online'] * 60 * 60 * 24 * 365;
                     break;
                 default:
-                    $timeonline = $award_task['online'] * 60 * 60 * 24;
+                    $timeonline = $task_data['online'] * 60 * 60 * 24;
                     break;
             }
             $where_clause[] = "u.timeonline>='{$timeonline}'";
         }
 
-        if (in_array('usergroups', $requirements) && !empty($award_task['usergroups'])) {
-            $usergroups = array_map('intval', explode(',', $award_task['usergroups']));
+        if (in_array('usergroups', $requirements) && !empty($task_data['usergroups'])) {
+            $usergroups = array_map('intval', explode(',', $task_data['usergroups']));
             $group_clause = ["usergroup IN ('" . implode("','", $usergroups) . "')"];
-            if ($award_task['additionalgroups']) {
+            if ($task_data['additionalgroups']) {
                 foreach ($usergroups as $gid) {
                     switch ($db->type) {
                         case 'pgsql':
@@ -909,32 +909,36 @@ function executeTask(): bool
             $where_clause[] = '(' . implode(' OR ', $group_clause) . ')';
         }
 
-        if (in_array('fposts', $requirements) && (int)$award_task['fposts'] >= 0 && !empty($award_task['fposts'])) {
+        if (in_array('fposts', $requirements) && (int)$task_data['fposts'] >= 0 && !empty($task_data['fposts'])) {
+            $forum_ids = implode("','", array_map('intval', explode(',', $task_data['fthreadsforums'])));
+
             $left_join[] = 'LEFT JOIN (
 				SELECT p.uid, COUNT(p.pid) AS fposts FROM ' . $db->table_prefix . 'posts p
 				LEFT JOIN ' . $db->table_prefix . "threads t ON (t.tid=p.tid)
-				WHERE p.fid='" . (int)$award_task['fpostsforums'] . "' AND t.visible > 0 AND p.visible > 0
+				WHERE p.fid IN ('{$forum_ids}') AND t.visible > 0 AND p.visible > 0
 				GROUP BY p.uid
 			) p ON (p.uid=u.uid)";
-            $where_clause[] = "p.fposts{$award_task['fpoststype']}'{$award_task['fposts']}'";
+            $where_clause[] = "p.fposts{$task_data['fpoststype']}'{$task_data['fposts']}'";
         }
 
         if (in_array(
                 'fthreads',
                 $requirements
-            ) && (int)$award_task['fthreads'] >= 0 && !empty($award_task['fthreads'])) {
+            ) && (int)$task_data['fthreads'] >= 0 && !empty($task_data['fthreads'])) {
+            $forum_ids = implode("','", array_map('intval', explode(',', $task_data['fthreadsforums'])));
+
             $left_join[] = 'LEFT JOIN (
 				SELECT uid, COUNT(tid) AS fthreads FROM ' . $db->table_prefix . "threads
-				WHERE fid='" . (int)$award_task['fthreadsforums'] . "' AND visible > 0 AND closed NOT LIKE 'moved|%'
+				WHERE fid IN ('{$forum_ids}') AND visible > 0 AND closed NOT LIKE 'moved|%'
 				GROUP BY uid
 			) t ON (t.uid=u.uid)";
-            $where_clause[] = "t.fthreads{$award_task['fthreadstype']}'{$award_task['fthreads']}'";
+            $where_clause[] = "t.fthreads{$task_data['fthreadstype']}'{$task_data['fthreads']}'";
         }
 
-        if (in_array('previousawards', $requirements) && !empty($award_task['previousawards'])) {
+        if (in_array('previousawards', $requirements) && !empty($task_data['previousawards'])) {
             $awards_cache = awardsCacheGet();
             $aids = implode("','", array_keys($awards_cache['awards']));
-            foreach (array_map('intval', explode(',', $award_task['previousawards'])) as $aid) {
+            foreach (array_map('intval', explode(',', $task_data['previousawards'])) as $aid) {
                 $left_join[] = "LEFT JOIN (
 					SELECT ua.uid, ua.aid, COUNT(ua.gid) AS previous_awards_{$aid} FROM " . $db->table_prefix . "ougc_awards_users ua
 					WHERE ua.aid='{$aid}' AND ua.aid IN ('{$aids}')
@@ -944,9 +948,9 @@ function executeTask(): bool
             }
         }
 
-        if (in_array('profilefields', $requirements) && !empty($award_task['profilefields'])) {
+        if (in_array('profilefields', $requirements) && !empty($task_data['profilefields'])) {
             $left_join[] = 'LEFT JOIN ' . $db->table_prefix . 'userfields uf ON (uf.ufid=u.uid)';
-            foreach (array_map('intval', explode(',', $award_task['profilefields'])) as $fid) {
+            foreach (array_map('intval', explode(',', $task_data['profilefields'])) as $fid) {
                 $where_clause[] = 'uf.fid' . (int)$fid . "!=''";
             }
         }
@@ -1021,7 +1025,7 @@ function executeTask(): bool
         if (is_object($plugins)) {
             $args = [
                 'task' => &$task,
-                'award_task' => &$award_task,
+                'award_task' => &$task_data,
                 'left_join' => &$left_join,
                 'where_clause' => &$where_clause
             ];
@@ -1040,29 +1044,29 @@ function executeTask(): bool
 
             $gave_cache = $revoke_cache = $aids = $gave_list = $revoke_list = [];
 
-            if (($award_task['give'] && !$award_task['allowmultiple']) || $award_task['revoke']) {
+            if (($task_data['give'] && !$task_data['allowmultiple']) || $task_data['revoke']) {
                 $q1 = $db->simple_select(
                     'ougc_awards_users',
                     'gid, aid',
                     "uid='{$user['uid']}' AND aid IN ('" . implode(
                         "','",
-                        explode(',', $award_task['revoke'] . ',' . $award_task['give'])
+                        explode(',', $task_data['revoke'] . ',' . $task_data['give'])
                     ) . "')"
                 );
 
                 while ($gave = $db->fetch_array($q1)) {
-                    if (my_strpos(',' . $award_task['give'] . ',', ',' . $gave['aid'] . ',') !== false) {
+                    if (my_strpos(',' . $task_data['give'] . ',', ',' . $gave['aid'] . ',') !== false) {
                         $gave_cache[] = $gave['aid'];
                     }
-                    if (my_strpos(',' . $award_task['revoke'] . ',', ',' . $gave['aid'] . ',') !== false) {
+                    if (my_strpos(',' . $task_data['revoke'] . ',', ',' . $gave['aid'] . ',') !== false) {
                         $revoke_cache[$gave['gid']] = $gave['aid'];
                     }
                 }
             }
 
-            if ($award_task['give']) {
-                $aids = array_flip(explode(',', $award_task['give']));
-                if (!$award_task['allowmultiple']) {
+            if ($task_data['give']) {
+                $aids = array_flip(explode(',', $task_data['give']));
+                if (!$task_data['allowmultiple']) {
                     foreach ($gave_cache as $aid) {
                         if (isset($aids[$aid])) {
                             unset($aids[$aid]);
@@ -1078,15 +1082,15 @@ function executeTask(): bool
                             $aid,
                             (int)$user['uid'],
                             '',
-                            $award_task['thread'],
-                            $award_task['tid']
+                            $task_data['thread'],
+                            $task_data['tid']
                         ); // reason shouldn't be supplied.
                         $log = $result > 0 || false;
                     }
                 }
             }
 
-            if ($award_task['revoke']) {
+            if ($task_data['revoke']) {
                 foreach ($revoke_cache as $gid => $aid) {
                     $revoke_list[] = $aid;
                     grantDelete($gid);
@@ -1095,7 +1099,7 @@ function executeTask(): bool
             }
 
             !$log or $log_inserts[] = [
-                'tid' => (int)$award_task['tid'],
+                'tid' => (int)$task_data['tid'],
                 'uid' => (int)$user['uid'],
                 'gave' => $db->escape_string(implode(',', $gave_list)),
                 'revoked' => $db->escape_string(implode(',', $revoke_list)),
@@ -1918,9 +1922,7 @@ function taskInsert(array $taskData, int $taskID = 0, bool $updateTask = false):
             'threadstype',
             'poststype',
             'fthreadstype',
-            'fthreadsforums',
             'fpoststype',
-            'fpostsforums',
             'registeredtype',
             'onlinetype',
             'reputationtype',
@@ -2010,7 +2012,17 @@ function taskInsert(array $taskData, int $taskID = 0, bool $updateTask = false):
         }
     }
 
-    foreach (['give', 'revoke', 'usergroups', 'previousawards', 'profilefields'] as $k) {
+    foreach (
+        [
+            'give',
+            'revoke',
+            'usergroups',
+            'fthreadsforums',
+            'fpostsforums',
+            'previousawards',
+            'profilefields'
+        ] as $k
+    ) {
         if (isset($taskData[$k]) && is_array($taskData[$k])) {
             $insertData[$k] = $db->escape_string(
                 implode(',', array_filter(array_unique(array_map('intval', $taskData[$k]))))

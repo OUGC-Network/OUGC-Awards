@@ -684,11 +684,11 @@ function member_profile_end(): bool
             parseUserAwards($grantedList, $grantCacheData);
         }
 
-        $presetAwards = array_filter(
-            (array)my_unserialize($presetData['visible'])
-        );
-
         if ($maximumAwardsInProfilePresets) {
+            $presetAwards = array_filter(
+                (array)my_unserialize($presetData['visible'])
+            );
+
             require_once MYBB_ROOT . 'inc/class_parser.php';
 
             is_object($parser) || $parser = new postParser();
