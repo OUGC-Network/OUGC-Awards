@@ -63,52 +63,6 @@ function admin_config_plugins_deactivate()
     }
 }
 
-function admin_user_action_handler(array &$actionHandler): array
-{
-    $actionHandler['ougc_awards'] = [
-        'active' => 'ougc_awards',
-        'file' => 'user.php'
-    ];
-
-    return $actionHandler;
-}
-
-function admin_user_menu(array &$menuArray): array
-{
-    global $lang;
-
-    loadLanguage();
-
-    $menuArray[] = [
-        'id' => 'ougc_awards',
-        'title' => $lang->ougc_awards_acp_nav,
-        'link' => 'index.php?module=user-ougc_awards'
-    ];
-
-    return $menuArray;
-}
-
-function admin_load()
-{
-    global $modules_dir, $run_module, $action_file, $run_module, $page, $modules_dir_backup, $run_module_backup, $action_file_backup;
-
-    if ($run_module !== 'user' || $page->active_action != 'ougc_awards') {
-        return;
-    }
-
-    $modules_dir_backup = $modules_dir;
-
-    $run_module_backup = $run_module;
-
-    $action_file_backup = $action_file;
-
-    $modules_dir = ROOT;
-
-    $run_module = 'admin';
-
-    $action_file = 'user.php';
-}
-
 function admin_config_settings_start()
 {
     loadLanguage();

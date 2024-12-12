@@ -30,18 +30,12 @@ declare(strict_types=1);
 
 use function ougc\Awards\Admin\pluginUninstall;
 use function ougc\Awards\Core\addHooks;
-use function ougc\Awards\Core\awardGet;
-use function ougc\Awards\Core\awardGetIcon;
 use function ougc\Awards\Core\cacheUpdate;
 use function ougc\Awards\Admin\pluginInfo;
 use function ougc\Awards\Admin\pluginActivate;
 use function ougc\Awards\Admin\pluginDeactivate;
 use function ougc\Awards\Admin\pluginIsInstalled;
 
-use function ougc\Awards\Core\getTemplate;
-use function ougc\Awards\Core\loadLanguage;
-
-use const ougc\Awards\Core\AWARD_TEMPLATE_TYPE_CLASS;
 use const ougc\Awards\ROOT;
 
 defined('IN_MYBB') || die('This file cannot be accessed directly.');
@@ -53,6 +47,7 @@ define('ougc\Awards\Core\SETTINGS', [
     'showInPosts' => 2,
     'showInPostsPresets' => 2,
     'allowedGroupsPresets' => -1,
+    'myAlertsVersion' => '2.1.0',
 ]);
 
 define('ougc\Awards\Core\DEBUG', true);
@@ -107,69 +102,4 @@ function ougc_awards_uninstall(): bool
 function update_ougc_awards()
 {
     cacheUpdate();
-}
-
-if (class_exists('MybbStuff_MyAlerts_Formatter_AbstractFormatter')) {
-    class OUGC_Awards_MyAlerts_Formatter extends MybbStuff_MyAlerts_Formatter_AbstractFormatter
-    {
-        public function init()
-        {
-            loadLanguage();
-        }
-
-        /**
-         * Format an alert into it's output string to be used in both the main alerts listing page and the popup.
-         *
-         * @param MybbStuff_MyAlerts_Entity_Alert $alert The alert to format.
-         *
-         * @return string The formatted alert string.
-         */
-        public function formatAlert(MybbStuff_MyAlerts_Entity_Alert $alert, array $outputAlert)
-        {
-            $Details = $alert->toArray();
-
-            $ExtraDetails = $alert->getExtraDetails();
-
-            $awardData = awardGet((int)$Details['object_id']);
-
-            $awardName = htmlspecialchars_uni($awardData['name']);
-
-            $awardImage = $awardClass = awardGetIcon((int)$Details['object_id']);
-
-            $awardImage = eval(
-            getTemplate(
-                $awardData['template'] === AWARD_TEMPLATE_TYPE_CLASS ? 'awardImageClass' : 'awardImage'
-            )
-            );
-
-            /*$FromUser = $alert->getFromUser();
-			$FromUser['avatar'] = $award['image'];
-			$alert->setFromUser($FromUser);*/
-
-            return $this->lang->sprintf(
-                $this->lang->ougc_awards_myalerts,
-                $outputAlert['username'],
-                $outputAlert['from_user'],
-                $awardData['name'],
-                $awardImage
-            );
-        }
-
-        /**
-         * Build a link to an alert's content so that the system can redirect to it.
-         *
-         * @param MybbStuff_MyAlerts_Entity_Alert $alert The alert to build the link for.
-         *
-         * @return string The built alert, preferably an absolute link.
-         */
-        public function buildShowLink(MybbStuff_MyAlerts_Entity_Alert $alert)
-        {
-            global $settings;
-
-            $Details = $alert->toArray();
-            $ExtraDetails = $alert->getExtraDetails();
-
-            return $settings['bburl'] . '/awards.php?view=' . (int)$Details['object_id'];
-        }
-    }
 }

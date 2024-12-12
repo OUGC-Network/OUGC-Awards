@@ -39,17 +39,12 @@ use postParser;
 use stdClass;
 
 use function ougc\Awards\Admin\pluginInfo;
-
 use function ougc\Awards\Hooks\Forum\myalerts_register_client_alert_formatters;
 
 use const ougc\Awards\ROOT;
 use const TIME_NOW;
 
 const URL = 'awards.php';
-
-const ADMIN_PERMISSION_ENABLE = 1;
-
-const ADMIN_PERMISSION_DISABLE = 0;
 
 const ADMIN_PERMISSION_DELETE = -1;
 
@@ -84,6 +79,14 @@ const REQUEST_STATUS_REJECTED = 2;
 const REQUEST_STATUS_ACCEPTED = 0;
 
 const REQUEST_STATUS_PENDING = 1;
+
+const FILE_UPLOAD_ERROR_FAILED = 1;
+
+const FILE_UPLOAD_ERROR_INVALID_TYPE = 2;
+
+const FILE_UPLOAD_ERROR_UPLOAD_SIZE = 3;
+
+const FILE_UPLOAD_ERROR_RESIZE = 4;
 
 const TABLES_DATA = [
     'ougc_awards_categories' => [
@@ -650,14 +653,6 @@ const FIELDS_DATA = [
     ]
 ];
 
-const FILE_UPLOAD_ERROR_FAILED = 1;
-
-const FILE_UPLOAD_ERROR_INVALID_TYPE = 2;
-
-const FILE_UPLOAD_ERROR_UPLOAD_SIZE = 3;
-
-const FILE_UPLOAD_ERROR_RESIZE = 4;
-
 function addHooks(string $namespace)
 {
     global $plugins;
@@ -673,13 +668,19 @@ function addHooks(string $namespace)
 
             $priority = substr($callable, -2);
 
+            $isNegative = substr($hookName, -3, 1) === '_';
+
             if (is_numeric(substr($hookName, -2))) {
                 $hookName = substr($hookName, 0, -2);
             } else {
                 $priority = 10;
             }
 
-            $plugins->add_hook($hookName, $callable, $priority);
+            if ($isNegative) {
+                $plugins->add_hook($hookName, $callable, -$priority);
+            } else {
+                $plugins->add_hook($hookName, $callable, $priority);
+            }
         }
     }
 }
@@ -2119,9 +2120,7 @@ function sendAlert(int $awardID, int $userID, string $alertTypeKey = 'give_award
 
     loadLanguage();
 
-    if (!(getSetting('myalerts') && $mybb->cache->cache['plugins']['active']['myalerts'] && class_exists(
-            'MybbStuff_MyAlerts_AlertTypeManager'
-        ))) {
+    if (!class_exists('MybbStuff_MyAlerts_AlertTypeManager')) {
         return false;
     }
 
@@ -2803,10 +2802,16 @@ function isVisibleAward(int $awardID): bool
 
 function myAlertsInitiate(): bool
 {
-    if (function_exists('myalerts_info')) {
-        if (version_compare(myalerts_info()['version'], '2.0.4') <= 0) {
-            myalerts_register_client_alert_formatters();
-        }
+    if (!function_exists('myalerts_info')) {
+        return false;
+    }
+
+    if (class_exists('MybbStuff_MyAlerts_Formatter_AbstractFormatter')) {
+        require_once ROOT . '/class_alerts.php';
+    }
+
+    if (version_compare(myalerts_info()['version'], getSetting('myAlertsVersion')) <= 0) {
+        myalerts_register_client_alert_formatters();
     }
 
     return true;

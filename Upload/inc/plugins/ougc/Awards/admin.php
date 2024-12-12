@@ -31,10 +31,13 @@ declare(strict_types=1);
 namespace ougc\Awards\Admin;
 
 use DirectoryIterator;
+use MybbStuff_MyAlerts_AlertTypeManager;
+use MybbStuff_MyAlerts_Entity_AlertType;
 
 use function ougc\Awards\Core\allowImports;
 use function ougc\Awards\Core\cacheUpdate;
 use function ougc\Awards\Core\categoryInsert;
+use function ougc\Awards\Core\getSetting;
 use function ougc\Awards\Core\loadLanguage;
 use function ougc\Awards\Core\loadPluginLibrary;
 
@@ -72,7 +75,7 @@ function pluginInfo(): array
         'version' => '1.8.33',
         'versioncode' => 1833,
         'compatibility' => '18*',
-        'myalerts' => '2.0.4',
+        'myalerts' => getSetting('myAlertsVersion'),
         'codename' => 'ougc_awards',
         'newpoints' => '2.1.1',
         'pl' => [
@@ -148,7 +151,7 @@ function pluginActivate(): bool
     if (class_exists('MybbStuff_MyAlerts_AlertTypeManager')) {
         global $alertTypeManager;
 
-        isset($alertTypeManager) or $alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::createInstance(
+        isset($alertTypeManager) || $alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::createInstance(
             $db,
             $mybb->cache
         );
@@ -159,9 +162,9 @@ function pluginActivate(): bool
 
         $alertType->setCode('ougc_awards');
 
-        $alertType->setEnabled(true);
+        $alertType->setEnabled();
 
-        $alertType->setCanBeUserDisabled(true);
+        $alertType->setCanBeUserDisabled();
 
         $alertTypeManager->add($alertType);
     }
@@ -283,17 +286,6 @@ function pluginDeactivate(): bool
     return true;
 }
 
-function pluginInstall(): bool
-{
-    dbVerifyTables();
-
-    dbVerifyColumns();
-
-    enableTask();
-
-    return true;
-}
-
 function pluginIsInstalled(): bool
 {
     static $isInstalled = null;
@@ -342,7 +334,7 @@ function pluginUninstall(): bool
     if (class_exists('MybbStuff_MyAlerts_AlertTypeManager')) {
         global $alertTypeManager;
 
-        isset($alertTypeManager) or $alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::createInstance(
+        isset($alertTypeManager) || $alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::createInstance(
             $db,
             $cache
         );

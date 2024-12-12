@@ -498,6 +498,9 @@ Greetings.',
 
     'ougcAwardsProfileEmpty' => 'There are currently no awards to display.',
     'ougcAwardsViewUserEmpty' => 'There are currently no awards to display.',
+    'ougcAwardsMyAlerts' => '{1}, you were granted the {3} award by {2}.',
+    // {4} outputs the award formatted image
+    'myalerts_setting_ougc_awards' => 'Receive alert when an award is granted or an award request is rejected?',
 ];
 
 // Stats
@@ -522,9 +525,6 @@ $l['ougc_awards_usercp_list_visible' => 'Display';
 $l['ougc_awards_usercp_list_disporder' => 'Display Order';
 $l['ougc_awards_usercp_list_reason' => 'Reason';
 $l['ougc_awards_usercp_list_from' => 'From User';
-
-// MyAlerts
-$l['ougc_awards_myalerts' => '{1}, you were granted the {3} award by {2}.';// {4} outputs the award formatted image
 
 // Presets
 $l['ougc_awards_presets_title' => 'Presets';

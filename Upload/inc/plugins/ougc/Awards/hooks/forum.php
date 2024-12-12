@@ -31,10 +31,8 @@ declare(strict_types=1);
 namespace ougc\Awards\Hooks\Forum;
 
 use MyBB;
-
 use MybbStuff_MyAlerts_AlertFormatterManager;
-use OUGC_Awards_MyAlerts_Formatter;
-
+use ougc\Awards\Core\MyAlertsFormatter;
 use postParser;
 
 use function ougc\Awards\Core\awardGetIcon;
@@ -194,7 +192,7 @@ function build_friendly_wol_location_end(array &$locationArguments): array
     return $locationArguments;
 }
 
-function xmlhttp05(): bool
+function xmlhttp_02(): bool
 {
     myAlertsInitiate();
 
@@ -866,7 +864,7 @@ function myalerts_register_client_alert_formatters(): bool
     if (
         class_exists('MybbStuff_MyAlerts_Formatter_AbstractFormatter') &&
         class_exists('MybbStuff_MyAlerts_AlertFormatterManager') &&
-        !class_exists('OUGC_Awards_MyAlerts_Formatter')
+        class_exists('ougc\Awards\Core\MyAlertsFormatter')
     ) {
         global $mybb, $lang;
 
@@ -877,9 +875,26 @@ function myalerts_register_client_alert_formatters(): bool
         }
 
         if ($formatterManager) {
-            $formatterManager->registerFormatter(new OUGC_Awards_MyAlerts_Formatter($mybb, $lang, 'ougc_awards'));
+            $formatterManager->registerFormatter(new MyAlertsFormatter($mybb, $lang, 'ougc_awards'));
         }
     }
 
     return true;
+}
+
+function myalerts_alerts_output_end(array &$hookArguments): array
+{
+    if ($hookArguments['outputAlert']['alert_code'] !== 'ougc_awards') {
+        return $hookArguments;
+    }
+
+    $Details = $hookArguments['alertToParse']->toArray();
+
+    $awardImage = awardGetIcon((int)$Details['object_id']);
+
+    if (my_validate_url($awardImage)) {
+        $hookArguments['outputAlert']['avatar']['image'] = $awardImage;
+    }
+
+    return $hookArguments;
 }

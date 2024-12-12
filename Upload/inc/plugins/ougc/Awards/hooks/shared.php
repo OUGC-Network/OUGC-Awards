@@ -38,3 +38,22 @@ function datahandler_user_insert(UserDataHandler &$dataHandler): UserDataHandler
 
     return $dataHandler;
 }
+
+function datahandler_user_delete_end(UserDataHandler &$dataHandler): UserDataHandler
+{
+    global $db;
+
+    $db->delete_query('ougc_awards_users', "uid IN ({$dataHandler->delete_uids})");
+
+    $db->delete_query('ougc_awards_category_owners', "userID IN ({$dataHandler->delete_uids})");
+
+    $db->delete_query('ougc_awards_owners', "uid IN ({$dataHandler->delete_uids})");
+
+    $db->delete_query('ougc_awards_requests', "uid IN ({$dataHandler->delete_uids})");
+
+    $db->delete_query('ougc_awards_tasks_logs', "uid IN ({$dataHandler->delete_uids})");
+
+    $db->delete_query('ougc_awards_presets', "uid IN ({$dataHandler->delete_uids})");
+
+    return $dataHandler;
+}

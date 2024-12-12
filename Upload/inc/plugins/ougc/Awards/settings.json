@@ -27,10 +27,6 @@
     "optionscode": "yesno",
     "value": 1
   },
-  "myalerts": {
-    "optionscode": "yesno",
-    "value": 0
-  },
   "sort_visible_default": {
     "optionscode": "yesno",
     "value": 1

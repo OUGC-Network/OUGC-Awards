@@ -296,8 +296,13 @@ switch ($mybb->get_input('action')) {
     case 'editCategory':
         add_breadcrumb($lang->ougcAwardsControlPanelEditCategoryTitle);
         break;
+    case 'deleteCategory':
+        add_breadcrumb($lang->ougcAwardsControlPanelDeleteCategoryTitle);
+        break;
     case 'manageTasks':
-        add_breadcrumb($lang->ougcAwardsControlPanelTasksTitle);
+    case 'taskLogs':
+    case 'deleteTask':
+        add_breadcrumb($lang->ougcAwardsControlPanelTasksTitle, urlHandlerBuild(['action' => 'manageTasks']));
         break;
     case 'newTask':
         add_breadcrumb($lang->ougcAwardsControlPanelTasksTitle);
@@ -935,7 +940,7 @@ $requirementCriteria = [
 $plugins->run_hooks('ougc_awards_intermediate');
 
 if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
-    if (!isModerator()) {
+    if (!$isModerator) {
         error_no_permission();
     }
 
@@ -1055,7 +1060,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     $pageContents = eval(getTemplate('controlPanelNewEditCategoryForm'));
 } elseif ($mybb->get_input('action') === 'deleteCategory') {
-    if (!isModerator()) {
+    if (!$isModerator) {
         error_no_permission();
     }
 
@@ -1538,7 +1543,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
         $grantedList = eval(getTemplate('controlPanelMyAwardsEmpty'));
     }
 
-    $pageTitle = $lang->ougcAwardsControlPanelUsersTitle;
+    $pageTitle = $lang->ougcAwardsControlPanelMyAwardsTitle;
 
     $formUrl = urlHandlerBuild(['action' => 'myAwards', 'awardID' => $awardID]);
 
@@ -1706,10 +1711,6 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
         if (!empty($grantData['uid'])) {
             $userIDs[] = (int)$grantData['uid'];
         }
-
-        if (!empty($grantData['thread'])) {
-            //$userIDs[] = (int)$grantData['thread'];
-        }
     }
 
     $paginationMenu = (string)multipage(
@@ -1847,7 +1848,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     $pageContents = eval(getTemplate('controlPanelUsers'));
 } elseif ($mybb->get_input('action') === 'viewCategoryOwners') {
-    if (!isModerator()) {
+    if (!$isModerator) {
         error_no_permission();
     }
 
@@ -2003,7 +2004,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     $pageContents = eval(getTemplate('controlPanelCategoryOwners'));
 } elseif ($mybb->get_input('action') === 'deleteCategoryOwner') {
-    if (!isModerator()) {
+    if (!$isModerator) {
         error_no_permission();
     }
 
@@ -2925,7 +2926,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     exit;
 } elseif (in_array($mybb->get_input('action'), ['newTask', 'editTask'])) {
-    if (!isModerator()) {
+    if (!$isModerator) {
         error_no_permission();
     }
 
@@ -3268,7 +3269,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     $pageContents = eval(getTemplate('controlPanelNewEditTaskForm'));
 } elseif ($mybb->get_input('action') === 'deleteTask') {
-    if (!isModerator()) {
+    if (!$isModerator) {
         error_no_permission();
     }
 
@@ -3300,7 +3301,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     $pageContents = eval(getTemplate('controlPanelConfirmation'));
 } elseif ($mybb->get_input('action') === 'manageTasks') {
-    if (!isModerator()) {
+    if (!$isModerator) {
         error_no_permission();
     }
 
@@ -3395,7 +3396,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     $pageContents = eval(getTemplate('controlPanelTasks'));
 } elseif ($mybb->get_input('action') === 'taskLogs') {
-    if (!isModerator()) {
+    if (!$isModerator) {
         error_no_permission();
     }
 
@@ -3404,6 +3405,8 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
     if (empty($taskData['tid'])) {
         error($lang->ougcAwardsErrorInvalidTask);
     }
+
+    add_breadcrumb(htmlspecialchars_uni($taskData['name']), urlHandlerBuild(['action' => 'manageTasks']));
 
     $alternativeBackground = alt_trow(true);
 
@@ -3562,19 +3565,13 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
         foreach ($categoryAwardsObjects as $awardID => $awardData) {
             if (!($isModerator || $isCategoryOwner) && !in_array($awardID, $ownerAwardIDs)) {
-                //continue;
+                continue;
             }
 
             $descriptionColumSpan = 1;
 
             if (!($isModerator || $isCategoryOwner) && $isAwardOwner && !in_array($awardID, $isAwardOwner)) {
                 ++$descriptionColumSpan;
-            }
-
-            //$colSpanRowCount = 2;
-
-            if (canRequestAwards($awardID, $categoryID)) {
-                //--$colSpanRowCount;
             }
 
             $awardName = htmlspecialchars_uni($awardData['name']);
@@ -3689,7 +3686,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
         $pageContents = eval(getTemplate('controlPanelEmpty'));
     }
 
-    if (isModerator()) {
+    if ($isModerator) {
         $buttonUrl = urlHandlerBuild(['action' => 'newCategory']);
 
         $buttonText = $lang->ougcAwardsControlPanelButtonNewCategory;
