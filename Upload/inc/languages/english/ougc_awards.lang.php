@@ -34,18 +34,6 @@ $l = [
     'ougcAwardsGlobalMenu' => 'Awards',
     'ougcAwardsWelcomeLinkText' => 'View My Awards',
 
-    /*
-    'ougcAwardsAward' => 'Award',
-    'ougcAwardsName' => 'Name',
-    'ougcAwardsDescription' => 'Description',
-    'ougcAwardsRequest' => 'Request',
-
-    'ougcAwardsViewUsername' => 'Username',
-    'ougcAwardsViewReason' => 'Reason',
-    'ougcAwardsViewThread' => 'Thread',
-    'ougcAwardsViewDate' => 'Date',
-    */
-
     'ougcAwardsButtonRequest' => 'Request',
 
     'ougcAwardsGlobalNotificationsRequests' => 'There are {1} award requests waiting for approval.',
@@ -484,7 +472,6 @@ Greetings.',
 
     'ougcAwardsPostPresetsTitle' => 'Awards',
     'ougcAwardsProfilePresetsTitle' => 'Awards',
-    'ougcAwardsProfileTitle' => 'Awards',
     'ougcAwardsWhoIsOnlineViewing' => 'Viewing <a href="{1}/awards.php">Awards Page</a>',
 
     'ougcAwardsStatsMostTitle' => 'Most Granted Users',
@@ -496,39 +483,13 @@ Greetings.',
     'ougcAwardsGlobalNotificationRequests' => '<strong>Award Request:</strong> <a href="{1}/{2}">There is one award request pending for review.</a>',
     'ougcAwardsGlobalNotificationRequestsPlural' => '<strong>Award Request:</strong> <a href="{1}/{2}">There are {3} award requests pending for review.</a>',
 
+    'ougcAwardsProfileViewAll' => 'View All',
+    'ougcAwardsProfileTitle' => "{1}'s Awards",
     'ougcAwardsProfileEmpty' => 'There are currently no awards to display.',
+    'ougcAwardsViewUser' => 'View User Awards',
+    'ougcAwardsViewUserTitle' => "{1}'s Awards",
     'ougcAwardsViewUserEmpty' => 'There are currently no awards to display.',
     'ougcAwardsMyAlerts' => '{1}, you were granted the {3} award by {2}.',
     // {4} outputs the award formatted image
     'myalerts_setting_ougc_awards' => 'Receive alert when an award is granted or an award request is rejected?',
 ];
-
-// Stats
-$l['ougcAwardsStatsViewAll'] = 'View All';
-
-/*
-// Plugin information.
-$l['ougc_awards' => 'ougc Awards';
-
-// ModCP
-$l['ougc_awards_usercp_nav' => 'Awards';
-
-// Profile
-$l['ougcAwardsProfileTitle' => '{1}'s awards.";
-
-// View all
-$l['ougcAwardsViewUser' => 'View User Awards';
-$l['ougcAwardsViewUserTitle' => '{1}'s Awards";
-
-// UserCP
-$l['ougc_awards_usercp_list_visible' => 'Display';
-$l['ougc_awards_usercp_list_disporder' => 'Display Order';
-$l['ougc_awards_usercp_list_reason' => 'Reason';
-$l['ougc_awards_usercp_list_from' => 'From User';
-
-// Presets
-$l['ougc_awards_presets_title' => 'Presets';
-$l['ougc_awards_presets_button' => 'View Presets';
-
-
-*/
