@@ -3,57 +3,53 @@
     "optionscode": "numeric",
     "value": 4
   },
-  "showInProfile": {
-    "optionscode": "numeric",
-    "value": 4
-  },
-  "perpage": {
-    "optionscode": "numeric",
-    "value": 10
-  },
-  "modcp": {
-    "optionscode": "yesno",
-    "value": 1
-  },
-  "pagegroups": {
-    "optionscode": "groupselect",
-    "value": -1
-  },
-  "enablestatspage": {
-    "optionscode": "yesno",
-    "value": 1
-  },
-  "sendpm": {
-    "optionscode": "yesno",
-    "value": 1
-  },
-  "sort_visible_default": {
-    "optionscode": "yesno",
-    "value": 1
-  },
-  "allowedGroupsPresets": {
-    "optionscode": "groupselect",
-    "value": -1
-  },
-  "presets_maximum": {
-    "optionscode": "numeric",
-    "value": 5
-  },
   "showInPostsPresets": {
     "optionscode": "numeric",
     "value": 10
+  },
+  "showInProfile": {
+    "optionscode": "numeric",
+    "value": 4
   },
   "showInProfilePresets": {
     "optionscode": "numeric",
     "value": 10
   },
-  "ignorePresetsFromAwardsList": {
-    "optionscode": "yesno",
-    "value": 1
+  "perPage": {
+    "optionscode": "numeric",
+    "value": 10
+  },
+  "groupsView": {
+    "optionscode": "groupselect",
+    "value": -1
+  },
+  "groupsPresets": {
+    "optionscode": "groupselect",
+    "value": -1
+  },
+  "presetsMaximum": {
+    "optionscode": "numeric",
+    "value": 5
   },
   "groupsModerators": {
     "optionscode": "groupselect",
     "value": 4
+  },
+  "statsEnabled": {
+    "optionscode": "yesno",
+    "value": 1
+  },
+  "statsLatestGrants": {
+    "optionscode": "numeric",
+    "value": "10"
+  },
+  "notificationPrivateMessage": {
+    "optionscode": "yesno",
+    "value": 1
+  },
+  "grantDefaultVisibleStatus": {
+    "optionscode": "yesno",
+    "value": 1
   },
   "uploadPath": {
     "optionscode": "text",

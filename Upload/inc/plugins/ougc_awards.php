@@ -44,10 +44,7 @@ defined('IN_MYBB') || die('This file cannot be accessed directly.');
 define('ougc\Awards\Core\SETTINGS', [
     //'key' => '',
     'allowImports' => false,
-    'showInPosts' => 2,
-    'showInPostsPresets' => 2,
-    'allowedGroupsPresets' => -1,
-    'myAlertsVersion' => '2.1.0',
+    'myAlertsVersion' => '2.1.0'
 ]);
 
 define('ougc\Awards\Core\DEBUG', true);

@@ -1692,7 +1692,7 @@ function grantInsert(
         'rid' => $requestID,
         'reason' => $db->escape_string($reasonText),
         'date' => TIME_NOW,
-        'visible' => (int)getSetting('sort_visible_default')
+        'visible' => (int)getSetting('grantDefaultVisibleStatus')
     ];
 
     $grantID = $db->insert_query('ougc_awards_users', $insertData);
@@ -2107,7 +2107,7 @@ function logGet(array $whereClauses = [], string $queryFields = '*', array $quer
 
 function sendPrivateMessage(array $privateMessage, int $fromUserID = 0, bool $adminOverride = false): bool
 {
-    if (getSetting('sendpm')) {
+    if (getSetting('notificationPrivateMessage')) {
         send_pm($privateMessage, $fromUserID, $adminOverride);
     }
 
@@ -2547,7 +2547,7 @@ function canViewMainPage(): bool
 {
     global $mybb;
 
-    return (bool)is_member(getSetting('pagegroups'));
+    return (bool)is_member(getSetting('groupsView'));
 }
 
 function pluginIsInstalled(): bool

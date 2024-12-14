@@ -12,18 +12,18 @@
  *
  ***************************************************************************
  ****************************************************************************
- * This program is protected software: you can make use of it under
- * the terms of the OUGC Network EULA as detailed by the included
- * "EULA.TXT" file.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed with the expectation that it will be
- * useful, but WITH LIMITED WARRANTY; with a limited warranty of
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * OUGC Network EULA included in the "EULA.TXT" file for more details.
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the OUGC Network EULA along with
- * the package which includes this file.  If not, see
- * <https://ougc.network/eula.txt>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 
 declare(strict_types=1);
@@ -208,7 +208,7 @@ function xmlhttp(): bool
 
         $mybb->input['ajax'] = 1;
 
-        if (!is_member(getSetting('allowedGroupsPresets'))) {
+        if (!is_member(getSetting('groupsPresets'))) {
             error_no_permission();
         }
 
@@ -290,7 +290,7 @@ function postbit(array &$postData): array
 
     $postUserID = (int)$postData['uid'];
 
-    if (getSetting('showInPostsPresets') && is_member(getSetting('allowedGroupsPresets'), $postData)) {
+    if (getSetting('showInPostsPresets') && is_member(getSetting('groupsPresets'), $postData)) {
         global $db;
 
         static $presetsCache = null;
@@ -544,7 +544,7 @@ function member_profile_end(): bool
 
     $maximumAwardsInProfilePresets = 0;
 
-    if (is_member(getSetting('allowedGroupsPresets'), $memprofile)) {
+    if (is_member(getSetting('groupsPresets'), $memprofile)) {
         $maximumAwardsInProfilePresets = (int)getSetting('showInProfilePresets');
 
         if ($maximumAwardsInProfilePresets < 1) {
@@ -750,7 +750,7 @@ function stats_end(): bool
 
     $ougc_awards_most = $ougcAwardsStatsLast = $userList = '';
 
-    if (!getSetting('enablestatspage')) {
+    if (!getSetting('statsEnabled')) {
         return false;
     }
 

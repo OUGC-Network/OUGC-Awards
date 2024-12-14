@@ -937,6 +937,8 @@ $requirementCriteria = [
     ],
 ];
 
+$perPage = (int)getSetting('perPage');
+
 $plugins->run_hooks('ougc_awards_intermediate');
 
 if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
@@ -1396,9 +1398,9 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
     }
 
     if ($mybb->get_input('page', MyBB::INPUT_INT) > 0) {
-        $startPage = ($mybb->get_input('page', MyBB::INPUT_INT) - 1) * (int)getSetting('perpage');
+        $startPage = ($mybb->get_input('page', MyBB::INPUT_INT) - 1) * $perPage;
 
-        $totalPages = ceil($totalGrantedCount / (int)getSetting('perpage'));
+        $totalPages = ceil($totalGrantedCount / $perPage);
 
         if ($mybb->get_input('page', MyBB::INPUT_INT) > $totalPages) {
             $startPage = 0;
@@ -1417,7 +1419,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
         ["uid='{$currentUserID}'"],
         '*',
         [
-            'limit' => (int)getSetting('perpage'),
+            'limit' => $perPage,
             'limit_start' => $startPage,
             'order_by' => 'disporder asc, date',
             'order_dir' => 'desc'
@@ -1432,7 +1434,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     $paginationMenu = (string)multipage(
         $totalGrantedCount,
-        (int)getSetting('perpage'),
+        $perPage,
         $mybb->get_input('page', MyBB::INPUT_INT),
         urlHandlerBuild(['action' => 'myAwards'])
     );
@@ -1549,7 +1551,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     $columnHeader = $grantForm = $revokeForm = '';
 
-    if (is_member(getSetting('allowedGroupsPresets'))) {
+    if (is_member(getSetting('groupsPresets'))) {
         $buttonUrl = urlHandlerBuild(['action' => 'viewPresets']);
 
         $buttonText = $lang->ougcAwardsControlPanelButtonManagePresets;
@@ -1680,9 +1682,9 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
     }
 
     if ($mybb->get_input('page', MyBB::INPUT_INT) > 0) {
-        $startPage = ($mybb->get_input('page', MyBB::INPUT_INT) - 1) * (int)getSetting('perpage');
+        $startPage = ($mybb->get_input('page', MyBB::INPUT_INT) - 1) * $perPage;
 
-        $totalPages = ceil($totalGrantedCount / (int)getSetting('perpage'));
+        $totalPages = ceil($totalGrantedCount / $perPage);
 
         if ($mybb->get_input('page', MyBB::INPUT_INT) > $totalPages) {
             $startPage = 0;
@@ -1700,7 +1702,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
     $grantCacheData = awardGetUser(["aid='{$awardID}'"],
         '*',
         [
-            'limit' => (int)getSetting('perpage'),
+            'limit' => $perPage,
             'limit_start' => $startPage,
             'order_by' => 'date',
             'order_dir' => 'desc'
@@ -1715,7 +1717,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     $paginationMenu = (string)multipage(
         $totalGrantedCount,
-        (int)getSetting('perpage'),
+        $perPage,
         $mybb->get_input('page', MyBB::INPUT_INT),
         urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID])
     );
@@ -1906,9 +1908,9 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
     }
 
     if ($mybb->get_input('page', MyBB::INPUT_INT) > 0) {
-        $startPage = ($mybb->get_input('page', MyBB::INPUT_INT) - 1) * (int)getSetting('perpage');
+        $startPage = ($mybb->get_input('page', MyBB::INPUT_INT) - 1) * $perPage;
 
-        $totalPages = ceil($totalOwnersCount / (int)getSetting('perpage'));
+        $totalPages = ceil($totalOwnersCount / $perPage);
 
         if ($mybb->get_input('page', MyBB::INPUT_INT) > $totalPages) {
             $startPage = 0;
@@ -1926,7 +1928,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
     $ownersCacheData = ownerCategoryGetUser(["categoryID='{$categoryID}'"],
         '*',
         [
-            'limit' => (int)getSetting('perpage'),
+            'limit' => $perPage,
             'limit_start' => $startPage,
             'order_by' => 'ownerDate',
             'order_dir' => 'desc'
@@ -1941,7 +1943,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     $paginationMenu = (string)multipage(
         $totalOwnersCount,
-        (int)getSetting('perpage'),
+        $perPage,
         $mybb->get_input('page', MyBB::INPUT_INT),
         urlHandlerBuild(['action' => 'viewUsers', 'categoryID' => $categoryID])
     );
@@ -2089,9 +2091,9 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
     }
 
     if ($mybb->get_input('page', MyBB::INPUT_INT) > 0) {
-        $startPage = ($mybb->get_input('page', MyBB::INPUT_INT) - 1) * (int)getSetting('perpage');
+        $startPage = ($mybb->get_input('page', MyBB::INPUT_INT) - 1) * $perPage;
 
-        $totalPages = ceil($totalOwnersCount / (int)getSetting('perpage'));
+        $totalPages = ceil($totalOwnersCount / $perPage);
 
         if ($mybb->get_input('page', MyBB::INPUT_INT) > $totalPages) {
             $startPage = 0;
@@ -2109,7 +2111,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
     $ownersCacheData = ownerGetUser(["aid='{$awardID}'"],
         '*',
         [
-            'limit' => (int)getSetting('perpage'),
+            'limit' => $perPage,
             'limit_start' => $startPage,
             'order_by' => 'date',
             'order_dir' => 'desc'
@@ -2124,7 +2126,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     $paginationMenu = (string)multipage(
         $totalOwnersCount,
-        (int)getSetting('perpage'),
+        $perPage,
         $mybb->get_input('page', MyBB::INPUT_INT),
         urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID])
     );
@@ -2328,9 +2330,9 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
         $requestsList = eval(getTemplate('controlPanelRequestsEmpty'));
     } else {
         if ($mybb->get_input('page', MyBB::INPUT_INT) > 0) {
-            $startPage = ($mybb->get_input('page', MyBB::INPUT_INT) - 1) * (int)getSetting('perpage');
+            $startPage = ($mybb->get_input('page', MyBB::INPUT_INT) - 1) * $perPage;
 
-            $totalPages = ceil($totalRequestsCount / (int)getSetting('perpage'));
+            $totalPages = ceil($totalRequestsCount / $perPage);
 
             if ($mybb->get_input('page', MyBB::INPUT_INT) > $totalPages) {
                 $startPage = 0;
@@ -2345,7 +2347,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
         $paginationMenu = (string)multipage(
             $totalRequestsCount,
-            getSetting('perpage'),
+            $perPage,
             $mybb->get_input('page', MyBB::INPUT_INT),
             urlHandlerBuild(['action' => 'viewRequests'])
         );
@@ -2353,7 +2355,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
         $pendingRequestsCache = requestGetPending(
             $whereClauses,
             '*',
-            ['limit_start' => $startPage, 'limit' => (int)getSetting('perpage')]
+            ['limit_start' => $startPage, 'limit' => $perPage]
         );
 
         $userIDs = [];
@@ -2525,7 +2527,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     $pageContents = eval(getTemplate('controlPanelGrantEdit'));
 } elseif ($mybb->get_input('action') === 'viewPresets') {
-    if (!is_member(getSetting('allowedGroupsPresets'))) {
+    if (!is_member(getSetting('groupsPresets'))) {
         error_no_permission();
     }
 
@@ -2545,7 +2547,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     if ($mybb->request_method === 'post') {
         if ($mybb->get_input('newPreset', MyBB::INPUT_INT) === 1) {
-            if (getSetting('presets_maximum') <= $totalPresets) {
+            if (getSetting('presetsMaximum') <= $totalPresets) {
                 error_no_permission();
             }
 
@@ -2611,7 +2613,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
         $presetsList = eval(getTemplate('controlPanelPresetsSelect'));
     }
 
-    if (getSetting('presets_maximum') > $totalPresets) {
+    if (getSetting('presetsMaximum') > $totalPresets) {
         $newPresetForm = eval(getTemplate('controlPanelPresetsForm'));
     }
 
@@ -2707,12 +2709,6 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
             htmlspecialchars_uni($userData['username'])
         );
 
-        $queryLimit = (int)getSetting('perpage');
-
-        if ($queryLimit < 1) {
-            $queryLimit = 10;
-        }
-
         $categoryIDs = $awardIDs = [];
 
         foreach (categoryGetCache() as $categoryData) {
@@ -2758,13 +2754,13 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
         $currentPage = 1;
 
-        if ($queryLimit && $totalGrantedCount) {
+        if ($perPage && $totalGrantedCount) {
             $currentPage = $mybb->get_input('page', MyBB::INPUT_INT);
 
             if ($currentPage > 0) {
-                $startPage = ($currentPage - 1) * $queryLimit;
+                $startPage = ($currentPage - 1) * $perPage;
 
-                if ($currentPage > ceil($totalGrantedCount / $queryLimit)) {
+                if ($currentPage > ceil($totalGrantedCount / $perPage)) {
                     $startPage = 0;
 
                     $currentPage = 1;
@@ -2773,7 +2769,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
             $paginationMenu = (string)multipage(
                 $totalGrantedCount,
-                $queryLimit,
+                $perPage,
                 $currentPage,
                 "javascript: ougcAwards.ViewAll('{$userID}', '{page}');"
             //urlHandlerBuild(['view' => 'awards'])
@@ -2789,7 +2785,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
             'order_dir' => 'desc'
         ];
 
-        $queryOptions['limit'] = $queryLimit;
+        $queryOptions['limit'] = $perPage;
 
         $queryOptions['limit_start'] = $startPage;
 
@@ -2802,7 +2798,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
         $grantedList = $presetList = '';
 
         if (!$totalGrantedCount) {
-            if ($queryLimit) {
+            if ($perPage) {
                 $grantedList = eval(getTemplate('viewUserEmpty'));
             }
         } else {
@@ -2822,7 +2818,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
                 }
             }
 
-            if ($queryLimit) {
+            if ($perPage) {
                 parseUserAwards($grantedList, $grantCacheData, 'viewUserRow');
             }
         }
