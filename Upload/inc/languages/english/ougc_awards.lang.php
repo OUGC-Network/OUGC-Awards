@@ -470,6 +470,7 @@ Greetings.',
 
     'ougcAwardsTaskRan' => 'The awards task ran successfully.',
 
+    'ougcAwardsPostViewAll' => 'View All',
     'ougcAwardsPostPresetsTitle' => 'Awards',
     'ougcAwardsProfilePresetsTitle' => 'Awards',
     'ougcAwardsWhoIsOnlineViewing' => 'Viewing <a href="{1}/awards.php">Awards Page</a>',
