@@ -72,12 +72,12 @@ function pluginInfo(): array
         'website' => 'https://ougc.network',
         'author' => 'Omar G.',
         'authorsite' => 'https://ougc.network',
-        'version' => '1.8.33',
-        'versioncode' => 1833,
+        'version' => '1.8.34',
+        'versioncode' => 1834,
         'compatibility' => '18*',
         'myalerts' => getSetting('myAlertsVersion'),
         'codename' => 'ougc_awards',
-        'newpoints' => '2.1.1',
+        'newpoints' => '3.1.0',
         'pl' => [
             'version' => 13,
             'url' => 'https://community.mybb.com/mods.php?action=view&pid=573'
@@ -179,13 +179,13 @@ function pluginActivate(): bool
         $plugins['awards'] = $pluginInfo['versioncode'];
     }
 
-    /*~*~* RUN UPDATES START *~*~*/
-
-    $db->update_query('ougc_awards_requests ', ['status' => REQUEST_STATUS_REJECTED], 'status="-1"');
-
     dbVerifyTables();
 
     dbVerifyColumns();
+
+    /*~*~* RUN UPDATES START *~*~*/
+
+    $db->update_query('ougc_awards_requests ', ['status' => REQUEST_STATUS_REJECTED], 'status="-1"');
 
     enableTask();
 
@@ -293,13 +293,13 @@ function pluginIsInstalled(): bool
     if ($isInstalled === null) {
         global $db;
 
-        $isInstalled = false;
+        $isInstalledEach = true;
 
-        foreach (dbTables() as $tableName => $tableData) {
-            $isInstalled = (bool)$db->table_exists($tableName) ?? false;
-
-            break;
+        foreach (TABLES_DATA as $tableName => $tableColumns) {
+            $isInstalledEach = $db->table_exists($tableName) && $isInstalledEach;
         }
+
+        $isInstalled = $isInstalledEach;
     }
 
     return $isInstalled;

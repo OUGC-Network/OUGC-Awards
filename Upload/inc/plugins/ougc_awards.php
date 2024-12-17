@@ -57,7 +57,6 @@ defined('PLUGINLIBRARY') || define('PLUGINLIBRARY', MYBB_ROOT . 'inc/plugins/plu
 
 if (defined('IN_ADMINCP')) {
     require_once ROOT . '/admin.php';
-
     require_once ROOT . '/hooks/admin.php';
 
     addHooks('ougc\Awards\Hooks\Admin');
