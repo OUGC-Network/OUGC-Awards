@@ -881,7 +881,8 @@ function myalerts_register_client_alert_formatters(): bool
 
     return true;
 }
-
+/*
+ * lets remove this feature for now
 function myalerts_alerts_output_end(array &$hookArguments): array
 {
     if ($hookArguments['outputAlert']['alert_code'] !== 'ougc_awards') {
@@ -898,3 +899,4 @@ function myalerts_alerts_output_end(array &$hookArguments): array
 
     return $hookArguments;
 }
+*/
