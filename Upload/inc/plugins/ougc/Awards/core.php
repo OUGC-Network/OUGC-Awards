@@ -943,7 +943,7 @@ function executeTask(): bool
                 $left_join[] = "LEFT JOIN (
 					SELECT ua.uid, ua.aid, COUNT(ua.gid) AS previous_awards_{$aid} FROM " . $db->table_prefix . "ougc_awards_users ua
 					WHERE ua.aid='{$aid}' AND ua.aid IN ('{$aids}')
-					GROUP BY ua.uid
+					GROUP BY ua.uid, ua.aid
 				) a_{$aid} ON (a_{$aid}.uid=u.uid)";
                 $where_clause[] = "a_{$aid}.previous_awards_{$aid}>='1'";
             }
@@ -975,7 +975,7 @@ function executeTask(): bool
 				SELECT s.uid, s.gid, COUNT(s.sid) AS scores FROM ' . $db->table_prefix . 'arcadescores s
 				LEFT JOIN ' . $db->table_prefix . "arcadegames g ON (g.gid=s.gid)
 				WHERE g.active='1'
-				GROUP BY s.uid
+				GROUP BY s.uid, s.gid
 			) mya ON (mya.uid=u.uid)";
             $where_clause[] = "mya.scores{$award_task['myarcadescorestype']}'{$award_task['myarcadescores']}'";
         }
@@ -995,7 +995,7 @@ function executeTask(): bool
                     "','",
                     array_map('intval', explode(',', $award_task['ougc_customrepids_r']))
                 ) . "')
-				GROUP BY p.uid
+				GROUP BY p.uid, l.rid
 			) ocr ON (ocr.uid=u.uid)";
             $where_clause[] = "ocr.ougc_custom_reputation_receieved{$award_task['ougc_customreptype_r']}'{$award_task['ougc_customrep_r']}'";
         }
@@ -1015,7 +1015,7 @@ function executeTask(): bool
                     "','",
                     array_map('intval', explode(',', $award_task['ougc_customrepids_g']))
                 ) . "')
-				GROUP BY l.uid
+				GROUP BY l.uid, l.rid
 			) ocg ON (ocg.uid=u.uid)";
             $where_clause[] = "ocg.ougc_custom_reputation_gived{$award_task['ougc_customreptype_g']}'{$award_task['ougc_customrep_g']}'";
         }
@@ -2287,7 +2287,7 @@ function cacheUpdate(): bool
 					SELECT ua.uid, COUNT(ua.aid) AS awards
 					FROM {$db->table_prefix}ougc_awards_users ua
 					WHERE ua.{$whereClauses}
-					GROUP BY ua.uid
+					GROUP BY ua.uid, ua.aid
 				) a ON (u.uid=a.uid)
 				WHERE a.awards!=''
 				ORDER BY a.awards DESC

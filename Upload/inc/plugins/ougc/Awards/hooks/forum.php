@@ -41,6 +41,7 @@ use function ougc\Awards\Core\awardsCacheGet;
 use function ougc\Awards\Core\awardsGetCache;
 use function ougc\Awards\Core\categoryGetCache;
 use function ougc\Awards\Core\cacheUpdate;
+use function ougc\Awards\Core\executeTask;
 use function ougc\Awards\Core\isModerator;
 use function ougc\Awards\Core\myAlertsInitiate;
 use function ougc\Awards\Core\parseMessage;
@@ -54,6 +55,7 @@ use function ougc\Awards\Core\urlHandlerGet;
 use function ougc\Awards\Core\getSetting;
 
 use const ougc\Awards\Core\AWARD_TEMPLATE_TYPE_CLASS;
+use const ougc\Awards\Core\DEBUG;
 use const ougc\Awards\Core\GRANT_STATUS_POSTS;
 use const ougc\Awards\Core\GRANT_STATUS_VISIBLE;
 use const ougc\Awards\Core\REQUEST_STATUS_PENDING;
