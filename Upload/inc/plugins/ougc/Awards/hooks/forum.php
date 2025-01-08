@@ -63,6 +63,10 @@ use const TIME_NOW;
 
 function global_start05(): bool
 {
+    if (DEBUG) {
+        executeTask();
+    }
+
     myAlertsInitiate();
 
     global $templatelist;
