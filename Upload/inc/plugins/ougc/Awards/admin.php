@@ -270,7 +270,7 @@ function pluginActivate(): bool
 
     /*~*~* RUN UPDATES END *~*~*/
 
-    $plugins['Awards'] = $pluginInfo['versioncode'];
+    $plugins['awards'] = $pluginInfo['versioncode'];
 
     $cache->update('ougc_plugins', $plugins);
 

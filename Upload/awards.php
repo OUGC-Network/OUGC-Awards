@@ -3560,7 +3560,8 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
         $alternativeBackground = alt_trow(true);
 
         foreach ($categoryAwardsObjects as $awardID => $awardData) {
-            if (!($isModerator || $isCategoryOwner) && !in_array($awardID, $ownerAwardIDs)) {
+            if (!($isModerator || $isCategoryOwner) && !in_array($awardID, $ownerAwardIDs) &&
+                !isVisibleAward($awardID)) {
                 continue;
             }
 
