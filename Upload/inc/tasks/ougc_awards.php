@@ -31,15 +31,13 @@ declare(strict_types=1);
 use function ougc\Awards\Core\loadLanguage;
 use function ougc\Awards\Core\executeTask;
 
-function task_ougc_awards(array $task): bool
+function task_ougc_awards(array $taskData): bool
 {
     global $lang;
 
-    loadLanguage();
+    executeTask($taskData);
 
-    executeTask();
-
-    add_task_log($task, $lang->ougcAwardsTaskRan);
+    add_task_log($taskData, $lang->ougcAwardsTaskRan);
 
     return true;
 }

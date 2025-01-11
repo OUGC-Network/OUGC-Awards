@@ -31,7 +31,6 @@ use function ougc\Awards\Core\awardGet;
 use function ougc\Awards\Core\awardGetIcon;
 use function ougc\Awards\Core\awardGetUser;
 use function ougc\Awards\Core\awardInsert;
-use function ougc\Awards\Core\awardsCacheGet;
 use function ougc\Awards\Core\awardsGetCache;
 use function ougc\Awards\Core\awardUpdate;
 use function ougc\Awards\Core\cacheUpdate;
@@ -46,7 +45,10 @@ use function ougc\Awards\Core\categoryUpdate;
 use function ougc\Awards\Core\generateSelectAwards;
 use function ougc\Awards\Core\generateSelectCategory;
 use function ougc\Awards\Core\generateSelectProfileFields;
+use function ougc\Awards\Core\getComparisonLanguageVariable;
+use function ougc\Awards\Core\getProfileFieldsCache;
 use function ougc\Awards\Core\getThreadByUrl;
+use function ougc\Awards\Core\getTimeLanguageVariable;
 use function ougc\Awards\Core\getUserByUserName;
 use function ougc\Awards\Core\grantDelete;
 use function ougc\Awards\Core\grantFind;
@@ -104,6 +106,18 @@ use const ougc\Awards\Core\REQUEST_STATUS_ACCEPTED;
 use const ougc\Awards\Core\REQUEST_STATUS_PENDING;
 use const ougc\Awards\Core\REQUEST_STATUS_REJECTED;
 use const ougc\Awards\Core\TASK_ALLOW_MULTIPLE;
+use const ougc\Awards\Core\TASK_REQUIREMENT_TYPE_AWARDS_GRANTED;
+use const ougc\Awards\Core\TASK_REQUIREMENT_TYPE_FILLED_PROFILE_FIELDS;
+use const ougc\Awards\Core\TASK_REQUIREMENT_TYPE_GROUPS;
+use const ougc\Awards\Core\TASK_REQUIREMENT_TYPE_ONLINE;
+use const ougc\Awards\Core\TASK_REQUIREMENT_TYPE_POSTS;
+use const ougc\Awards\Core\TASK_REQUIREMENT_TYPE_POSTS_FORUM;
+use const ougc\Awards\Core\TASK_REQUIREMENT_TYPE_REFERRALS;
+use const ougc\Awards\Core\TASK_REQUIREMENT_TYPE_REGISTRATION;
+use const ougc\Awards\Core\TASK_REQUIREMENT_TYPE_REPUTATION;
+use const ougc\Awards\Core\TASK_REQUIREMENT_TYPE_THREADS;
+use const ougc\Awards\Core\TASK_REQUIREMENT_TYPE_THREADS_FORUM;
+use const ougc\Awards\Core\TASK_REQUIREMENT_TYPE_WARNINGS;
 use const ougc\Awards\Core\TASK_STATUS_ENABLED;
 
 const IN_MYBB = true;
@@ -299,10 +313,10 @@ switch ($mybb->get_input('action')) {
     case 'deleteCategory':
         add_breadcrumb($lang->ougcAwardsControlPanelDeleteCategoryTitle);
         break;
-    case 'manageTasks':
+    case 'viewTasks':
     case 'taskLogs':
     case 'deleteTask':
-        add_breadcrumb($lang->ougcAwardsControlPanelTasksTitle, urlHandlerBuild(['action' => 'manageTasks']));
+        add_breadcrumb($lang->ougcAwardsControlPanelTasksTitle, urlHandlerBuild(['action' => 'viewTasks']));
         break;
     case 'newTask':
         add_breadcrumb($lang->ougcAwardsControlPanelTasksTitle);
@@ -320,7 +334,7 @@ switch ($mybb->get_input('action')) {
 }
 
 $requirementCriteria = [
-    'usergroups' => [
+    TASK_REQUIREMENT_TYPE_GROUPS => [
         'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsGroups',
         'rowFunction' => function (
             string $selectName,
@@ -370,15 +384,33 @@ $requirementCriteria = [
             $typeSelect = eval(getTemplate('radioField'));
 
             return $inputField . $typeSelect;
+        },
+        'format' => function (string $requirementType, array $taskData): string {
+            global $mybb, $lang;
+
+            $groupsCache = $mybb->cache->read('usergroups');
+
+            $groupList = [];
+
+            foreach (explode(',', $taskData['usergroups']) as $groupID) {
+                $groupList[] = format_name($groupsCache[$groupID]['title'], $groupID, $groupID);
+            }
+
+            return $lang->sprintf(
+                $lang->ougcAwardsControlPanelViewTasksTypeGroups,
+                implode($lang->comma, $groupList)
+            );
         }
     ],
-    'threads' => [
+    TASK_REQUIREMENT_TYPE_THREADS => [
         'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsThreadCount',
         'rowFunction' => function (
             string $inputName,
             array $inputValue
         ): string {
             $inputType = 'number';
+
+            $minimumOption = "min='0'";
 
             $inputValue = (int)$inputValue[0];
 
@@ -414,15 +446,26 @@ $requirementCriteria = [
             $typeSelect = eval(getTemplate('selectField'));
 
             return $inputField . $typeSelect;
+        },
+        'format' => function (string $requirementType, array $taskData): string {
+            global $lang;
+
+            return $lang->sprintf(
+                $lang->ougcAwardsControlPanelViewTasksTypeThreads,
+                getComparisonLanguageVariable($taskData["{$requirementType}type"]),
+                my_number_format($taskData[$requirementType])
+            );
         }
     ],
-    'posts' => [
+    TASK_REQUIREMENT_TYPE_POSTS => [
         'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsPostCount',
         'rowFunction' => function (
             string $inputName,
             array $selectedIDs
         ): string {
             $inputType = 'number';
+
+            $minimumOption = "min='0'";
 
             $inputValue = (int)$selectedIDs[0];
 
@@ -458,9 +501,18 @@ $requirementCriteria = [
             $typeSelect = eval(getTemplate('selectField'));
 
             return $inputField . $typeSelect;
+        },
+        'format' => function (string $requirementType, array $taskData): string {
+            global $lang;
+
+            return $lang->sprintf(
+                $lang->ougcAwardsControlPanelViewTasksTypePosts,
+                getComparisonLanguageVariable($taskData["{$requirementType}type"]),
+                my_number_format($taskData[$requirementType])
+            );
         }
     ],
-    'fthreads' => [
+    TASK_REQUIREMENT_TYPE_THREADS_FORUM => [
         'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsForumThreadCount',
         'rowFunction' => function (
             string $inputName,
@@ -468,6 +520,8 @@ $requirementCriteria = [
         ): string {
             $inputType = 'number';
 
+            $minimumOption = "min='0'";
+
             $inputValue = (int)$inputValue[0];
 
             $inputField = eval(getTemplate('inputField'));
@@ -526,9 +580,29 @@ $requirementCriteria = [
             $forumSelect = eval(getTemplate('selectField'));
 
             return $inputField . $typeSelect . $forumSelect;
+        },
+        'format' => function (string $requirementType, array $taskData): string {
+            global $lang;
+
+            $forumList = [];
+
+            foreach (explode(',', $taskData[$requirementType . 'forums']) as $forumID) {
+                $forumData = get_forum($forumID);
+
+                if (!empty($forumData['name'])) {
+                    $forumList[] = strip_tags($forumData['name']);
+                }
+            }
+
+            return $lang->sprintf(
+                $lang->ougcAwardsControlPanelViewTasksTypeThreadsForums,
+                getComparisonLanguageVariable($taskData["{$requirementType}type"]),
+                my_number_format($taskData[$requirementType]),
+                implode($lang->comma, $forumList)
+            );
         }
     ],
-    'fposts' => [
+    TASK_REQUIREMENT_TYPE_POSTS_FORUM => [
         'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsForumPostCount',
         'rowFunction' => function (
             string $inputName,
@@ -536,6 +610,8 @@ $requirementCriteria = [
         ): string {
             $inputType = 'number';
 
+            $minimumOption = "min='0'";
+
             $inputValue = (int)$inputValue[0];
 
             $inputField = eval(getTemplate('inputField'));
@@ -594,9 +670,29 @@ $requirementCriteria = [
             $forumSelect = eval(getTemplate('selectField'));
 
             return $inputField . $typeSelect . $forumSelect;
+        },
+        'format' => function (string $requirementType, array $taskData): string {
+            global $lang;
+
+            $forumList = [];
+
+            foreach (explode(',', $taskData[$requirementType . 'forums']) as $forumID) {
+                $forumData = get_forum($forumID);
+
+                if (!empty($forumData['name'])) {
+                    $forumList[] = strip_tags($forumData['name']);
+                }
+            }
+
+            return $lang->sprintf(
+                $lang->ougcAwardsControlPanelViewTasksTypePostsForums,
+                getComparisonLanguageVariable($taskData["{$requirementType}type"]),
+                my_number_format($taskData[$requirementType]),
+                implode($lang->comma, $forumList)
+            );
         }
     ],
-    'registered' => [
+    TASK_REQUIREMENT_TYPE_REGISTRATION => [
         'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsTimeRegistered',
         'rowFunction' => function (
             string $inputName,
@@ -604,6 +700,8 @@ $requirementCriteria = [
         ): string {
             $inputType = 'number';
 
+            $minimumOption = "min='0'";
+
             $inputValue = (int)$inputValue[0];
 
             $inputField = eval(getTemplate('inputField'));
@@ -638,9 +736,18 @@ $requirementCriteria = [
             $typeSelect = eval(getTemplate('selectField'));
 
             return $inputField . $typeSelect;
+        },
+        'format' => function (string $requirementType, array $taskData): string {
+            global $lang;
+
+            return $lang->sprintf(
+                $lang->ougcAwardsControlPanelViewTasksTypeRegistration,
+                my_number_format($taskData[$requirementType]),
+                getTimeLanguageVariable($taskData["{$requirementType}type"], $taskData[$requirementType] > 1)
+            );
         }
     ],
-    'online' => [
+    TASK_REQUIREMENT_TYPE_ONLINE => [
         'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsTimeOnline',
         'rowFunction' => function (
             string $inputName,
@@ -648,6 +755,8 @@ $requirementCriteria = [
         ): string {
             $inputType = 'number';
 
+            $minimumOption = "min='0'";
+
             $inputValue = (int)$inputValue[0];
 
             $inputField = eval(getTemplate('inputField'));
@@ -682,9 +791,18 @@ $requirementCriteria = [
             $typeSelect = eval(getTemplate('selectField'));
 
             return $inputField . $typeSelect;
+        },
+        'format' => function (string $requirementType, array $taskData): string {
+            global $lang;
+
+            return $lang->sprintf(
+                $lang->ougcAwardsControlPanelViewTasksTypeOnline,
+                my_number_format($taskData[$requirementType]),
+                getTimeLanguageVariable($taskData["{$requirementType}type"], $taskData[$requirementType] > 1)
+            );
         }
     ],
-    'reputation' => [
+    TASK_REQUIREMENT_TYPE_REPUTATION => [
         'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsReputation',
         'rowFunction' => function (
             string $inputName,
@@ -692,6 +810,8 @@ $requirementCriteria = [
         ): string {
             $inputType = 'number';
 
+            $minimumOption = "min='0'";
+
             $inputValue = (int)$inputValue[0];
 
             $inputField = eval(getTemplate('inputField'));
@@ -726,9 +846,18 @@ $requirementCriteria = [
             $typeSelect = eval(getTemplate('selectField'));
 
             return $inputField . $typeSelect;
+        },
+        'format' => function (string $requirementType, array $taskData): string {
+            global $lang;
+
+            return $lang->sprintf(
+                $lang->ougcAwardsControlPanelViewTasksTypeReputation,
+                getComparisonLanguageVariable($taskData["{$requirementType}type"]),
+                my_number_format($taskData[$requirementType])
+            );
         }
     ],
-    'referrals' => [
+    TASK_REQUIREMENT_TYPE_REFERRALS => [
         'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsReferrals',
         'rowFunction' => function (
             string $inputName,
@@ -736,6 +865,8 @@ $requirementCriteria = [
         ): string {
             $inputType = 'number';
 
+            $minimumOption = "min='0'";
+
             $inputValue = (int)$inputValue[0];
 
             $inputField = eval(getTemplate('inputField'));
@@ -770,9 +901,18 @@ $requirementCriteria = [
             $typeSelect = eval(getTemplate('selectField'));
 
             return $inputField . $typeSelect;
+        },
+        'format' => function (string $requirementType, array $taskData): string {
+            global $lang;
+
+            return $lang->sprintf(
+                $lang->ougcAwardsControlPanelViewTasksTypeReferrals,
+                getComparisonLanguageVariable($taskData["{$requirementType}type"]),
+                my_number_format($taskData[$requirementType])
+            );
         }
     ],
-    'warnings' => [
+    TASK_REQUIREMENT_TYPE_WARNINGS => [
         'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsWarningPoints',
         'rowFunction' => function (
             string $inputName,
@@ -780,6 +920,8 @@ $requirementCriteria = [
         ): string {
             $inputType = 'number';
 
+            $minimumOption = "min='0'";
+
             $inputValue = (int)$inputValue[0];
 
             $inputField = eval(getTemplate('inputField'));
@@ -814,12 +956,21 @@ $requirementCriteria = [
             $typeSelect = eval(getTemplate('selectField'));
 
             return $inputField . $typeSelect;
+        },
+        'format' => function (string $requirementType, array $taskData): string {
+            global $lang;
+
+            return $lang->sprintf(
+                $lang->ougcAwardsControlPanelViewTasksTypeWarnings,
+                getComparisonLanguageVariable($taskData["{$requirementType}type"]),
+                my_number_format($taskData[$requirementType])
+            );
         }
     ],
     /*'newpoints' => [
         'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsNewpoints'
     ],*/
-    'previousawards' => [
+    TASK_REQUIREMENT_TYPE_AWARDS_GRANTED => [
         'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsPreviousAwards',
         'rowFunction' => function (
             string $inputName,
@@ -832,9 +983,44 @@ $requirementCriteria = [
                 (array)$inputData[$inputName],
                 ['multiple' => true]
             );
+        },
+        'format' => function (string $requirementType, array $taskData): string {
+            global $mybb, $lang;
+
+            $awardsList = [];
+
+            foreach (array_map('intval', explode(',', $taskData[TASK_REQUIREMENT_TYPE_AWARDS_GRANTED])) as $awardID) {
+                $awardData = awardGet($awardID);
+
+                if (empty($awardData)) {
+                    continue;
+                }
+
+                $awardName = htmlspecialchars_uni($awardData['name']);
+
+                $awardImage = $awardClass = awardGetIcon($awardID);
+
+                $awardImage = eval(
+                getTemplate(
+                    $awardData['template'] === AWARD_TEMPLATE_TYPE_CLASS ? 'awardImageClass' : 'awardImage'
+                )
+                );
+
+                $awardUrl = urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID]);
+
+                $awardImage = eval(getTemplate('awardWrapper', false));
+
+                $awardsList[$awardName] = $awardImage;
+            }
+
+            return $lang->sprintf(
+                $lang->ougcAwardsControlPanelViewTasksTypeAwardsGranted,
+                implode('', array_values($awardsList)),
+                implode($lang->comma, array_keys($awardsList))
+            );
         }
     ],
-    'profilefields' => [
+    TASK_REQUIREMENT_TYPE_FILLED_PROFILE_FIELDS => [
         'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsFilledProfileFields',
         'rowFunction' => function (
             string $inputName,
@@ -847,6 +1033,24 @@ $requirementCriteria = [
                 (array)$inputData[$inputName],
                 ['multiple' => true, 'id' => $inputName]
             );
+        },
+        'format' => function (string $requirementType, array $taskData): string {
+            global $lang;
+
+            $profileFieldsList = [];
+
+            $profileFieldsCache = getProfileFieldsCache();
+
+            foreach (explode(',', $taskData[$requirementType]) as $fieldID) {
+                if (isset($profileFieldsCache[$fieldID])) {
+                    $profileFieldsList[] = htmlspecialchars_uni($profileFieldsCache[$fieldID]['name']);
+                }
+            }
+
+            return $lang->sprintf(
+                $lang->ougcAwardsControlPanelViewTasksTypeProfileFields,
+                implode($lang->comma, $profileFieldsList)
+            );
         }
     ],
     /*'mydownloads' => [
@@ -856,6 +1060,8 @@ $requirementCriteria = [
             array $inputValue
         ): string {
             $inputType = 'number';
+
+            $minimumOption = "min='0'";
 
             $inputValue = (int)$inputValue[0];
 
@@ -870,6 +1076,8 @@ $requirementCriteria = [
         ): string {
             $inputType = 'number';
 
+            $minimumOption = "min='0'";
+
             $inputValue = (int)$inputValue[0];
 
             return eval(getTemplate('inputField'));
@@ -882,6 +1090,8 @@ $requirementCriteria = [
             array $inputValue
         ): string {
             $inputType = 'number';
+
+            $minimumOption = "min='0'";
 
             $inputValue = (int)$inputValue[0];
 
@@ -896,6 +1106,8 @@ $requirementCriteria = [
         ): string {
             $inputType = 'number';
 
+            $minimumOption = "min='0'";
+
             $inputValue = (int)$inputValue[0];
 
             return eval(getTemplate('inputField'));
@@ -909,12 +1121,14 @@ $requirementCriteria = [
         ): string {
             $inputType = 'number';
 
+            $minimumOption = "min='0'";
+
             $inputValue = (int)$inputValue[0];
 
             return eval(getTemplate('inputField'));
         }
-    ],*/
-    'ruleScripts' => [
+    ],
+    \ougc\Awards\Core\TASK_REQUIREMENT_TYPE_JSON_SCRIPT => [
         'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsRuleScripts',
         'rowFunction' => function (
             string $inputName,
@@ -933,8 +1147,35 @@ $requirementCriteria = [
             );
 
             return eval(getTemplate('textAreaField'));
+        },
+        'format' => function (string $requirementType, array $taskData): string {
+            return '';
         }
     ],
+    TASK_REQUIREMENT_TYPE_NEWPOINTS => [
+        'languageVar' => 'ougcAwardsControlPanelNewTaskRequirementsNewPoints',
+        'rowFunction' => function (
+            string $inputName,
+            array $inputValue
+        ): string {
+            global $inputData;
+
+            return generateSelectAwards(
+                "{$inputName}[]",
+                (array)$inputData[$inputName],
+                ['multiple' => true]
+            );
+        },
+        'format' => function (string $requirementType, array $taskData): string {
+            global $lang;
+
+            return $lang->sprintf(
+                $lang->ougcAwardsControlPanelViewTasksTypeNewPoints,
+                getComparisonLanguageVariable($taskData["{$requirementType}type"]),
+                points_format((float)$taskData[$requirementType])
+            );
+        }
+    ],*/
 ];
 
 $perPage = (int)getSetting('perPage');
@@ -2988,7 +3229,10 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
         [
             'tid',
             'active',
+            'taskType',
             'logging',
+            'give',
+            'revoke',
             'thread',
             'allowmultiple',
             'disporder',
@@ -3021,12 +3265,10 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
     foreach (
         [
             'requirements',
-            'give',
-            'revoke',
             'usergroups',
             'fthreadsforums',
             'fpostsforums',
-            'previousawards',
+            TASK_REQUIREMENT_TYPE_AWARDS_GRANTED,
             'profilefields',
         ] as $inputKey
     ) {
@@ -3059,6 +3301,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
                 'name' => $inputData['name'],
                 'description' => $inputData['description'],
                 'active' => $inputData['active'],
+                'taskType' => $inputData['taskType'],
                 'requirements' => $inputData['requirements'],
                 'give' => $inputData['give'],
                 'reason' => $inputData['reason'],
@@ -3090,7 +3333,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
                 'warningstype' => $inputData['warningstype'],
                 //'newpoints' => $inputData['newpoints'],
                 //'newpointstype' => $inputData['newpointstype'],
-                'previousawards' => $inputData['previousawards'],
+                TASK_REQUIREMENT_TYPE_AWARDS_GRANTED => $inputData[TASK_REQUIREMENT_TYPE_AWARDS_GRANTED],
                 'profilefields' => $inputData['profilefields'],
                 //'mydownloads' => $inputData['mydownloads'],
                 //'mydownloadstype' => $inputData['mydownloadstype'],
@@ -3118,9 +3361,9 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
             logAction();
 
             if ($newTaskPage) {
-                redirect(urlHandlerBuild(['action' => 'manageTasks']), $lang->ougcAwardsRedirectTaskCreated);
+                redirect(urlHandlerBuild(['action' => 'viewTasks']), $lang->ougcAwardsRedirectTaskCreated);
             } else {
-                redirect(urlHandlerBuild(['action' => 'manageTasks']), $lang->ougcAwardsRedirectTaskUpdated);
+                redirect(urlHandlerBuild(['action' => 'viewTasks']), $lang->ougcAwardsRedirectTaskUpdated);
             }
         }
     }
@@ -3168,8 +3411,19 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
         case TASK_STATUS_ENABLED:
             $selectedElementEnabledYes = 'checked="checked"';
             break;
-        default:
+        case \ougc\Awards\Core\TASK_STATUS_DISABLED:
             $selectedElementEnabledNo = 'checked="checked"';
+            break;
+    }
+
+    $selectedElementTypeGrant = $selectedElementTypedRevoke = '';
+
+    switch ($inputData['taskType']) {
+        case \ougc\Awards\Core\TASK_TYPE_GRANT:
+            $selectedElementTypeGrant = 'checked="checked"';
+            break;
+        case \ougc\Awards\Core\TASK_TYPE_REVOKE:
+            $selectedElementTypedRevoke = 'checked="checked"';
             break;
     }
 
@@ -3182,11 +3436,11 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
     $selectedRequirements = array_flip($inputData['requirements']);
 
     foreach (
-        $requirementCriteria as $requirementKey => $requirementOption
+        $requirementCriteria as $requirementKey => $requirementOptions
     ) {
         $optionValue = $requirementKey;
 
-        $optionName = $lang->{$requirementOption['languageVar']};
+        $optionName = $lang->{$requirementOptions['languageVar']};
 
         $selectedElement = '';
 
@@ -3205,7 +3459,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
     $requirementOptions = eval(getTemplate('selectField'));
 
-    $awardsGrantSelect = generateSelectAwards('give[]', (array)$inputData['give'], ['multiple' => true]);
+    $awardsGrantSelect = generateSelectAwards('give', (array)$inputData['give']);
 
     $selectedElementMultipleYes = $selectedElementMultipleNo = '';
 
@@ -3218,8 +3472,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
             break;
     }
 
-    $awardsRevokeSelect = generateSelectAwards('revoke[]', (array)$inputData['revoke'], ['multiple' => true]
-    );
+    $awardsRevokeSelect = generateSelectAwards('revoke', (array)$inputData['revoke']);
 
     $pageTitle = $lang->ougcAwardsControlPanelEditTaskTitle;
 
@@ -3284,7 +3537,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
         logAction();
 
-        redirect(urlHandlerBuild(['action' => 'manageTasks']), $lang->ougcAwardsRedirectTaskDeleted);
+        redirect(urlHandlerBuild(['action' => 'viewTasks']), $lang->ougcAwardsRedirectTaskDeleted);
     }
 
     $pageTitle = $lang->ougcAwardsControlPanelDeleteAwardTitle;
@@ -3296,23 +3549,35 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
     $confirmationContent = $lang->ougcAwardsControlPanelDeleteTaskTableDescription;
 
     $pageContents = eval(getTemplate('controlPanelConfirmation'));
-} elseif ($mybb->get_input('action') === 'manageTasks') {
-    if (!$isModerator) {
-        error_no_permission();
-    }
-
+} elseif ($mybb->get_input('action') === 'viewTasks') {
     $alternativeBackground = alt_trow(true);
 
     $taskRows = '';
+
+    $optionsThead = '';
+
+    if ($isModerator) {
+        $optionsThead = eval(getTemplate('controlPanelTasksThead'));
+    }
 
     foreach (taskGet() as $taskData) {
         $taskID = (int)$taskData['tid'];
 
         $taskName = htmlspecialchars_uni($taskData['name']);
 
-        $taskDescription = htmlspecialchars_uni($taskData['description']);
+        $taskDescription = parseMessage($taskData['description']);
 
         $taskRequirements = array_flip(explode(',', $taskData['requirements']));
+
+        $taskRequirementsList = '';
+
+        foreach ($requirementCriteria as $requirementType => $requirementOption) {
+            if (isset($taskRequirements[$requirementType])) {
+                $requirementText = $requirementOption['format']($requirementType, $taskData);
+
+                $taskRequirementsList .= eval(getTemplate('controlPanelTasksRowRequirement'));
+            }
+        }
 
         foreach ($taskRequirements as $taskRequirementKey => &$taskRequirementValue) {
             if (isset($lang->{$requirementCriteria[$taskRequirementKey]['languageVar']})) {
@@ -3324,7 +3589,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
         $checkedElement = $taskGrantAwards = $taskRevokeAwards = '';
 
-        $taskGrantAwardIDs = implode("','", array_map('intval', explode(',', $taskData['give'])));
+        $taskGrantAwardIDs = (int)$taskData['give'];
 
         foreach (awardsGetCache(["aid IN ('{$taskGrantAwardIDs}')"]) as $awardID => $awardData) {
             $awardName = htmlspecialchars_uni($awardData['name']);
@@ -3344,10 +3609,11 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
             $taskGrantAwards .= $awardImage;
         }
 
-
-        $taskRevokeAwardIDs = implode("','", array_map('intval', explode(',', $taskData['revoke'])));
+        $taskRevokeAwardIDs = (int)$taskData['revoke'];
 
         foreach (awardsGetCache(["aid IN ('{$taskRevokeAwardIDs}')"]) as $awardID => $awardData) {
+            $awardName = htmlspecialchars_uni($awardData['name']);
+
             $awardImage = $awardClass = awardGetIcon($awardID);
 
             $awardImage = eval(
@@ -3367,8 +3633,6 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
             $checkedElement = 'checked="$checkedElement"';
         }
 
-        $taskRevoke = htmlspecialchars_uni($taskData['revoke']);
-
         $taskStatus = (int)$taskData['active'];
 
         $viewLogsUrl = urlHandlerBuild(['action' => 'taskLogs', 'taskID' => $taskID]);
@@ -3377,16 +3641,24 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
         $deleteUrl = urlHandlerBuild(['action' => 'deleteTask', 'taskID' => $taskID]);
 
+        $optionsColumn = '';
+
+        if ($isModerator) {
+            $optionsColumn = eval(getTemplate('controlPanelTasksRowOptions'));
+        }
+
         $taskRows .= eval(getTemplate('controlPanelTasksRow'));
 
         $alternativeBackground = alt_trow();
     }
 
-    $buttonUrl = urlHandlerBuild(['action' => 'newTask']);
+    if ($isModerator) {
+        $buttonUrl = urlHandlerBuild(['action' => 'newTask']);
 
-    $buttonText = $lang->ougcAwardsControlPanelButtonNewTask;
+        $buttonText = $lang->ougcAwardsControlPanelButtonNewTask;
 
-    $actionButtons[] = eval(getTemplate('controlPanelButtons'));
+        $actionButtons[] = eval(getTemplate('controlPanelButtons'));
+    }
 
     $pageTitle = $lang->ougcAwardsControlPanelTasksTitle;
 
@@ -3402,7 +3674,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
         error($lang->ougcAwardsErrorInvalidTask);
     }
 
-    add_breadcrumb(htmlspecialchars_uni($taskData['name']), urlHandlerBuild(['action' => 'manageTasks']));
+    add_breadcrumb(htmlspecialchars_uni($taskData['name']), urlHandlerBuild(['action' => 'viewTasks']));
 
     $alternativeBackground = alt_trow(true);
 
@@ -3698,7 +3970,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
                 $actionButtons[] = eval(getTemplate('controlPanelButtons'));
         */
 
-        $buttonUrl = urlHandlerBuild(['action' => 'manageTasks']);
+        $buttonUrl = urlHandlerBuild(['action' => 'viewTasks']);
 
         $buttonText = $lang->ougcAwardsControlPanelButtonManageTasks;
 

@@ -35,6 +35,7 @@ use MybbStuff_MyAlerts_AlertManager;
 use MybbStuff_MyAlerts_AlertTypeManager;
 use MybbStuff_MyAlerts_Entity_Alert;
 use PluginLibrary;
+use pluginSystem;
 use postParser;
 use stdClass;
 
@@ -57,6 +58,10 @@ const AWARD_ALLOW_REQUESTS = 1;
 const AWARD_STATUS_DISABLED = 0;
 
 const AWARD_STATUS_ENABLED = 1;
+
+const TASK_TYPE_GRANT = 1;
+
+const TASK_TYPE_REVOKE = 2;
 
 const TASK_STATUS_DISABLED = 0;
 
@@ -345,6 +350,11 @@ const TABLES_DATA = [
             'unsigned' => true,
             'default' => 1
         ],
+        'taskType' => [
+            'type' => 'TINYINT',
+            'size' => 1,
+            'default' => 1
+        ],
         'logging' => [
             'type' => 'TINYINT',
             'unsigned' => true,
@@ -489,16 +499,6 @@ const TABLES_DATA = [
             'size' => 2,
             'default' => ''
         ],
-        /*'newpoints' => [
-            'type' => 'FLOAT',
-            'unsigned' => true,
-            'default' => 0
-        ],
-        'newpointstype' => [
-            'type' => 'VARCHAR',
-            'size' => 2,
-            'default' => ''
-        ],*/
         'previousawards' => [
             'type' => 'TEXT',
             'null' => true,
@@ -536,7 +536,22 @@ const TABLES_DATA = [
             'type' => 'VARCHAR',
             'size' => 2,
             'default' => ''
+        ],*/
+        'ruleScripts' => [
+            'type' => 'TEXT',
+            'null' => true,
         ],
+        'newpoints' => [
+            'type' => 'FLOAT',
+            'unsigned' => true,
+            'default' => 0
+        ],
+        'newpointstype' => [
+            'type' => 'VARCHAR',
+            'size' => 2,
+            'default' => ''
+        ],
+        /*
         'ougc_customrep_r' => [
             'type' => 'INT',
             'unsigned' => true,
@@ -564,11 +579,8 @@ const TABLES_DATA = [
         'ougc_customrepids_g' => [
             'type' => 'TEXT',
             'null' => true,
-        ],*/
-        'ruleScripts' => [
-            'type' => 'TEXT',
-            'null' => true,
         ],
+        */
     ],
     'ougc_awards_tasks_logs' => [
         'lid' => [
@@ -653,6 +665,56 @@ const FIELDS_DATA = [
     ]
 ];
 
+const TASK_REQUIREMENT_TYPE_GROUPS = 'usergroups';
+
+const TASK_REQUIREMENT_TYPE_THREADS = 'threads';
+
+const TASK_REQUIREMENT_TYPE_POSTS = 'posts';
+
+const TASK_REQUIREMENT_TYPE_THREADS_FORUM = 'fthreads';
+
+const TASK_REQUIREMENT_TYPE_POSTS_FORUM = 'fposts';
+
+const TASK_REQUIREMENT_TYPE_REGISTRATION = 'registered';
+
+const TASK_REQUIREMENT_TYPE_ONLINE = 'online';
+
+const TASK_REQUIREMENT_TYPE_REPUTATION = 'reputation';
+
+const TASK_REQUIREMENT_TYPE_REFERRALS = 'referrals';
+
+const TASK_REQUIREMENT_TYPE_WARNINGS = 'warnings';
+
+const TASK_REQUIREMENT_TYPE_AWARDS_GRANTED = 'previousawards';
+
+const TASK_REQUIREMENT_TYPE_FILLED_PROFILE_FIELDS = 'profilefields';
+
+const TASK_REQUIREMENT_TYPE_JSON_SCRIPT = 'ruleScripts';
+
+const TASK_REQUIREMENT_TYPE_NEWPOINTS = 'newpoints';
+
+const TASK_REQUIREMENT_TIME_TYPE_HOURS = 'hours';
+
+const TASK_REQUIREMENT_TIME_TYPE_DAYS = 'days';
+
+const TASK_REQUIREMENT_TIME_TYPE_WEEKS = 'weeks';
+
+const TASK_REQUIREMENT_TIME_TYPE_MONTHS = 'months';
+
+const TASK_REQUIREMENT_TIME_TYPE_YEARS = 'years';
+
+const COMPARISON_TYPE_GREATER_THAN = '>';
+
+const COMPARISON_TYPE_GREATER_THAN_OR_EQUAL = '>=';
+
+const COMPARISON_TYPE_EQUAL = '=';
+
+const COMPARISON_TYPE_NOT_EQUAL = '!=';
+
+const COMPARISON_TYPE_LESS_THAN_OR_EQUAL = '<=';
+
+const COMPARISON_TYPE_LESS_THAN = '<';
+
 function addHooks(string $namespace)
 {
     global $plugins;
@@ -683,6 +745,21 @@ function addHooks(string $namespace)
             }
         }
     }
+}
+
+function runHooks(string $hookName, array &$hookArguments)
+{
+    if (getSetting('disablePlugins') !== false) {
+        return $hookArguments;
+    }
+
+    global $plugins;
+
+    if ($plugins instanceof pluginSystem) {
+        $hookArguments = $plugins->run_hooks('ougc_awards_' . $hookName, $hookArguments);
+    }
+
+    return $hookArguments;
 }
 
 function loadLanguage(bool $isDataHandler = false): bool
@@ -809,309 +886,494 @@ function getSetting(string $settingKey = '')
     );
 }
 
-function executeTask(): bool
+function executeTask(array $awardTaskData = []): bool
 {
-    global $mybb, $db, $plugins;
+    global $db;
 
     loadLanguage(true);
 
-    $query = $db->simple_select('ougc_awards_tasks', '*', 'active=1');
+    $tableQueryOptions = [];
 
-    while ($task_data = $db->fetch_array($query)) {
-        $task_data['tid'] = (int)$task_data['tid'];
+    $tableQueryFields = ['u.uid', 'u.username'];
 
-        $where_clause = $left_join = [];
+    $requirementCriteria = [
+        TASK_REQUIREMENT_TYPE_GROUPS => function (
+            array $taskData,
+            string $requirementType,
+            array &$whereClauses
+        ): bool {
+            global $db;
 
-        $requirements = explode(',', $task_data['requirements']);
+            $groupIDs = array_map('intval', explode(',', $taskData[$requirementType]));
 
-        foreach (
-            [
-                'posts' => 'postnum',
-                'threads' => 'threadnum',
-                'referrals' => 'referrals',
-                'warnings' => 'warningpoints',
-                'newpoints' => 'newpoints'
-            ] as $k => $c
-        ) {
-            $t = $k . 'type';
-            if (in_array($k, $requirements) && (int)$task_data[$k] >= 0 && !empty($task_data[$t])) {
-                $where_clause[] = "u.{$c}{$task_data[$t]}'{$task_data[$k]}'";
-            }
-        }
+            $whereClause = ["usergroup IN ('" . implode("','", $groupIDs) . "')"];
 
-        foreach (['reputation' => 'reputation'] as $k => $c) {
-            $t = $k . 'type';
-            if (in_array($k, $requirements) && !empty($task_data[$t])) {
-                $where_clause[] = "u.{$c}{$task_data[$t]}'{$task_data[$k]}'";
-            }
-        }
-
-        if (in_array(
-                'registered',
-                $requirements
-            ) && (int)$task_data['registered'] >= 0 && !empty($task_data['registeredtype'])) {
-            switch ($task_data['registeredtype']) {
-                case 'hours':
-                    $regdate = $task_data['registered'] * 60 * 60;
-                    break;
-                case 'weeks':
-                    $regdate = $task_data['registered'] * 60 * 60 * 24 * 7;
-                    break;
-                case 'months':
-                    $regdate = $task_data['registered'] * 60 * 60 * 24 * 30;
-                    break;
-                case 'years':
-                    $regdate = $task_data['registered'] * 60 * 60 * 24 * 365;
-                    break;
-                default:
-                    $regdate = $task_data['registered'] * 60 * 60 * 24;
-                    break;
-            }
-            $where_clause[] = "u.regdate<='" . (TIME_NOW - $regdate) . "'";
-        }
-
-        if (in_array('online', $requirements) && (int)$task_data['online'] >= 0 && !empty($task_data['onlinetype'])) {
-            switch ($task_data['onlinetype']) {
-                case 'hours':
-                    $timeonline = $task_data['online'] * 60 * 60;
-                    break;
-                case 'weeks':
-                    $timeonline = $task_data['online'] * 60 * 60 * 24 * 7;
-                    break;
-                case 'months':
-                    $timeonline = $task_data['online'] * 60 * 60 * 24 * 30;
-                    break;
-                case 'years':
-                    $timeonline = $task_data['online'] * 60 * 60 * 24 * 365;
-                    break;
-                default:
-                    $timeonline = $task_data['online'] * 60 * 60 * 24;
-                    break;
-            }
-            $where_clause[] = "u.timeonline>='{$timeonline}'";
-        }
-
-        if (in_array('usergroups', $requirements) && !empty($task_data['usergroups'])) {
-            $usergroups = array_map('intval', explode(',', $task_data['usergroups']));
-            $group_clause = ["usergroup IN ('" . implode("','", $usergroups) . "')"];
-            if ($task_data['additionalgroups']) {
-                foreach ($usergroups as $gid) {
+            if (!empty($taskData['additionalgroups'])) {
+                foreach ($groupIDs as $groupID) {
                     switch ($db->type) {
                         case 'pgsql':
                         case 'sqlite':
-                            $group_clause[] = "','||u.additionalgroups||',' LIKE '%,{$gid},%'";
+                            $whereClause[] = "','||u.additionalgroups||',' LIKE '%,{$groupID},%'";
                             break;
                         default:
-                            $group_clause[] = "CONCAT(',',u.additionalgroups,',') LIKE '%,{$gid},%'";
+                            $whereClause[] = "CONCAT(',',u.additionalgroups,',') LIKE '%,{$groupID},%'";
                             break;
                     }
                 }
             }
-            $where_clause[] = '(' . implode(' OR ', $group_clause) . ')';
-        }
 
-        if (in_array('fposts', $requirements) && (int)$task_data['fposts'] >= 0 && !empty($task_data['fposts'])) {
-            $forum_ids = implode("','", array_map('intval', explode(',', $task_data['fthreadsforums'])));
+            $whereClauses[] = '(' . implode(' OR ', $whereClause) . ')';
 
-            $left_join[] = 'LEFT JOIN (
-				SELECT p.uid, COUNT(p.pid) AS fposts FROM ' . $db->table_prefix . 'posts p
-				LEFT JOIN ' . $db->table_prefix . "threads t ON (t.tid=p.tid)
-				WHERE p.fid IN ('{$forum_ids}') AND t.visible > 0 AND p.visible > 0
-				GROUP BY p.uid
-			) p ON (p.uid=u.uid)";
-            $where_clause[] = "p.fposts{$task_data['fpoststype']}'{$task_data['fposts']}'";
-        }
+            return false;
+        },
+        TASK_REQUIREMENT_TYPE_THREADS => function (
+            array $taskData,
+            string $requirementType,
+            array &$whereClauses
+        ): bool {
+            if (in_array($taskData[$requirementType . 'type'], [
+                COMPARISON_TYPE_GREATER_THAN,
+                COMPARISON_TYPE_GREATER_THAN_OR_EQUAL,
+                COMPARISON_TYPE_EQUAL,
+                COMPARISON_TYPE_NOT_EQUAL,
+                COMPARISON_TYPE_LESS_THAN_OR_EQUAL,
+                COMPARISON_TYPE_LESS_THAN,
+            ])) {
+                $userThreads = (int)$taskData[$requirementType];
 
-        if (in_array(
-                'fthreads',
-                $requirements
-            ) && (int)$task_data['fthreads'] >= 0 && !empty($task_data['fthreads'])) {
-            $forum_ids = implode("','", array_map('intval', explode(',', $task_data['fthreadsforums'])));
-
-            $left_join[] = 'LEFT JOIN (
-				SELECT uid, COUNT(tid) AS fthreads FROM ' . $db->table_prefix . "threads
-				WHERE fid IN ('{$forum_ids}') AND visible > 0 AND closed NOT LIKE 'moved|%'
-				GROUP BY uid
-			) t ON (t.uid=u.uid)";
-            $where_clause[] = "t.fthreads{$task_data['fthreadstype']}'{$task_data['fthreads']}'";
-        }
-
-        if (in_array('previousawards', $requirements) && !empty($task_data['previousawards'])) {
-            $awards_cache = awardsCacheGet();
-            $aids = implode("','", array_keys($awards_cache['awards']));
-            foreach (array_map('intval', explode(',', $task_data['previousawards'])) as $aid) {
-                $left_join[] = "LEFT JOIN (
-					SELECT ua.uid, ua.aid, COUNT(ua.gid) AS previous_awards_{$aid} FROM " . $db->table_prefix . "ougc_awards_users ua
-					WHERE ua.aid='{$aid}' AND ua.aid IN ('{$aids}')
-					GROUP BY ua.uid, ua.aid
-				) a_{$aid} ON (a_{$aid}.uid=u.uid)";
-                $where_clause[] = "a_{$aid}.previous_awards_{$aid}>='1'";
+                $whereClauses[] = "u.threadnum{$taskData[$requirementType.'type']}'{$userThreads}'";
             }
-        }
 
-        if (in_array('profilefields', $requirements) && !empty($task_data['profilefields'])) {
-            $left_join[] = 'LEFT JOIN ' . $db->table_prefix . 'userfields uf ON (uf.ufid=u.uid)';
-            foreach (array_map('intval', explode(',', $task_data['profilefields'])) as $fid) {
-                $where_clause[] = 'uf.fid' . (int)$fid . "!=''";
+            return true;
+        },
+        TASK_REQUIREMENT_TYPE_POSTS => function (
+            array $taskData,
+            string $requirementType,
+            array &$whereClauses
+        ): bool {
+            if (in_array($taskData[$requirementType . 'type'], [
+                COMPARISON_TYPE_GREATER_THAN,
+                COMPARISON_TYPE_GREATER_THAN_OR_EQUAL,
+                COMPARISON_TYPE_EQUAL,
+                COMPARISON_TYPE_NOT_EQUAL,
+                COMPARISON_TYPE_LESS_THAN_OR_EQUAL,
+                COMPARISON_TYPE_LESS_THAN,
+            ])) {
+                $userThreads = (int)$taskData[$requirementType];
+
+                $whereClauses[] = "u.postnum{$taskData[$requirementType.'type']}'{$userThreads}'";
             }
-        }
 
-        /*
-        if (in_array(
-                'mydownloads',
-                $requirements
-            ) && (int)$award_task['mydownloads'] >= 0 && !empty($award_task['mydownloads'])) {
-            $left_join[] = 'LEFT JOIN (SELECT submitter_uid, COUNT(did) AS downloads FROM ' . $db->table_prefix . "mydownloads_downloads WHERE hidden='0' GROUP BY submitter_uid) myd ON (myd.submitter_uid=u.uid)";
-            $where_clause[] = "myd.downloads{$award_task['mydownloadstype']}'{$award_task['mydownloads']}'";
-        }
+            return true;
+        },
+        TASK_REQUIREMENT_TYPE_THREADS_FORUM => function (
+            array $taskData,
+            string $requirementType,
+            array &$whereClauses,
+            array &$tableLeftJoins
+        ): bool {
+            if (in_array($taskData[$requirementType . 'type'], [
+                COMPARISON_TYPE_GREATER_THAN,
+                COMPARISON_TYPE_GREATER_THAN_OR_EQUAL,
+                COMPARISON_TYPE_EQUAL,
+                COMPARISON_TYPE_NOT_EQUAL,
+                COMPARISON_TYPE_LESS_THAN_OR_EQUAL,
+                COMPARISON_TYPE_LESS_THAN,
+            ])) {
+                $forumThreads = (int)$taskData[$requirementType];
 
-        // TODO myarcadechampions
-
-        if (in_array(
-                'myarcadescores',
-                $requirements
-            ) && (int)$award_task['myarcadescores'] >= 0 && !empty($award_task['myarcadescores'])) {
-            $left_join[] = 'LEFT JOIN (
-				SELECT s.uid, s.gid, COUNT(s.sid) AS scores FROM ' . $db->table_prefix . 'arcadescores s
-				LEFT JOIN ' . $db->table_prefix . "arcadegames g ON (g.gid=s.gid)
-				WHERE g.active='1'
-				GROUP BY s.uid, s.gid
-			) mya ON (mya.uid=u.uid)";
-            $where_clause[] = "mya.scores{$award_task['myarcadescorestype']}'{$award_task['myarcadescores']}'";
-        }
-
-        if (in_array(
-                'ougc_customrep_r',
-                $requirements
-            ) && (int)$award_task['ougc_customrep_r'] >= 0 && !empty($award_task['ougc_customrep_r']) && $db->table_exists(
-                'ougc_customrep'
-            )) {
-            $left_join[] = 'LEFT JOIN (
-				SELECT p.uid, l.rid, COUNT(l.lid) AS ougc_custom_reputation_receieved FROM ' . $db->table_prefix . 'ougc_customrep_log l
-				LEFT JOIN ' . $db->table_prefix . 'ougc_customrep r ON (r.rid=l.rid)
-				LEFT JOIN ' . $db->table_prefix . 'posts p ON (p.pid=l.pid)
-				LEFT JOIN ' . $db->table_prefix . "threads t ON (t.tid=p.tid)
-				WHERE r.visible='1' AND t.visible > 0 AND p.visible > 0 AND r.rid IN ('" . implode(
+                $forumIDs = implode(
                     "','",
-                    array_map('intval', explode(',', $award_task['ougc_customrepids_r']))
-                ) . "')
-				GROUP BY p.uid, l.rid
-			) ocr ON (ocr.uid=u.uid)";
-            $where_clause[] = "ocr.ougc_custom_reputation_receieved{$award_task['ougc_customreptype_r']}'{$award_task['ougc_customrep_r']}'";
-        }
-
-        if (in_array(
-                'ougc_customrep_g',
-                $requirements
-            ) && (int)$award_task['ougc_customrep_g'] >= 0 && !empty($award_task['ougc_customrep_g']) && $db->table_exists(
-                'ougc_customrep'
-            )) {
-            $left_join[] = 'LEFT JOIN (
-				SELECT l.uid, l.rid, COUNT(l.lid) AS ougc_custom_reputation_gived FROM ' . $db->table_prefix . 'ougc_customrep_log l
-				LEFT JOIN ' . $db->table_prefix . 'ougc_customrep r ON (r.rid=l.rid)
-				LEFT JOIN ' . $db->table_prefix . 'posts p ON (p.pid=l.pid)
-				LEFT JOIN ' . $db->table_prefix . "threads t ON (t.tid=p.tid)
-				WHERE r.visible='1' AND t.visible > 0 AND p.visible > 0 AND r.rid IN ('" . implode(
-                    "','",
-                    array_map('intval', explode(',', $award_task['ougc_customrepids_g']))
-                ) . "')
-				GROUP BY l.uid, l.rid
-			) ocg ON (ocg.uid=u.uid)";
-            $where_clause[] = "ocg.ougc_custom_reputation_gived{$award_task['ougc_customreptype_g']}'{$award_task['ougc_customrep_g']}'";
-        }
-        */
-
-        $log_inserts = [];
-
-        if (is_object($plugins)) {
-            $args = [
-                'task' => &$task,
-                'award_task' => &$task_data,
-                'left_join' => &$left_join,
-                'where_clause' => &$where_clause
-            ];
-
-            $plugins->run_hooks('task_ougc_awards', $args);
-        }
-
-        $query2 = $db->simple_select(
-            'users u ' . implode(' ', $left_join),
-            'u.uid, u.username',
-            implode(' AND ', $where_clause)
-        );
-
-        while ($user = $db->fetch_array($query2)) {
-            $log = false;
-
-            $gave_cache = $revoke_cache = $aids = $gave_list = $revoke_list = [];
-
-            if (($task_data['give'] && !$task_data['allowmultiple']) || $task_data['revoke']) {
-                $q1 = $db->simple_select(
-                    'ougc_awards_users',
-                    'gid, aid',
-                    "uid='{$user['uid']}' AND aid IN ('" . implode(
-                        "','",
-                        explode(',', $task_data['revoke'] . ',' . $task_data['give'])
-                    ) . "')"
+                    array_map('intval', explode(',', $taskData[$requirementType . 'forums']))
                 );
 
-                while ($gave = $db->fetch_array($q1)) {
-                    if (my_strpos(',' . $task_data['give'] . ',', ',' . $gave['aid'] . ',') !== false) {
-                        $gave_cache[] = $gave['aid'];
-                    }
-                    if (my_strpos(',' . $task_data['revoke'] . ',', ',' . $gave['aid'] . ',') !== false) {
-                        $revoke_cache[$gave['gid']] = $gave['aid'];
-                    }
+                global $db;
+
+                $tableLeftJoins[] = "(
+				SELECT uid, COUNT(tid) AS {$requirementType}
+				FROM {$db->table_prefix}threads
+				WHERE fid IN ('{$forumIDs}') AND visible > 0 AND closed NOT LIKE 'moved|%'
+				GROUP BY uid
+			) t ON (t.uid=u.uid)";
+
+                $whereClauses[] = "u.threadnum{$taskData[$requirementType.'type']}'{$forumThreads}'";
+            }
+
+            return true;
+        },
+        TASK_REQUIREMENT_TYPE_POSTS_FORUM => function (
+            array $taskData,
+            string $requirementType,
+            array &$whereClauses,
+            array &$tableLeftJoins
+        ): bool {
+            if (in_array($taskData[$requirementType . 'type'], [
+                COMPARISON_TYPE_GREATER_THAN,
+                COMPARISON_TYPE_GREATER_THAN_OR_EQUAL,
+                COMPARISON_TYPE_EQUAL,
+                COMPARISON_TYPE_NOT_EQUAL,
+                COMPARISON_TYPE_LESS_THAN_OR_EQUAL,
+                COMPARISON_TYPE_LESS_THAN,
+            ])) {
+                $forumPosts = (int)$taskData[$requirementType];
+
+                $forumIDs = implode(
+                    "','",
+                    array_map('intval', explode(',', $taskData[$requirementType . 'forums']))
+                );
+
+                global $db;
+
+                $tableLeftJoins[] = "(
+				SELECT p.uid, COUNT(p.pid) AS {$requirementType}
+				FROM {$db->table_prefix}posts p
+				LEFT JOIN {$db->table_prefix}threads t ON (t.tid=p.tid)
+				WHERE p.fid IN ('{$forumIDs}') AND t.visible > 0 AND p.visible > 0
+				GROUP BY p.uid
+			) p ON (p.uid=u.uid)";
+
+                $whereClauses[] = "p.{$requirementType}{$taskData[$requirementType.'type']}'{$forumPosts}'";
+            }
+
+            return true;
+        },
+        TASK_REQUIREMENT_TYPE_REGISTRATION => function (
+            array $taskData,
+            string $requirementType,
+            array &$whereClauses
+        ): bool {
+            $registeredSeconds = (int)$taskData[$requirementType];
+
+            switch ($taskData[$requirementType . 'type']) {
+                case TASK_REQUIREMENT_TIME_TYPE_HOURS:
+                    $registeredSeconds *= 60 * 60;
+                    break;
+                case TASK_REQUIREMENT_TIME_TYPE_DAYS:
+                    $registeredSeconds *= 60 * 60 * 24;
+                    break;
+                case TASK_REQUIREMENT_TIME_TYPE_WEEKS:
+                    $registeredSeconds *= 60 * 60 * 24 * 7;
+                    break;
+                case TASK_REQUIREMENT_TIME_TYPE_MONTHS:
+                    $registeredSeconds *= 60 * 60 * 24 * 30;
+                    break;
+                case TASK_REQUIREMENT_TIME_TYPE_YEARS:
+                    $registeredSeconds *= 60 * 60 * 24 * 365;
+                    break;
+            }
+
+            $registeredSeconds = TIME_NOW - $registeredSeconds;
+
+            if ($registeredSeconds > 0) {
+                $whereClauses[] = "u.regdate<='{$registeredSeconds}'";
+            }
+
+            return true;
+        },
+        TASK_REQUIREMENT_TYPE_ONLINE => function (
+            array $taskData,
+            string $requirementType,
+            array &$whereClauses
+        ): bool {
+            $onlineSeconds = (int)$taskData[$requirementType];
+
+            switch ($taskData[$requirementType . 'type']) {
+                case TASK_REQUIREMENT_TIME_TYPE_HOURS:
+                    $onlineSeconds *= 60 * 60;
+                    break;
+                case TASK_REQUIREMENT_TIME_TYPE_DAYS:
+                    $onlineSeconds *= 60 * 60 * 24;
+                    break;
+                case TASK_REQUIREMENT_TIME_TYPE_WEEKS:
+                    $onlineSeconds *= 60 * 60 * 24 * 7;
+                    break;
+                case TASK_REQUIREMENT_TIME_TYPE_MONTHS:
+                    $onlineSeconds *= 60 * 60 * 24 * 30;
+                    break;
+                case TASK_REQUIREMENT_TIME_TYPE_YEARS:
+                    $onlineSeconds *= 60 * 60 * 24 * 365;
+                    break;
+            }
+
+            if ($onlineSeconds > 0) {
+                $whereClauses[] = "u.timeonline>='{$onlineSeconds}'";
+            }
+
+            return true;
+        },
+        TASK_REQUIREMENT_TYPE_REPUTATION => function (
+            array $taskData,
+            string $requirementType,
+            array &$whereClauses
+        ): bool {
+            if (in_array($taskData[$requirementType . 'type'], [
+                COMPARISON_TYPE_GREATER_THAN,
+                COMPARISON_TYPE_GREATER_THAN_OR_EQUAL,
+                COMPARISON_TYPE_EQUAL,
+                COMPARISON_TYPE_NOT_EQUAL,
+                COMPARISON_TYPE_LESS_THAN_OR_EQUAL,
+                COMPARISON_TYPE_LESS_THAN,
+            ])) {
+                $userReputation = (int)$taskData[$requirementType];
+
+                $whereClauses[] = "u.{$requirementType}{$taskData[$requirementType.'type']}'{$userReputation}'";
+
+                return true;
+            }
+
+            return false;
+        },
+        TASK_REQUIREMENT_TYPE_REFERRALS => function (
+            array $taskData,
+            string $requirementType,
+            array &$whereClauses
+        ): bool {
+            if (in_array($taskData[$requirementType . 'type'], [
+                COMPARISON_TYPE_GREATER_THAN,
+                COMPARISON_TYPE_GREATER_THAN_OR_EQUAL,
+                COMPARISON_TYPE_EQUAL,
+                COMPARISON_TYPE_NOT_EQUAL,
+                COMPARISON_TYPE_LESS_THAN_OR_EQUAL,
+                COMPARISON_TYPE_LESS_THAN,
+            ])) {
+                $userReferrals = (int)$taskData[$requirementType];
+
+                $whereClauses[] = "u.{$requirementType}{$taskData[$requirementType.'type']}'{$userReferrals}'";
+            }
+
+            return true;
+        },
+        TASK_REQUIREMENT_TYPE_WARNINGS => function (
+            array $taskData,
+            string $requirementType,
+            array &$whereClauses
+        ): bool {
+            if (in_array($taskData[$requirementType . 'type'], [
+                COMPARISON_TYPE_GREATER_THAN,
+                COMPARISON_TYPE_GREATER_THAN_OR_EQUAL,
+                COMPARISON_TYPE_EQUAL,
+                COMPARISON_TYPE_NOT_EQUAL,
+                COMPARISON_TYPE_LESS_THAN_OR_EQUAL,
+                COMPARISON_TYPE_LESS_THAN,
+            ])) {
+                $userWarningPoints = (int)$taskData[$requirementType];
+
+                $whereClauses[] = "u.warningpoints{$taskData[$requirementType.'type']}'{$userWarningPoints}'";
+            }
+
+            return true;
+        },
+        TASK_REQUIREMENT_TYPE_AWARDS_GRANTED => function (
+            array $taskData,
+            string $requirementType,
+            array &$whereClauses,
+            array &$tableLeftJoins
+        ): bool {
+            if (!empty($taskData[$requirementType])) {
+                global $db;
+
+                $awardIDs = implode("','", array_keys(awardsCacheGet()['awards']));
+
+                foreach (array_map('intval', explode(',', $taskData[$requirementType])) as $previousAwardID) {
+                    $tableLeftJoins[] = "(
+                            SELECT g.uid, g.aid, COUNT(g.gid) AS {$requirementType}{$previousAwardID}
+                            FROM {$db->table_prefix}ougc_awards_users g
+                            WHERE g.aid='{$previousAwardID}' AND g.aid IN ('{$awardIDs}')
+                            GROUP BY g.uid, g.aid
+                        ) aw{$previousAwardID} ON (aw{$previousAwardID}.uid=u.uid)";
+
+                    $whereClauses[] = "aw{$previousAwardID}.{$requirementType}{$previousAwardID}>='1'";
                 }
             }
 
-            if ($task_data['give']) {
-                $aids = array_flip(explode(',', $task_data['give']));
-                if (!$task_data['allowmultiple']) {
-                    foreach ($gave_cache as $aid) {
-                        if (isset($aids[$aid])) {
-                            unset($aids[$aid]);
-                        }
-                    }
-                }
+            return true;
+        },
+        TASK_REQUIREMENT_TYPE_FILLED_PROFILE_FIELDS => function (
+            array $taskData,
+            string $requirementType,
+            array &$whereClauses,
+            array &$tableLeftJoins
+        ): bool {
+            if (!empty($taskData[$requirementType])) {
+                global $db;
 
-                if (!empty($aids)) {
-                    foreach ($aids as $aid => $i) {
-                        $gave_list[] = $aid;
-                        $award = awardGet($aid);
-                        $result = grantInsert(
-                            $aid,
-                            (int)$user['uid'],
-                            '',
-                            $task_data['thread'],
-                            $task_data['tid']
-                        ); // reason shouldn't be supplied.
-                        $log = $result > 0 || false;
-                    }
+                $tableLeftJoins[] = "{$db->table_prefix}userfields uf ON (uf.ufid=u.uid)";
+
+                foreach (array_map('intval', explode(',', $taskData[$requirementType])) as $fieldID) {
+                    $whereClauses[] = "uf.fid{$fieldID}!=''";
                 }
             }
 
-            if ($task_data['revoke']) {
-                foreach ($revoke_cache as $gid => $aid) {
-                    $revoke_list[] = $aid;
-                    grantDelete($gid);
-                    $log = true;
-                }
+            return true;
+        },
+        /*
+        TASK_REQUIREMENT_TYPE_NEWPOINTS => function (array $taskData, string $requirementType) use (
+            &$tableLeftJoins,
+            &$whereClauses
+        ): bool {
+            $userPoints = (float)$taskData[$requirementType];
+
+            if ($userPoints >= 0 && !empty($taskData[$requirementType . 'type'])) {
+                $whereClauses[] = "u.{$requirementType}{$taskData[$requirementType.'type']}'{$userPoints}'";
             }
 
-            !$log or $log_inserts[] = [
-                'tid' => (int)$task_data['tid'],
-                'uid' => (int)$user['uid'],
-                'gave' => $db->escape_string(implode(',', $gave_list)),
-                'revoked' => $db->escape_string(implode(',', $revoke_list)),
-                'date' => TIME_NOW
-            ];
+
+            return true;
+        },
+        */
+    ];
+
+    $hookArguments = [
+        'taskData' => &$awardTaskData,
+        'tableQueryOptions' => &$tableQueryOptions,
+        'tableQueryFields' => &$tableQueryFields,
+        'requirementTypes' => &$requirementCriteria
+    ];
+
+    // TODO mydownloads
+    // TODO myarcadechampions
+    // TODO myarcadescores
+    // TODO ougc_customrep_r
+    // TODO ougc_customrep_g
+
+    $queryTasks = $db->simple_select(
+        'ougc_awards_tasks',
+        '*',
+        "active='1'"
+    );
+
+    while ($awardTaskData = $db->fetch_array($queryTasks)) {
+        $taskID = (int)$awardTaskData['tid'];
+
+        $taskType = (int)$awardTaskData['taskType'];
+
+        $hookArguments['awardTaskData'] = &$awardTaskData;
+
+        $whereClauses = [];
+
+        $hookArguments['whereClauses'] = &$whereClauses;
+
+        $tableLeftJoins = ['users u'];
+
+        $taskGrantAwardID = (int)$awardTaskData['give'];
+
+        $taskRevokeAwardID = (int)$awardTaskData['revoke'];
+
+        if ($taskType === \ougc\Awards\Core\TASK_TYPE_GRANT && $taskGrantAwardID) {
+            if (empty($awardTaskData['allowmultiple'])) {
+                $tableQueryFields[] = 'a.totalUserGrants';
+
+                $tableLeftJoins[] = "(
+					SELECT uid, COUNT(aid) AS totalUserGrants
+					FROM {$db->table_prefix}ougc_awards_users
+					WHERE aid IN ('{$taskGrantAwardID}')
+					GROUP BY uid
+				) a ON (u.uid=a.uid)";
+
+                $whereClauses[] = "a.totalUserGrants>'1'";
+            }
+
+            $taskRevokeAwardID = 0;
+        } elseif ($taskType === \ougc\Awards\Core\TASK_TYPE_REVOKE && $taskRevokeAwardID) {
+            $tableQueryFields[] = 'a.totalUserGrants';
+
+            // if user has no awards from this task, skip
+            $tableLeftJoins[] = "(
+					SELECT uid, COUNT(aid) AS totalUserGrants
+					FROM {$db->table_prefix}ougc_awards_users
+					WHERE aid='{$taskRevokeAwardID}'
+					GROUP BY uid
+				) a ON (u.uid=a.uid)";
+
+            $taskGrantAwardID = 0;
+        } else {
+            continue;
         }
 
-        if (count($log_inserts) > 0) {
-            $db->insert_query_multiple('ougc_awards_tasks_logs', $log_inserts);
+        // if log exists for user, skip
+        $tableQueryFields[] = 'l.totalUserLogs';
 
-            $log_inserts = [];
+        $tableLeftJoins[] = "(
+					SELECT uid, COUNT(lid) AS totalUserLogs
+					FROM {$db->table_prefix}ougc_awards_tasks_logs
+					WHERE tid='{$taskID}'
+					GROUP BY uid
+				) l ON (u.uid=l.uid)";
+
+        $whereClauses[] = "l.totalUserLogs<'1' OR l.totalUserLogs IS NULL";
+
+        $hookArguments['tableLeftJoins'] = &$tableLeftJoins;
+
+        $hookArguments = runHooks('task_start', $hookArguments);
+
+        $taskThreadID = (int)$awardTaskData['thread'];
+
+        foreach ($requirementCriteria as $requirementType => $callback) {
+            if (in_array($requirementType, explode(',', $awardTaskData['requirements']))) {
+                $callback($awardTaskData, $requirementType, $whereClauses, $tableLeftJoins);
+            }
+        }
+
+        $taskLogObjects = [];
+
+        $hookArguments = runHooks('task_intermediate', $hookArguments);
+
+        // todo: $whereClauses to ignore users who already received this task
+
+        $queryUsers = $db->simple_select(
+            implode(' LEFT JOIN ', $tableLeftJoins),
+            implode(',', $tableQueryFields),
+            implode(' AND ', $whereClauses)
+        );
+
+        while ($userData = $db->fetch_array($queryUsers)) {
+            $userID = (int)$userData['uid'];
+
+            $logTaskGrant = false;
+
+            $userGrantedAwardIDs = $userRevokeAwardIDs = $grandIDs = $revokeAwardIDs = [];
+
+            if ($taskType === \ougc\Awards\Core\TASK_TYPE_GRANT) {
+                if (grantInsert(
+                    $taskGrantAwardID,
+                    $userID,
+                    '',
+                    $taskThreadID,
+                    $taskID
+                )) {
+                    $grandIDs[] = $taskGrantAwardID;
+
+                    $logTaskGrant = true;
+                }
+            } else {
+                $queryGrants = $db->simple_select(
+                    'ougc_awards_users',
+                    'gid',
+                    "uid='{$userID}' AND aid='{$taskRevokeAwardID}'"
+                );
+
+                while ($grandData = $db->fetch_array($queryGrants)) {
+                    grantDelete((int)$grandData['gid']);
+
+                    $logTaskGrant = true;
+                }
+            }
+
+            if ($logTaskGrant) {
+                $taskLogObjects[] = [
+                    'tid' => $taskID,
+                    'uid' => $userID,
+                    'gave' => $taskGrantAwardID,
+                    'revoked' => $taskRevokeAwardID,
+                    'date' => TIME_NOW
+                ];
+            }
+        }
+
+        $hookArguments = runHooks('task_end', $hookArguments);
+
+        if (count($taskLogObjects) > 0) {
+            $db->insert_query_multiple('ougc_awards_tasks_logs', $taskLogObjects);
         }
     }
 
@@ -1204,14 +1466,14 @@ function presetDelete(int $presetID): bool
 
 function ownerInsert(int $awardID, int $userID): bool
 {
-    global $db, $plugins;
+    global $db;
 
     $hookArguments = [
         'awardID' => &$awardID,
         'userID' => &$userID
     ];
 
-    $plugins->run_hooks('ougc_awards_insert_owner', $hookArguments);
+    $hookArguments = runHooks('assign_award_owner', $hookArguments);
 
     $insertData = [
         'aid' => $awardID,
@@ -1228,13 +1490,13 @@ function ownerInsert(int $awardID, int $userID): bool
 
 function ownerDelete(int $ownerID): bool
 {
-    global $db, $plugins;
+    global $db;
 
     $hookArguments = [
         'ownerID' => &$ownerID
     ];
 
-    $plugins->run_hooks('ougc_awards_revoke_owner', $hookArguments);
+    $hookArguments = runHooks('revoke_award_owner', $hookArguments);
 
     $db->delete_query('ougc_awards_owners', "oid='{$ownerID}'");
 
@@ -1320,14 +1582,14 @@ function ownerFind(int $awardID, int $userID): array
 
 function ownerCategoryInsert(int $categoryID, int $userID): bool
 {
-    global $db, $plugins;
+    global $db;
 
     $hookArguments = [
         'categoryID' => &$categoryID,
         'userID' => &$userID
     ];
 
-    $plugins->run_hooks('ougc_awards_insert_category_owner', $hookArguments);
+    $hookArguments = runHooks('assign_category_owner', $hookArguments);
 
     $insertData = [
         'categoryID' => $categoryID,
@@ -1344,13 +1606,13 @@ function ownerCategoryInsert(int $categoryID, int $userID): bool
 
 function ownerCategoryDelete(int $ownerID): bool
 {
-    global $db, $plugins;
+    global $db;
 
     $hookArguments = [
         'ownerID' => &$ownerID
     ];
 
-    $plugins->run_hooks('ougc_awards_revoke_category_owner', $hookArguments);
+    $hookArguments = runHooks('revoke_category_owner', $hookArguments);
 
     $db->delete_query('ougc_awards_category_owners', "ownerID='{$ownerID}'");
 
@@ -1515,7 +1777,11 @@ function categoryGetCache(array $whereClauses = [], string $queryFields = '*', a
             $cacheObjects = $db->fetch_array($dbQuery);
         } else {
             while ($userData = $db->fetch_array($dbQuery)) {
-                $cacheObjects[] = $userData;
+                if (isset($userData['cid'])) {
+                    $cacheObjects[(int)$userData['cid']] = $userData;
+                } else {
+                    $cacheObjects[] = $userData;
+                }
             }
         }
     }
@@ -1669,19 +1935,19 @@ function grantInsert(
     int $taskID = 0,
     int $requestID = 0
 ): int {
-    global $db, $plugins, $mybb;
+    global $db, $mybb;
 
     $awardData = awardGet($awardID);
 
     $userData = getUser($userID);
 
     $hookArguments = [
-        'award' => &$awardData,
-        'user' => &$userData,
-        'reason' => &$reasonText
+        'awardData' => &$awardData,
+        'userData' => &$userData,
+        'reasonText' => &$reasonText
     ];
 
-    $plugins->run_hooks('ougc_awards_give_award', $hookArguments);
+    $hookArguments = runHooks('grant_award', $hookArguments);
 
     $insertData = [
         'aid' => $awardID,
@@ -1724,15 +1990,14 @@ function grantInsert(
 
 function grantUpdate(array $updateData, int $grantID): bool
 {
-    global $db, $plugins;
+    global $db;
 
     $hookArguments = [
-        'gid' => &$grantID,
-        'data' => &$data,
-        'clean_data' => &$updateData,
+        'grantID' => &$grantID,
+        'updateData' => &$updateData,
     ];
 
-    $plugins->run_hooks('ougc_awards_update_gived', $hookArguments);
+    $hookArguments = runHooks('update_gived', $hookArguments);
 
     $db->update_query('ougc_awards_users', $updateData, "gid='{$grantID}'");
 
@@ -1741,13 +2006,13 @@ function grantUpdate(array $updateData, int $grantID): bool
 
 function grantDelete(int $grantID): bool
 {
-    global $db, $plugins;
+    global $db;
 
     $hookArguments = [
         'grantID' => &$grantID
     ];
 
-    $plugins->run_hooks('ougc_awards_revoke_award', $hookArguments);
+    $hookArguments = runHooks('revoke_award', $hookArguments);
 
     $db->delete_query('ougc_awards_users', "gid='{$grantID}'");
 
@@ -1959,7 +2224,10 @@ function taskInsert(array $taskData, int $taskID = 0, bool $updateTask = false):
         [
             'tid',
             'active',
+            'taskType',
             'logging',
+            'give',
+            'revoke',
             'thread',
             'allowmultiple',
             'disporder',
@@ -2015,12 +2283,10 @@ function taskInsert(array $taskData, int $taskID = 0, bool $updateTask = false):
 
     foreach (
         [
-            'give',
-            'revoke',
             'usergroups',
             'fthreadsforums',
             'fpostsforums',
-            'previousawards',
+            TASK_REQUIREMENT_TYPE_AWARDS_GRANTED,
             'profilefields'
         ] as $k
     ) {
@@ -2284,10 +2550,10 @@ function cacheUpdate(): bool
 				SELECT u.uid, a.awards
 				FROM {$db->table_prefix}users u
 				LEFT JOIN (
-					SELECT ua.uid, COUNT(ua.aid) AS awards
-					FROM {$db->table_prefix}ougc_awards_users ua
-					WHERE ua.{$whereClauses}
-					GROUP BY ua.uid, ua.aid
+					SELECT g.uid, COUNT(g.aid) AS awards
+					FROM {$db->table_prefix}ougc_awards_users g
+					WHERE g.{$whereClauses}
+					GROUP BY g.uid, g.aid
 				) a ON (u.uid=a.uid)
 				WHERE a.awards!=''
 				ORDER BY a.awards DESC
@@ -2366,9 +2632,7 @@ function generateSelectProfileFields(string $inputName, array $selectedIDs = [],
 
     $selectCode .= '>';
 
-    $dbQuery = $db->simple_select('profilefields', '*', '', ['order_by' => 'disporder']);
-
-    while ($profileFieldData = $db->fetch_array($dbQuery)) {
+    foreach (getProfileFieldsCache() as $profileFieldData) {
         $selectedElement = '';
         if (in_array($profileFieldData['fid'], $selectedIDs)) {
             $selectedElement = 'selected="selected"';
@@ -2591,11 +2855,12 @@ function parseMessage(string &$messageContent): string
     return $parser->parse_message(
         $messageContent,
         [
-            'allow_html' => 0,
-            'allow_smilies' => 1,
-            'allow_mycode' => 1,
-            'filter_badwords' => 1,
-            'shorten_urls' => 1
+            'allow_html' => false,
+            'allow_mycode' => true,
+            'allow_smilies' => true,
+            'allow_imgcode' => true,
+            'filter_badwords' => true,
+            'nl2br' => false
         ]
     );
 }
@@ -2639,10 +2904,6 @@ function parseUserAwards(
         $requestID = (int)$grantData['rid'];
 
         $taskID = (int)$grantData['tid'];
-
-        $awardName = htmlspecialchars_uni($awardData['name']);
-
-        $awardDescription = htmlspecialchars_uni($awardData['description']);
 
         $grantReason = $grantData['reason'];
 
@@ -2935,4 +3196,74 @@ function awardsCacheGet(): array
     global $mybb;
 
     return (array)$mybb->cache->read('ougc_awards');
+}
+
+function getComparisonLanguageVariable(string $comparisonOperator): string
+{
+    global $lang;
+
+    switch ($comparisonOperator) {
+        case COMPARISON_TYPE_GREATER_THAN:
+            return $lang->ougcAwardsControlPanelViewTasksTypeGreaterThan;
+        case COMPARISON_TYPE_GREATER_THAN_OR_EQUAL:
+            return $lang->ougcAwardsControlPanelViewTasksTypeGreaterThanOrEqualTo;
+        case COMPARISON_TYPE_EQUAL:
+            return $lang->ougcAwardsControlPanelViewTasksTypeEqualTo;
+        case COMPARISON_TYPE_NOT_EQUAL:
+            return $lang->ougcAwardsControlPanelViewTasksTypeNotEqualTo;
+        case COMPARISON_TYPE_LESS_THAN_OR_EQUAL:
+            return $lang->ougcAwardsControlPanelViewTasksTypeLessThanOrEqualTo;
+    }
+
+    return '';
+}
+
+function getTimeLanguageVariable(string $timeType, bool $isPlural): string
+{
+    global $lang;
+
+    switch ($timeType) {
+        case TASK_REQUIREMENT_TIME_TYPE_HOURS:
+            if ($isPlural) {
+                return $lang->ougcAwardsControlPanelViewTasksTimeTypeHoursPlural;
+            }
+            return $lang->ougcAwardsControlPanelViewTasksTimeTypeHours;
+        case TASK_REQUIREMENT_TIME_TYPE_DAYS:
+            if ($isPlural) {
+                return $lang->ougcAwardsControlPanelViewTasksTimeTypeDaysPlural;
+            }
+            return $lang->ougcAwardsControlPanelViewTasksTimeTypeDays;
+        case TASK_REQUIREMENT_TIME_TYPE_WEEKS:
+            if ($isPlural) {
+                return $lang->ougcAwardsControlPanelViewTasksTimeTypeWeeksPlural;
+            }
+            return $lang->ougcAwardsControlPanelViewTasksTimeTypeWeeks;
+        case TASK_REQUIREMENT_TIME_TYPE_MONTHS:
+            if ($isPlural) {
+                return $lang->ougcAwardsControlPanelViewTasksTimeTypeMonthsPlural;
+            }
+            return $lang->ougcAwardsControlPanelViewTasksTimeTypeMonths;
+        case TASK_REQUIREMENT_TIME_TYPE_YEARS:
+            if ($isPlural) {
+                return $lang->ougcAwardsControlPanelViewTasksTimeTypeYearsPlural;
+            }
+            return $lang->ougcAwardsControlPanelViewTasksTimeTypeYears;
+    }
+
+    return '';
+}
+
+function getProfileFieldsCache(): array
+{
+    global $mybb;
+    global $profiecats;
+
+    if (
+        class_exists('OUGC_ProfiecatsCache') && $profiecats instanceof OUGC_ProfiecatsCache &&
+        !empty($profiecats->cache['original'])
+    ) {
+        return $profiecats->cache['original'];
+    }
+
+    return (array)$mybb->cache->read('profilefields');
 }

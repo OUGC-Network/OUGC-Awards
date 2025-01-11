@@ -46,6 +46,8 @@ use const ougc\Awards\Core\ADMIN_PERMISSION_DELETE;
 use const ougc\Awards\Core\REQUEST_STATUS_REJECTED;
 use const ougc\Awards\Core\TABLES_DATA;
 use const ougc\Awards\Core\FIELDS_DATA;
+use const ougc\Awards\Core\TASK_TYPE_REVOKE;
+use const ougc\Awards\Core\TASK_STATUS_DISABLED;
 use const ougc\Awards\ROOT;
 
 const TASK_ENABLE = 1;
@@ -185,11 +187,16 @@ function pluginActivate(): bool
 
     /*~*~* RUN UPDATES START *~*~*/
 
-    $db->update_query('ougc_awards_requests ', ['status' => REQUEST_STATUS_REJECTED], 'status="-1"');
+    if ($plugins['awards'] <= 1834) {
+        $db->update_query('ougc_awards_tasks', ['active' => TASK_STATUS_DISABLED], "give LIKE '%,%'");
 
-    enableTask();
+        // todo: rename column `revoke` to `awardRemoveIDs`
+        $db->update_query('ougc_awards_tasks', ['active' => TASK_STATUS_DISABLED], "`revoke` LIKE '%,%'");
 
-    change_admin_permission('tools', 'ougc_awards', ADMIN_PERMISSION_DELETE);
+        $db->update_query('ougc_awards_tasks', ['taskType' => TASK_TYPE_REVOKE], "give='' AND `revoke`!=''");
+
+        $db->update_query('ougc_awards_requests ', ['status' => REQUEST_STATUS_REJECTED], 'status="-1"');
+    }
 
     if ($plugins['awards'] <= 1803) {
         $dbQuery = $db->simple_select('ougc_awards', 'aid');
@@ -270,11 +277,15 @@ function pluginActivate(): bool
 
     /*~*~* RUN UPDATES END *~*~*/
 
+    enableTask();
+
+    cacheUpdate();
+
+    change_admin_permission('tools', 'ougc_awards', ADMIN_PERMISSION_DELETE);
+
     $plugins['awards'] = $pluginInfo['versioncode'];
 
     $cache->update('ougc_plugins', $plugins);
-
-    cacheUpdate();
 
     return true;
 }

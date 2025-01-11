@@ -77,8 +77,6 @@ function global_start05(): bool
         $templatelist = '';
     }
 
-    $templatelist .= ',';
-
     return true;
 }
 
@@ -569,6 +567,7 @@ function member_profile_end(): bool
     }
 
     if (!$maximumAwardsInProfile && !$maximumAwardsInProfilePresets) {
+        _dump(1);
         return false;
     }
 
@@ -590,6 +589,7 @@ function member_profile_end(): bool
         if (!empty($categoryIDs[$awardData['cid']]) && (int)$awardData['type'] !== GRANT_STATUS_POSTS) {
             $awardIDs[$awardID] = $awardID;
         }
+        $awardIDs[$awardID] = $awardID;
     }
 
     $categoryIDs = implode("','", $categoryIDs);

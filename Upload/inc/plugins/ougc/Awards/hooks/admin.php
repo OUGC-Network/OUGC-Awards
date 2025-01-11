@@ -38,8 +38,6 @@ use function ougc\Awards\Core\awardInsert;
 use function ougc\Awards\Core\categoryInsert;
 use function ougc\Awards\Core\loadLanguage;
 
-use const ougc\Awards\ROOT;
-
 function admin_config_plugins_deactivate()
 {
     global $mybb, $page;

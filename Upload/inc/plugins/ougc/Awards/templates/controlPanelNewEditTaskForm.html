@@ -50,6 +50,22 @@
             </td>
         </tr>
         <tr>
+            <td class="trow2" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewTaskType}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewTaskTypeDescription}
+                </div>
+            </td>
+            <td class="trow2" style="vertical-align: middle;">
+                <input type="radio" class="radio" name="taskType" value="1" id="taskTypeYes"
+                       {$selectedElementTypeGrant}>
+                <label for="taskTypeYes">{$lang->ougcAwardsControlPanelNewTaskTypeGrant}</label>
+                <input type="radio" class="radio" name="taskType" value="2" id="taskTypeNo"
+                       {$selectedElementTypedRevoke}>
+                <label for="taskTypeNo">{$lang->ougcAwardsControlPanelNewTaskTypeRevoke}</label>
+            </td>
+        </tr>
+        <tr>
             <td class="trow1" width="20%" style="vertical-align: top;">
                 <strong>{$lang->ougcAwardsControlPanelNewTaskRequirements}</strong>
                 <div class="smalltext">
