@@ -3563,6 +3563,8 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
     foreach (taskGet() as $taskData) {
         $taskID = (int)$taskData['tid'];
 
+        $taskType = (int)$taskData['taskType'];
+
         $taskName = htmlspecialchars_uni($taskData['name']);
 
         $taskDescription = parseMessage($taskData['description']);
@@ -3589,44 +3591,46 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
         $checkedElement = $taskGrantAwards = $taskRevokeAwards = '';
 
-        $taskGrantAwardIDs = (int)$taskData['give'];
+        if ($taskType === \ougc\Awards\Core\TASK_TYPE_GRANT) {
+            $taskGrantAwardIDs = (int)$taskData['give'];
 
-        foreach (awardsGetCache(["aid IN ('{$taskGrantAwardIDs}')"]) as $awardID => $awardData) {
-            $awardName = htmlspecialchars_uni($awardData['name']);
+            foreach (awardsGetCache(["aid IN ('{$taskGrantAwardIDs}')"]) as $awardID => $awardData) {
+                $awardName = htmlspecialchars_uni($awardData['name']);
 
-            $awardImage = $awardClass = awardGetIcon($awardID);
+                $awardImage = $awardClass = awardGetIcon($awardID);
 
-            $awardImage = eval(
-            getTemplate(
-                $awardData['template'] === AWARD_TEMPLATE_TYPE_CLASS ? 'awardImageClass' : 'awardImage'
-            )
-            );
+                $awardImage = eval(
+                getTemplate(
+                    $awardData['template'] === AWARD_TEMPLATE_TYPE_CLASS ? 'awardImageClass' : 'awardImage'
+                )
+                );
 
-            $awardUrl = urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID]);
+                $awardUrl = urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID]);
 
-            $awardImage = eval(getTemplate('awardWrapper', false));
+                $awardImage = eval(getTemplate('awardWrapper', false));
 
-            $taskGrantAwards .= $awardImage;
-        }
+                $taskGrantAwards .= $awardImage;
+            }
+        } else {
+            $taskRevokeAwardIDs = (int)$taskData['revoke'];
 
-        $taskRevokeAwardIDs = (int)$taskData['revoke'];
+            foreach (awardsGetCache(["aid IN ('{$taskRevokeAwardIDs}')"]) as $awardID => $awardData) {
+                $awardName = htmlspecialchars_uni($awardData['name']);
 
-        foreach (awardsGetCache(["aid IN ('{$taskRevokeAwardIDs}')"]) as $awardID => $awardData) {
-            $awardName = htmlspecialchars_uni($awardData['name']);
+                $awardImage = $awardClass = awardGetIcon($awardID);
 
-            $awardImage = $awardClass = awardGetIcon($awardID);
+                $awardImage = eval(
+                getTemplate(
+                    $awardData['template'] === AWARD_TEMPLATE_TYPE_CLASS ? 'awardImageClass' : 'awardImage'
+                )
+                );
 
-            $awardImage = eval(
-            getTemplate(
-                $awardData['template'] === AWARD_TEMPLATE_TYPE_CLASS ? 'awardImageClass' : 'awardImage'
-            )
-            );
+                $awardUrl = urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID]);
 
-            $awardUrl = urlHandlerBuild(['action' => 'viewUsers', 'awardID' => $awardID]);
+                $awardImage = eval(getTemplate('awardWrapper', false));
 
-            $awardImage = eval(getTemplate('awardWrapper', false));
-
-            $taskRevokeAwards .= eval(getTemplate('awardWrapper', false));
+                $taskRevokeAwards .= eval(getTemplate('awardWrapper', false));
+            }
         }
 
         if (!empty($taskData['active'])) {
@@ -3961,7 +3965,6 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
         $buttonText = $lang->ougcAwardsControlPanelButtonNewCategory;
 
         $actionButtons[] = eval(getTemplate('controlPanelButtons'));
-
         /*
                 $buttonUrl = urlHandlerBuild(['action' => 'newAward']);
 
@@ -3969,13 +3972,13 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
 
                 $actionButtons[] = eval(getTemplate('controlPanelButtons'));
         */
-
-        $buttonUrl = urlHandlerBuild(['action' => 'viewTasks']);
-
-        $buttonText = $lang->ougcAwardsControlPanelButtonManageTasks;
-
-        $actionButtons[] = eval(getTemplate('controlPanelButtons'));
     }
+
+    $buttonUrl = urlHandlerBuild(['action' => 'viewTasks']);
+
+    $buttonText = $lang->ougcAwardsControlPanelButtonManageTasks;
+
+    $actionButtons[] = eval(getTemplate('controlPanelButtons'));
 
     $actionButtons[] =
         (function () use ($lang): string {
