@@ -47,7 +47,7 @@ define('ougc\Awards\Core\SETTINGS', [
     'myAlertsVersion' => '2.1.0'
 ]);
 
-define('ougc\Awards\Core\DEBUG', true);
+define('ougc\Awards\Core\DEBUG', false);
 
 define('ougc\Awards\ROOT', MYBB_ROOT . 'inc/plugins/ougc/Awards');
 
