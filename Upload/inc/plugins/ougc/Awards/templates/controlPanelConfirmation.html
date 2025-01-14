@@ -1,0 +1,22 @@
+<form action="{$pageUrl}" method="post">
+    <input type="hidden" name="my_post_key" value="{$mybb->post_code}"/>
+    <input type="hidden" name="action" value="{$mybb->input['action']}"/>
+    <input type="hidden" name="categoryID" value="{$categoryID}"/>
+    <input type="hidden" name="awardID" value="{$awardID}"/>
+    <input type="hidden" name="ownerID" value="{$ownerID}"/>
+    <input type="hidden" name="taskID" value="{$taskID}"/>
+    <table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
+        <tr>
+            <td class="thead" colspan="2"><strong>{$confirmationTitle}</strong></td>
+        </tr>
+        <tr>
+            <td class="trow1" colspan="2" align="center">
+                {$confirmationContent}
+            </td>
+        </tr>
+    </table>
+    <br/>
+    <div align="center"><input type="submit" class="button" name="submit"
+                               value="{$confirmationButtonText}"/></div>
+</form>
+<br/>

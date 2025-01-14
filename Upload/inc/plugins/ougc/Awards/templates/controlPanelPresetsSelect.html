@@ -1,0 +1,7 @@
+<form method="post" action="{$mybb->settings['bburl']}/{$pageUrl}" style="display: inline;">
+    <input type="hidden" name="action" value="viewPresets"/>
+    {$presetOptions}
+    <input type="submit" class="button" value="{$lang->ougcAwardsControlPanelPresetsButtonSelect}">
+    {$setDefaultButton}
+    <input type="submit" class="button" name="deletePreset" value="{$lang->ougcAwardsControlPanelPresetsButtonDelete}"/>
+</form>

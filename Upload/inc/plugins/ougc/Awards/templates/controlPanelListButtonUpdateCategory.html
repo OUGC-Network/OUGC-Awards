@@ -1,0 +1,9 @@
+<form action="{$formUrl}" method="post" id="controlPanelListForm{$categoryID}"></form>
+<input type="hidden" name="action" value="awards" form="controlPanelListForm{$categoryID}"/>
+<input type="hidden" name="categoryID" value="{$categoryID}" form="controlPanelListForm{$categoryID}"/>
+<input type="hidden" name="awardID" value="{$awardID}" form="controlPanelListForm{$categoryID}"/>
+<div align="center">
+    <input type="submit" class="button" value="{$lang->ougcAwardsControlPanelButtonUpdate}"
+           form="controlPanelListForm{$categoryID}"/>
+</div>
+<br/>

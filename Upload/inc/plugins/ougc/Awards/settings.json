@@ -1,0 +1,66 @@
+{
+  "showInPosts": {
+    "optionscode": "numeric",
+    "value": 4
+  },
+  "showInPostsPresets": {
+    "optionscode": "numeric",
+    "value": 10
+  },
+  "showInProfile": {
+    "optionscode": "numeric",
+    "value": 4
+  },
+  "showInProfilePresets": {
+    "optionscode": "numeric",
+    "value": 10
+  },
+  "perPage": {
+    "optionscode": "numeric",
+    "value": 10
+  },
+  "groupsView": {
+    "optionscode": "groupselect",
+    "value": -1
+  },
+  "groupsPresets": {
+    "optionscode": "groupselect",
+    "value": -1
+  },
+  "presetsMaximum": {
+    "optionscode": "numeric",
+    "value": 5
+  },
+  "groupsModerators": {
+    "optionscode": "groupselect",
+    "value": 4
+  },
+  "statsEnabled": {
+    "optionscode": "yesno",
+    "value": 1
+  },
+  "statsLatestGrants": {
+    "optionscode": "numeric",
+    "value": "10"
+  },
+  "notificationPrivateMessage": {
+    "optionscode": "yesno",
+    "value": 1
+  },
+  "grantDefaultVisibleStatus": {
+    "optionscode": "yesno",
+    "value": 1
+  },
+  "uploadPath": {
+    "optionscode": "text",
+    "value": "./uploads/awards/"
+  },
+  "uploadDimensions": {
+    "optionscode": "text",
+    "value": "32|32"
+  },
+  "uploadSize": {
+    "optionscode": "text",
+    "value": "50"
+  }
+}

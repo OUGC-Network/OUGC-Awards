@@ -1,0 +1,24 @@
+<div class="modal">
+    <div style="overflow-y: auto; max-height: 400px;" class="modal_{$awardID}">
+        <form action="{$mybb->settings['bburl']}/{$formUrl}" method="post"
+              onsubmit="return ougcAwards.DoRequestAward('{$awardID}');"
+              class="requestForm{$awardID}">
+            <input type="hidden" name="my_post_key" value="{$mybb->post_code}"/>
+            <input type="hidden" name="action" value="requestAward"/>
+            <input type="hidden" name="awardID" value="{$awardID}"/>
+            <table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}"
+                   class="tborder">
+                <tr>
+                    <td class="thead"><strong>{$lang->ougcAwardsRequestTitle}</strong></td>
+                </tr>
+                <tr>
+                    <td class="tcat">{$lang->ougcAwardsRequestDescription}</td>
+                </tr>
+                {$formContents}
+                <tr>
+                    <td class="tfoot" align="center">{$buttonContent}</td>
+                </tr>
+            </table>
+        </form>
+    </div>
+</div>

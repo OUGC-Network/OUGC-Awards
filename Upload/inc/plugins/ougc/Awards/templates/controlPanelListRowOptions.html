@@ -1,0 +1,12 @@
+<td class="{$alternativeBackground} postbit_buttons post_management_buttons" align="center">
+    <form action="{$formUrl}" method="get" id="controlPanelListFormMenu{$awardID}"></form>
+    <select name="action" form="controlPanelListFormMenu{$awardID}">
+        <option value="viewUsers" selected="selected">{$lang->ougcAwardsControlPanelViewUsers}</option>
+        <option value="viewOwners">{$lang->ougcAwardsControlPanelViewOwners}</option>
+        <option value="viewRequests">{$lang->ougcAwardsControlPanelViewRequests}</option>
+        <option value="editAward">{$lang->ougcAwardsControlPanelEditAward}</option>
+        <option value="deleteAward">{$lang->ougcAwardsControlPanelDeleteAward}</option>
+    </select>
+    <input type="hidden" name="awardID" value="{$awardID}" form="controlPanelListFormMenu{$awardID}"/>
+    <input type="submit" class="button" value="{$lang->go}" form="controlPanelListFormMenu{$awardID}"/>
+</td>

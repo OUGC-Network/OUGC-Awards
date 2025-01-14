@@ -1,0 +1,135 @@
+<form action="{$pageUrl}" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="my_post_key" value="{$mybb->post_code}"/>
+    <input type="hidden" name="action" value="{$mybb->input['action']}"/>
+    <input type="hidden" name="awardID" value="{$awardID}"/>
+    <table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
+        <tr>
+            <td class="thead" colspan="2">
+                <strong>{$tableTitle}</strong>
+            </td>
+        </tr>
+        <tr>
+            <td class="tcat smalltext" colspan="2">
+                <strong>{$tableDescription}</strong>
+            </td>
+        </tr>
+        <tr>
+            <td class="trow1" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewAwardName}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewAwardNameDescription}
+                </div>
+            </td>
+            <td class="trow1" style="vertical-align: middle;">
+                <input type="text" class="textbox" name="name" size="40" maxlength="100" value="{$inputData['name']}"/>
+            </td>
+        </tr>
+        <tr>
+            <td class="trow2" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewAwardDescription}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewAwardDescriptionDescription}
+                </div>
+            </td>
+            <td class="trow2" style="vertical-align: middle;">
+                <input type="text" class="textbox" name="description" size="40" maxlength="255"
+                       value="{$inputData['description']}"/></td>
+        </tr>
+        <tr>
+            <td class="trow1" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewAwardCategory}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewAwardCategoryDescription}
+                </div>
+            </td>
+            <td class="trow1" style="vertical-align: middle;">{$categorySelect}</td>
+        </tr>
+        {$fileUploadRow}
+        <tr>
+            <td class="trow2" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewAwardImageType}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewAwardImageTypeDescription}
+                </div>
+            </td>
+            <td class="trow2" style="vertical-align: middle;">
+                <input type="text" class="textbox" name="image" size="40" maxlength="255"
+                       value="{$inputData['image']}"/></td>
+        </tr>
+        <tr>
+            <td class="trow1" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewAwardTemplateType}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewAwardTemplateTypeDescription}
+                </div>
+            </td>
+            <td class="trow1" style="vertical-align: middle;">
+                <select name="template">
+                    <option value="0" {$selectedElementTemplateImage}>
+                        {$lang->ougcAwardsControlPanelNewAwardTemplateTypeImage}
+                    </option>
+                    <option value="1" {$selectedElementTemplateClass}>
+                        {$lang->ougcAwardsControlPanelNewAwardTemplateTypeClass}
+                    </option>
+                    <option value="2" {$selectedElementTemplateCustom}>
+                        {$lang->ougcAwardsControlPanelNewAwardTemplateTypeCustom}
+                    </option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td class="trow2" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewAwardAllowRequests}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewAwardAllowRequestsDescription}
+                </div>
+            </td>
+            <td class="trow2" style="vertical-align: middle;">
+                <input type="radio" class="radio" name="allowrequests" value="1" id="allowrequests_yes"
+                       {$selectedElementAllowRequestsYes}>
+                <label for="allowrequests_yes">{$lang->yes}</label>
+                <input type="radio" class="radio" name="allowrequests" value="0" id="allowrequests_no"
+                       {$selectedElementAllowRequestsNo}>
+                <label for="allowrequests_no">{$lang->no}</label>
+            </td>
+        </tr>
+        <tr>
+            <td class="trow2" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewAwardPrivateMessage}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewAwardPrivateMessageDescription}
+                </div>
+            </td>
+            <td class="trow2" style="vertical-align: middle;">
+                <textarea id="pm" name="pm" rows="10" cols="70" tabindex="2">{$inputData['pm']}</textarea>
+            </td>
+        </tr>
+        <tr>
+            <td class="trow1" width="20%" style="vertical-align: top;">
+                <strong>{$lang->ougcAwardsControlPanelNewAwardDisplayType}</strong>
+                <div class="smalltext">
+                    {$lang->ougcAwardsControlPanelNewAwardDisplayTypeDescription}
+                </div>
+            </td>
+            <td class="trow1" style="vertical-align: middle;">
+                <select name="type">
+                    <option value="0" {$selectedElementTypeBoth}>
+                        {$lang->ougcAwardsControlPanelNewAwardDisplayTypeBoth}
+                    </option>
+                    <option value="1" {$selectedElementTypeProfile}>
+                        {$lang->ougcAwardsControlPanelNewAwardDisplayTypeProfile}
+                    </option>
+                    <option value="2" {$selectedElementTypeBothPosts}>
+                        {$lang->ougcAwardsControlPanelNewAwardDisplayTypePosts}
+                    </option>
+                </select>
+            </td>
+        </tr>
+        {$additionalRows}
+    </table>
+    <br/>
+    <div align="center">
+        <input type="submit" class="button" value="{$buttonText}">
+    </div>
+</form>
+<br/>
