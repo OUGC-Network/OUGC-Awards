@@ -1416,7 +1416,7 @@ if (in_array($mybb->get_input('action'), ['newCategory', 'editCategory'])) {
             $errorMessages[] = $lang->ougcAwardsErrorInvalidAwardImage;
         }
 
-        if (!($categoryData = categoryGet($categoryID)) || !isVisibleCategory($categoryID)) {
+        if (!categoryGet($categoryID) || !isVisibleCategory($categoryID)) {
             $errorMessages[] = $lang->ougcAwardsErrorInvalidCategory;
         }
 

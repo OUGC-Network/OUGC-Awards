@@ -3172,7 +3172,7 @@ function uploadAward(array $awardFile, int $awardID): array
             break;
     }
 
-    if ((int)$imageDimensions[2] !== $imageType || empty($imageType)) {
+    if (empty($imageType) || (int)$imageDimensions[2] !== $imageType) {
         delete_uploaded_file($fullFilePath);
 
         return ['error' => FILE_UPLOAD_ERROR_FAILED];
