@@ -1259,7 +1259,7 @@ function executeTask(array $awardTaskData = []): bool
 
         $taskRevokeAwardID = (int)$awardTaskData['revoke'];
 
-        if ($taskType === \ougc\Awards\Core\TASK_TYPE_GRANT && $taskGrantAwardID) {
+        if ($taskType === TASK_TYPE_GRANT && $taskGrantAwardID) {
             if (empty($awardTaskData['allowmultiple'])) {
                 $tableQueryFields[] = 'a.totalUserGrants';
 
@@ -1274,7 +1274,7 @@ function executeTask(array $awardTaskData = []): bool
             }
 
             $taskRevokeAwardID = 0;
-        } elseif ($taskType === \ougc\Awards\Core\TASK_TYPE_REVOKE && $taskRevokeAwardID) {
+        } elseif ($taskType === TASK_TYPE_REVOKE && $taskRevokeAwardID) {
             $tableQueryFields[] = 'a.totalUserGrants';
 
             // if user has no awards from this task, skip
@@ -1333,7 +1333,7 @@ function executeTask(array $awardTaskData = []): bool
 
             $userGrantedAwardIDs = $userRevokeAwardIDs = $grandIDs = $revokeAwardIDs = [];
 
-            if ($taskType === \ougc\Awards\Core\TASK_TYPE_GRANT) {
+            if ($taskType === TASK_TYPE_GRANT) {
                 if (grantInsert(
                     $taskGrantAwardID,
                     $userID,
@@ -1981,7 +1981,7 @@ function grantInsert(
             $mybb->settings['bbname']
         ),
         'touid' => $userID
-    ], -1, true);
+    ], (int)getSetting('privateMessageSenderUserID'), true);
 
     sendAlert($awardID, $userID);
 
@@ -2142,7 +2142,7 @@ function requestReject(int $requestID): bool
             strip_tags($awardData['name'])
         ),
         'touid' => $userData['uid']
-    ], -1, true);
+    ], (int)getSetting('privateMessageSenderUserID'), true);
 
     sendAlert($awardID, $userID, 'reject_request');
 

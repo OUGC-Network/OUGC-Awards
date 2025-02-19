@@ -62,5 +62,9 @@
   "uploadSize": {
     "optionscode": "text",
     "value": "50"
+  },
+  "privateMessageSenderUserID": {
+    "optionscode": "numeric",
+    "value": 0
   }
 }
